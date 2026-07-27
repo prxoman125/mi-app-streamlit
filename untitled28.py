@@ -7,7 +7,6 @@ Original file is located at
     https://colab.research.google.com/drive/1TgKik8x3FnVLGL4gC8B1Ouy9DqoZKvH6
 """
 
- Commented out IPython magic to ensure Python compatibility.
  %%writefile app.py
  import math
  import matplotlib.pyplot as plt
