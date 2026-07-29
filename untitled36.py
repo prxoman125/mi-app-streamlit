@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.title("🔢 Mi Contador Interactivo")
+st.title("Mi Contador Interactivo")
 
 # 1. Creamos la barra deslizable y guardamos su valor en la variable 'numero'
 numero = st.slider(
