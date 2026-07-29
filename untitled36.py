@@ -1,3 +1,14 @@
+import os
+import sys
+
+# --- TRUCO SÚPER FÁCIL: Auto-instalar Plotly si no existe ---
+try:
+    import plotly
+except ImportError:
+    # Si la aplicación no encuentra Plotly, ella misma se lo ordena a internet
+    os.system(f"{sys.executable} -m pip install plotly")
+    import plotly
+
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
@@ -40,25 +51,17 @@ st.metric(label="Inclinación requerida en la Mira", value=f"{angulo_deg:.4f}°"
 fig = go.Figure()
 
 # 1. DISEÑO DE LA MIRA TELESCÓPICA (Ubicada en X = 0)
-# Círculo exterior metálico de la mira
 fig.add_shape(type="circle", x0=-0.3, y0=y_mira-1.5, x1=0.3, y1=y_mira+1.5, line=dict(color="RoyalBlue", width=4))
-# Retícula de cruz interna (Línea Horizontal y Vertical)
 fig.add_shape(type="line", x0=-0.6, y0=y_mira, x1=0.6, y1=y_mira, line=dict(color="RoyalBlue", width=2))
 fig.add_shape(type="line", x0=0, y0=y_mira-1.8, x1=0, y1=y_mira+1.8, line=dict(color="RoyalBlue", width=2))
 
 # 2. DISEÑO DE LA DIANA DE TIRO (Ubicada en X = 10 metros)
-# Anillo exterior rojo
 fig.add_shape(type="circle", x0=9.6, y0=y_diana-2.5, x1=10.4, y1=y_diana+2.5, line=dict(color="Crimson", width=3))
-# Anillo intermedio blanco/rojo
 fig.add_shape(type="circle", x0=9.8, y0=y_diana-1.2, x1=10.2, y1=y_diana+1.2, line=dict(color="Crimson", width=2))
-# Centro exacto de la diana (Punto de impacto objetivo)
 fig.add_shape(type="circle", x0=9.93, y0=y_diana-0.2, x1=10.07, y1=y_diana+0.2, fillcolor="Crimson", line=dict(color="Crimson"))
 
 # 3. VÍAS DE PROYECCIÓN
-# Rayo láser: Totalmente recto y horizontal desde el origen (0, y_diana) hasta el blanco (10, y_diana)
 fig.add_shape(type="line", x0=0, y0=y_diana, x1=10, y1=y_diana, line=dict(color="Red", width=3, dash="dash"))
-
-# Línea de visión óptica: Une el centro de la mira con el centro de la diana
 fig.add_shape(type="line", x0=0, y0=y_mira, x1=10, y1=y_diana, line=dict(color="DarkCyan", width=2))
 
 # --- AJUSTES ESTÉTICOS DEL ESCENARIO ---
