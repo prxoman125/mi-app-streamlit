@@ -1,46 +1,31 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
-st.title("Panel de Analisis Numerico")
+st.title("Grafica de Tendencias Interactiva")
 
-# 1. Control del numero principal
-numero = st.slider(
-    label="Selecciona un numero para analizar:",
-    min_value=1,
+# 1. Barra deslizable colocada abajo (la declaramos primero para usar su valor)
+# Controla la cantidad de dias o puntos a graficar
+puntos = st.slider(
+    label="Selecciona la cantidad de dias a mostrar en la grafica:",
+    min_value=5,
     max_value=100,
-    value=1
+    value=30
 )
 
-st.header(f"Numero seleccionado: {numero}")
+# 2. Generacion de datos aleatorios basados en la seleccion del usuario
+# Creamos una secuencia de numeros que simula el comportamiento de una accion o temperatura
+np.random.seed(42)
+datos_linea = np.random.randn(puntos).cumsum()
 
-# 2. Visualizacion grafica del progreso (de 0.0 a 1.0)
-st.progress(numero / 100)
+# Convertimos los datos a una tabla estructurada
+df = pd.DataFrame(
+    datos_linea,
+    columns=["Valor Actual"]
+)
 
-# 3. Bloque de analisis matematico simple
-st.subheader("Propiedades Matematicas")
-col1, col2 = st.columns(2)
+# 3. Mostrar la grafica en la pantalla
+# Se dibuja arriba de la barra gracias a la organizacion del codigo de Streamlit
+st.line_chart(df)
 
-with col1:
-    # Comprobar si es par o impar
-    if numero % 2 == 0:
-        st.write("Tipo de numero: Par")
-    else:
-        st.write("Tipo de numero: Impar")
-
-with col2:
-    # Calcular el cuadrado del numero
-    cuadrado = numero ** 2
-    st.write(f"Su valor al cuadrado es: {cuadrado}")
-
-# 4. Generacion automatica de datos (Tabla de multiplicar)
-st.subheader(f"Tabla de Multiplicar del {numero}")
-
-# Creamos una lista de multiplicaciones del 1 al 10
-datos_tabla = {
-    "Multiplicador": [f"{numero} x {i}" for i in range(1, 11)],
-    "Resultado": [numero * i for i in range(1, 11)]
-}
-
-# Convertimos los datos en una tabla dinamica de Streamlit
-df = pd.DataFrame(datos_tabla)
-st.dataframe(df, use_container_width=True)
+st.write(f"Mostrando el historico de los ultimos {puntos} dias.")
