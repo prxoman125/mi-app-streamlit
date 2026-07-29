@@ -1,14 +1,3 @@
-import os
-import sys
-
-# --- TRUCO SÚPER FÁCIL: Auto-instalar Plotly si no existe ---
-try:
-    import plotly
-except ImportError:
-    # Si la aplicación no encuentra Plotly, ella misma se lo ordena a internet
-    os.system(f"{sys.executable} -m pip install plotly")
-    import plotly
-
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
