@@ -125,18 +125,30 @@ fig.add_trace(go.Scatter(
     mode='markers', marker=dict(size=14, color='gold', symbol='star'), name='Punto de Apuntado'
 ))
 
-# CONFIGURACIÓN ULTRA-COMPATIBLE: Quitamos 'legend' personalizado para evitar errores de validación en Python 3.14
+# CONFIGURACIÓN ULTRA-COMPATIBLE Y COMPORTAMIENTO DE ARRASTRE MEJORADO
 fig.update_layout(
     title="Representación Geométrica del Sistema",
     hovermode="closest",
-    height=500
+    height=500,
+    dragmode="pan" # Activa la mano para arrastrar por defecto
 )
 
-# Colocamos las etiquetas usando funciones individuales nativas que no fallan
-fig.update_xaxes(title_text="Distancia Horizontal (Metros)")
-fig.update_yaxes(title_text="Altura desde el Suelo (Metros)")
+# Colocamos las etiquetas y bloqueamos el eje Y para que solo se mueva en horizontal
+fig.update_xaxes(
+    title_text="Distancia Horizontal (Metros)",
+    fixedrange=False # Permite mover y arrastrar libremente en horizontal
+)
+fig.update_yaxes(
+    title_text="Altura desde el Suelo (Metros)",
+    fixedrange=True # ¡BLOQUEADO! No se moverá verticalmente al arrastrar
+)
 
-st.plotly_chart(fig, use_container_width=True)
+# Renderizamos la gráfica ocultando la barra de íconos molestos en la esquina superior derecha
+st.plotly_chart(
+    fig, 
+    use_container_width=True, 
+    config={"displayModeBar": False} # Desactiva el zoom de caja y los íconos de Plotly
+)
 
 # 7. NOTAS TÉCNICAS
 st.info(f"""
