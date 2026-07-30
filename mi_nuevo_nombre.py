@@ -43,7 +43,7 @@ El software procesa los datos en tiempo real de forma dinamica y fluida sin parp
 # 2. SECCIÓN PRINCIPAL ENVOLVIENDO LOS CONTROLES Y GRÁFICAS EN UN FRAGMENTO (ELIMINA EL PARPADEO)
 @st.fragment
 def renderizar_simulador():
-    # Estructura de columnas fija para evitar errores de renderizado
+    # CORRECCIÓN DEFINITIVA: Se especifican las proporciones exactas de las columnas (1 parte controles, 3 partes gráficas)
     col_controles, col_graficas = st.columns([1, 3])
     
     with col_controles:
@@ -62,47 +62,41 @@ def renderizar_simulador():
         v_viento = st.slider("Velocidad del Viento Lateral (m/s)", min_value=-20, max_value=20, value=8, step=1, 
                              help="Valores positivos empujan a la derecha, valores negativos a la izquierda.")
         
-        # Filtro de visibilidad solicitado por el cliente (Botones de opción simple)
+        # Filtro de visibilidad solicitado por el cliente (Uso de segmented_control para máxima compatibilidad)
         st.markdown("---")
         st.markdown("**Seleccion de Vista**")
-        vista_seleccionada = st.pills(
+        vista_seleccionada = st.segmented_control(
             "Elige el plano grafico a desplegar:",
-            ["Vista Lateral", "Vista Superior (Desde Arriba)"],
-            selection_mode="single",
+            options=["Vista Lateral", "Vista Superior (Desde Arriba)"],
             default="Vista Lateral"
         )
         
         st.markdown("---")
         st.markdown("**Capas Visuales**")
-        visibilidad = st.pills(
+        visibilidad = st.segmented_control(
             "Filtrar trazos en el mapa:",
-            ["Mostrar Todo", "Ocultar Bala", "Ocultar Apunte"],
-            selection_mode="single",
+            options=["Mostrar Todo", "Ocultar Bala", "Ocultar Apunte"],
             default="Mostrar Todo"
         )
 
-    # 3. CONVERSIÓN DE UNIDADES A SISTEMA INTERNACIONAL (METROS)
+    # 3. CONVERSIÓN DE UNIDADES A METROS
     distancia = distancia_m
     h_laser = altura_laser_cm / 100.0
     h_mira_absolute = (altura_laser_cm + altura_mira_cm) / 100.0
     radio_diana = (diametro_diana_cm / 2.0) / 100.0
-    
-    # El centro de la diana se alinea estrictamente al plano del láser horizontal
     h_centro_diana = h_laser 
 
-    # 4. CÁLCULO TRIGONOMÉTRICO PRECISO DE INCLINACIÓN DE LA MIRA
-    # Cateto opuesto = altura absoluta de la mira - altura del objetivo (centro de la diana)
-    # Cateto adyacente = distancia horizontal
+    # 4. CÁLCULO TRIGONOMÉTRICO DE INCLINACIÓN DE LA MIRA
     angulo_mira_rad = np.arctan((h_mira_absolute - h_centro_diana) / distancia)
     angulo_mira_deg = np.degrees(angulo_mira_rad)
     moa_mira = angulo_mira_deg * 60
 
     # 5. MOTOR DE CÁLCULO FÍSICO (Ecuaciones Diferenciales Balísticas)
-    m = 0.015       # Masa en kg (15 gramos)
-    Cd = 0.3        # Coeficiente de arrastre aerodinámico
-    A = 0.000045    # Área frontal en m²
-    rho = 1.225     # Densidad del aire estándar kg/m³
-    g = 9.81        # Gravedad de la Tierra
+    m = 0.015       
+    Cd = 0.3        
+    A = 0.000045    
+    rho = 1.225     
+    g = 9.81        
 
     def modelo_balistico(t, variables):
         x, y, z, vx, vy, vz = variables
@@ -114,7 +108,6 @@ def renderizar_simulador():
         az = factor_arrastre * (v_viento - vz)
         return [vx, vy, vz, ax, ay, az]
 
-    # Velocidades iniciales vectorizadas según el ángulo de inclinación de la mira
     vx0 = v0 * np.cos(angulo_mira_rad)
     vy0 = v0 * np.sin(angulo_mira_rad)
     
@@ -127,18 +120,17 @@ def renderizar_simulador():
     solucion = solve_ivp(modelo_balistico, t_span=(0, 5), y0=condiciones_iniciales, events=cruza_diana, max_step=0.01)
     
     x_vals = solucion.y[0]
-    y_vals = solucion.y[1] # Eje Y de alturas
-    z_vals = solucion.y[2] # Eje Z de desviaciones laterales
+    y_vals = solucion.y[1] 
+    z_vals = solucion.y[2] 
 
-    # Condicionales para ocultar o mostrar trazos en los mapas
     ver_bala = visibilidad in ["Mostrar Todo", "Ocultar Apunte"]
     ver_mira = visibilidad in ["Mostrar Todo", "Ocultar Bala"]
 
-    # PALETA DE ALTA VISIBILIDAD REQUERIDA (Contrastes limpios y profesionales)
-    color_eje_referencia = "#E0E0E0"  # Gris claro institucional
-    color_mira_linea = "#424242"      # Gris oscuro (Representa la línea de visión)
-    color_bala_linea = "#9C27B0"      # Púrpura eléctrico de alta visibilidad para el proyectil
-    color_diana_solido = "#311B92"    # Morado profundo institucional para el objetivo
+    # PALETA DE COLORES PROFESIONALES DE ALTA VISIBILIDAD
+    color_eje_referencia = "#E0E0E0"  
+    color_mira_linea = "#424242"      
+    color_bala_linea = "#9C27B0"      
+    color_diana_solido = "#311B92"    
 
     with col_graficas:
         # INDICADORES TÉCNICOS INTEGRALES DE LA MIRA Y EL IMPACTO
@@ -151,33 +143,9 @@ def renderizar_simulador():
             st.metric("Desviacion por Fuerza de Viento", f"{(z_vals[-1]*100):.2f} cm")
 
         # -----------------------------------------------------------------
-        # RENDERIZADO DINÁMICO SEGÚN LA OPCIÓN DE BOTÓN SELECCIONADA
+        # RENDERIZADO DINÁMICO DE LAS GRÁFICAS SEGÚN LA VISTA SELECCIONADA
         # -----------------------------------------------------------------
-        if vista_seleccionada == "Vista Lateral":
-            st.subheader("Grafica de Perfil: Elevacion y Caida")
-            fig_lateral = go.Figure()
-
-            # Suelo de referencia
-            fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Suelo', line=dict(color=color_eje_referencia, width=2, dash='dash')))
-            
-            # Línea de la mira (Eje recto visual de apuntado)
-            if ver_mira:
-                fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[h_mira_absolute, h_centro_diana], mode='lines', name='Linea de la Mira', line=dict(color=color_mira_linea, width=2, dash='dot')))
-            
-            # Trayectoria de la bala
-            if ver_bala:
-                fig_lateral.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', name='Trayectoria Proyectil', line=dict(color=color_bala_linea, width=3)))
-
-            # Diana Vertical
-            fig_lateral.add_trace(go.Scatter(x=[distancia, distancia], y=[h_centro_diana - radio_diana, h_centro_diana + radio_diana], mode='lines', name='Diana', line=dict(color=color_diana_solido, width=6)))
-
-            fig_lateral.update_layout(hovermode="closest", height=450, dragmode="pan", margin=dict(t=10, b=10))
-            fig_lateral.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
-            fig_lateral.update_yaxes(title_text="Altura (Metros)", fixedrange=True)
-
-            st.plotly_chart(fig_lateral, use_container_width=True, config={"displayModeBar": False})
-
-        else:
+        if vista_seleccionada == "Vista Superior (Desde Arriba)":
             st.subheader("Grafica Cenital: Desviacion por Resistencia del Aire")
             fig_superior = go.Figure()
 
@@ -203,3 +171,32 @@ def renderizar_simulador():
             fig_superior.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
             fig_superior.update_yaxes(title_text="Desviacion Izquierda / Derecha (Metros)", fixedrange=True)
 
+            st.plotly_chart(fig_superior, use_container_width=True, config={"displayModeBar": False})
+
+        else:
+            # Por defecto o si selecciona Vista Lateral
+            st.subheader("Grafica de Perfil: Elevacion y Caida")
+            fig_lateral = go.Figure()
+
+            # Suelo de referencia
+            fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Suelo', line=dict(color=color_eje_referencia, width=2, dash='dash')))
+            
+            # Línea de la mira (Eje recto visual de apuntado)
+            if ver_mira:
+                fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[h_mira_absolute, h_centro_diana], mode='lines', name='Linea de la Mira', line=dict(color=color_mira_linea, width=2, dash='dot')))
+            
+            # Trayectoria de la bala
+            if ver_bala:
+                fig_lateral.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', name='Trayectoria Proyectil', line=dict(color=color_bala_linea, width=3)))
+
+            # Cuerpo Diana Vertical
+            fig_lateral.add_trace(go.Scatter(x=[distancia, distancia], y=[h_centro_diana - radio_diana, h_centro_diana + radio_diana], mode='lines', name='Diana', line=dict(color=color_diana_solido, width=6)))
+
+            fig_lateral.update_layout(hovermode="closest", height=450, dragmode="pan", margin=dict(t=10, b=10))
+            fig_lateral.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
+            fig_lateral.update_yaxes(title_text="Altura (Metros)", fixedrange=True)
+
+            st.plotly_chart(fig_lateral, use_container_width=True, config={"displayModeBar": False})
+
+# Ejecutamos la aplicación integrada
+renderizar_simulador()
