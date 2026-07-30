@@ -1,9 +1,34 @@
 import streamlit as st
 
-# Configuración de la página en modo ancho
+# Configuración inicial en modo ancho
 st.set_page_config(page_title="Calculadora Inmobiliaria", layout="wide")
 
-# --- BARRA LATERAL: ENTRADAS DE DATOS ---
+# --- CSS PERSONALIZADO PARA FIJAR EL ANCHO AL 25% Y BLOQUEAR EL DESLIZAMIENTO ---
+st.markdown(
+    """
+    <style>
+    /* Ocultar el botón de colapsar/deslizar la barra lateral */
+    [data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+    }
+    
+    /* Fijar la barra lateral al 25% del ancho de pantalla */
+    [data-testid="stSidebar"] {
+        width: 25vw !important;
+        min-width: 25vw !important;
+        max-width: 25vw !important;
+    }
+    
+    /* Asegurar que el contenido principal ocupe el resto del espacio */
+    [data-testid="stMainBlockContainer"] {
+        max-width: 100% !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# --- BARRA LATERAL (25% FIJO) ---
 st.sidebar.header("⚙️ Ingreso de Datos")
 
 st.sidebar.subheader("Inversión")
@@ -33,13 +58,13 @@ else:
     cap_rate = 0.0
 
 
-# --- PANTALLA PRINCIPAL: RESULTADOS EN FIJA ---
+# --- ÁREA PRINCIPAL (75% RESTANTE) ---
 st.title("🏢 Análisis de Inversión y Cap Rate")
-st.caption("Modifica las cifras en el menú de la izquierda para ver la actualización automática.")
+st.caption("Los datos cambian automáticamente al modificar la barra izquierda.")
 
 st.markdown("---")
 
-# Visualización limpia en 3 columnas arriba
+# Muestra los 3 resultados principales alineados horizontalmente
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -62,7 +87,7 @@ with col3:
 
 st.markdown("---")
 
-# Retroalimentación rápida según el resultado
+# Diagnóstico de la inversión
 if cap_rate >= 8.0:
     st.success(f"🔥 **Excelente rendimiento:** Un Cap Rate del **{cap_rate:.2f}%** es una métrica muy atractiva.")
 elif cap_rate >= 5.0:
