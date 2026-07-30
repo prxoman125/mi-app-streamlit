@@ -6,7 +6,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
-# --- ESTILOS CSS PERSONALIZADOS (CORREGIDOS) ---
+# --- ESTILOS CSS PERSONALIZADOS (CON BOTONES + Y - EN AZUL CLARO) ---
 st.markdown("""
     <style>
         /* Fondo y contenedor de la barra lateral */
@@ -43,6 +43,28 @@ st.markdown("""
             box-shadow: 0px 0px 10px rgba(0, 210, 255, 0.4);
         }
 
+        /* Estilo para los botones + y - de los number_input (Azul claro) */
+        button[aria-label="Increase value"], 
+        button[aria-label="Decrease value"],
+        div[data-baseweb="spinbutton"] button,
+        [data-testid="stNumberInputStepDown"],
+        [data-testid="stNumberInputStepUp"] {
+            color: #00d2ff !important;
+            background-color: #161836 !important;
+            border-color: #00d2ff !important;
+            transition: all 0.2s ease !important;
+        }
+
+        button[aria-label="Increase value"]:hover, 
+        button[aria-label="Decrease value"]:hover,
+        div[data-baseweb="spinbutton"] button:hover,
+        [data-testid="stNumberInputStepDown"]:hover,
+        [data-testid="stNumberInputStepUp"]:hover {
+            background-color: #00d2ff !important;
+            color: #0e0f1d !important;
+            box-shadow: 0px 0px 8px rgba(0, 210, 255, 0.7) !important;
+        }
+
         /* Botón Verde (Confirmar Borrado) */
         div.btn-confirm-yes > div.stButton > button {
             background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%) !important;
@@ -65,25 +87,6 @@ st.markdown("""
             background: #ff4d6d !important;
             color: #2b0008 !important;
             box-shadow: 0px 0px 10px rgba(255, 77, 109, 0.6);
-        }
-
-        /* Marcos decorativos ajustables para la gráfica */
-        .glow-box-blue {
-            border-radius: 12px;
-            border: 2px solid #00d2ff;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
-            padding: 6px;
-            background-color: #0b0c1b;
-            margin-bottom: 15px;
-        }
-
-        .glow-box-red {
-            border-radius: 12px;
-            border: 2px solid #ff4444;
-            box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
-            padding: 6px;
-            background-color: #0b0c1b;
-            margin-bottom: 15px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -378,7 +381,6 @@ diff_height_display = diferencia_altura_cm if is_metric else diferencia_altura_c
 
 is_up = (angulo_deg >= 0)
 direccion_str = txt["direction_up"] if is_up else txt["direction_down"]
-glow_class = "glow-box-blue" if is_up else "glow-box-red"
 
 clicks_moa = abs(round(moa * 4))
 pulsos_mrad = abs(round(mrad * 10))
@@ -437,7 +439,7 @@ ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=4, facecolor='#1
 
 plt.tight_layout()
 
-# --- MOSTRAR LA GRÁFICA SANA Y SIN CAJAS VACÍAS ---
+# --- MOSTRAR LA GRÁFICA ---
 st.pyplot(fig, use_container_width=True, clear_figure=True)
 plt.close(fig)
 
