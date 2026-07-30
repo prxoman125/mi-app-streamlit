@@ -6,18 +6,18 @@ import pandas as pd
 # ---------------------------------------------------------
 # 1. CONFIGURACIÓN DE PÁGINA Y CONSTANTES
 # ---------------------------------------------------------
-st.set_page_config(page_title="Software Modular: Topografía & Ciencias", layout="wide")
+st.set_page_config(page_title="Software Modular: Topografia & Ciencias", layout="wide")
 
 # ---------------------------------------------------------
-# INYECCIÓN DE CSS MONOCROMÁTICO (DARK / MINIMALISTA)
+# INYECCIÓN DE CSS MONOCROMÁTICO (NEGROS Y GRISES OSCUROS)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
     /* 1. Fondo principal y tipografía general */
     .stApp {
-        background-color: #0D0F12 !important;
-        color: #E6E8EA !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #050505 !important;
+        color: #D4D4D4 !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     /* 2. Estilo de Encabezados */
@@ -29,18 +29,17 @@ st.markdown("""
 
     /* 3. Tarjetas de Métricas (st.metric) */
     [data-testid="stMetric"] {
-        background-color: #161A20 !important;
-        border: 1px solid #2B303A !important;
+        background-color: #121212 !important;
+        border: 1px solid #262626 !important;
         padding: 16px !important;
-        border-radius: 8px !important;
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+        border-radius: 6px !important;
     }
     [data-testid="stMetricValue"] {
         color: #FFFFFF !important;
         font-weight: 700 !important;
     }
     [data-testid="stMetricLabel"] {
-        color: #9DA8B6 !important;
+        color: #8C8C8C !important;
         font-size: 0.85rem !important;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -50,40 +49,35 @@ st.markdown("""
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     .stNumberInput input {
-        background-color: #161A20 !important;
-        border: 1px solid #2B303A !important;
+        background-color: #121212 !important;
+        border: 1px solid #262626 !important;
         color: #FFFFFF !important;
-        border-radius: 6px !important;
+        border-radius: 4px !important;
     }
     div[data-baseweb="select"]:hover > div,
     div[data-baseweb="input"]:hover > div {
-        border-color: #4A5260 !important;
-    }
-
-    /* Sliders */
-    div[data-baseweb="slider"] {
-        padding-top: 10px;
+        border-color: #404040 !important;
     }
 
     /* 5. Cuadros de Información (st.info, st.warning) */
     div[data-testid="stNotification"] {
-        background-color: #1A1F26 !important;
-        border: 1px solid #363D4A !important;
-        color: #D1D5DB !important;
-        border-radius: 6px !important;
+        background-color: #171717 !important;
+        border: 1px solid #262626 !important;
+        color: #A3A3A3 !important;
+        border-radius: 4px !important;
     }
 
     /* 6. Editor de Datos (st.data_editor) */
     div[data-testid="stDataEditor"] {
-        background-color: #161A20 !important;
-        border: 1px solid #2B303A !important;
-        border-radius: 8px !important;
+        background-color: #121212 !important;
+        border: 1px solid #262626 !important;
+        border-radius: 6px !important;
         padding: 4px;
     }
 
     /* 7. Línea divisoria (st.divider) */
     hr {
-        border-color: #2B303A !important;
+        border-color: #262626 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -109,7 +103,7 @@ col_izq, col_central, col_der = st.columns([1, 2, 1])
 # COLUMNA IZQUIERDA: SELECTOR Y PARÁMETROS DE ENTRADA
 # =========================================================
 with col_izq:
-    st.header("⚙️ Configuración")
+    st.header("Configuracion")
     
     mercado = st.selectbox(
         "Selecciona el Mercado:",
@@ -119,10 +113,10 @@ with col_izq:
     st.divider()
 
     if mercado == "Ingeniería Civil (Topografía)":
-        st.subheader("📏 Geometría del Terreno")
+        st.subheader("Geometria del Terreno")
         cota_corte = st.slider("Cota de Plano de Corte (m)", min_value=-2.0, max_value=5.0, value=1.0, step=0.1)
 
-        st.subheader("🧱 Propiedades Físicas del Suelo")
+        st.subheader("Propiedades Fisicas del Suelo")
         tipo_material = st.selectbox("Tipo de Material", list(PROPIEDADES_MATERIALES.keys()))
         
         # Factor de esponjamiento automático
@@ -130,23 +124,23 @@ with col_izq:
         st.info(f"**Factor de Esponjamiento (Auto):** {factor_esponjamiento:.2f}")
 
         talud_reposo = st.number_input(
-            "Talud de Reposo / Ángulo (°)", 
+            "Talud de Reposo / Angulo (°)", 
             min_value=10.0, max_value=80.0, 
             value=PROPIEDADES_MATERIALES[tipo_material]["talud_opt"], step=1.0
         )
         
         factor_compactacion = st.number_input(
-            "Factor de Compactación", 
+            "Factor de Compactacion", 
             min_value=0.50, max_value=1.00, value=0.85, step=0.01
         )
 
-        st.subheader("💰 Costos y Logística")
-        costo_corte_m3 = st.number_input("Costo Excavación/Corte ($/m³)", min_value=0.0, value=12.5, step=0.5)
+        st.subheader("Costos y Logistica")
+        costo_corte_m3 = st.number_input("Costo Excavacion/Corte ($/m³)", min_value=0.0, value=12.5, step=0.5)
         costo_relleno_m3 = st.number_input("Costo Relleno ($/m³)", min_value=0.0, value=18.0, step=0.5)
-        capacidad_camion_m3 = st.number_input("Capacidad Camión de Volteo (m³)", min_value=1.0, value=14.0, step=1.0)
+        capacidad_camion_m3 = st.number_input("Capacidad Camion de Volteo (m³)", min_value=1.0, value=14.0, step=1.0)
 
     else:  # Modo Ciencias (Geofísica/Astrofísica)
-        st.subheader("🪐 Parámetros Astrofísicos")
+        st.subheader("Parametros Astrofisicos")
         
         # Sliders y controles solicitados
         M_input = st.slider("Masa del Cuerpo Central (M)", min_value=1.0, max_value=100.0, value=5.0, step=0.5)
@@ -170,26 +164,26 @@ with col_izq:
 # COLUMNA DERECHA: EDITOR DE DATOS DINÁMICO
 # =========================================================
 with col_der:
-    st.header("📍 Coordenadas")
+    st.header("Coordenadas")
     
     if mercado == "Ingeniería Civil (Topografía)":
         if "df_civil" not in st.session_state:
             st.session_state.df_civil = pd.DataFrame({'X': [0.0, 2.0, -1.5], 'Y': [0.0, -1.0, 2.0]})
         
-        st.write("Puntos de Interés / Sondeos:")
+        st.write("Puntos de Interes / Sondeos:")
         df_input = st.data_editor(st.session_state.df_civil, num_rows="dynamic", key="editor_civil")
     else:
         if "df_ciencias" not in st.session_state:
             st.session_state.df_ciencias = pd.DataFrame({'X': [1.0, -2.0, 3.0], 'Y': [1.0, 2.0, -1.0]})
         
-        st.write("Posición de Cuerpos / Partículas:")
+        st.write("Posicion de Cuerpos / Particulas:")
         df_input = st.data_editor(st.session_state.df_ciencias, num_rows="dynamic", key="editor_ciencias")
 
 # =========================================================
 # COLUMNA CENTRAL: GRÁFICA 3D Y MÉTRICAS INFERIORES
 # =========================================================
 with col_central:
-    st.header("📊 Visualización y Análisis 3D")
+    st.header("Visualizacion y Analisis 3D")
     
     # Malla matemática base
     x = np.linspace(-5, 5, 60)
