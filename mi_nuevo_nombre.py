@@ -32,6 +32,67 @@ with col2:
         # --- CÁLCULOS MATEMÁTICOS SIMPLES (Ejemplo base) ---
         tasa_decimal = tasa_interes / 100
         # Fórmula base de interés compuesto simulada para el año final
+                # --- 1. CÁLCULO MATEMÁTICO AVANZADO CON PANDAS ---
+        tasa_decimal = tasa_interes / 100
+        inflacion_estimada = 0.045 # Supongamos un 4.5% de inflación promedio anual
+        
+        datos_anios = []
+        saldo_actual = capital_inicial
+        
+        for anio in range(1, anios + 1):
+            # El interés se aplica al saldo del año anterior
+            interes_ganado = saldo_actual * tasa_decimal
+            saldo_actual += interes_ganado + (ahorro_mensual * 12)
+            
+            # Cálculo del impacto de la inflación (Rendimiento Real)
+            rendimiento_real = tasa_decimal - inflacion_estimada
+            
+            # Guardamos los datos de cada año
+            datos_anios.append({
+                "Año": f"Año {anio}",
+                "Saldo Total ($)": round(saldo_actual, 2),
+                "Rendimiento Real (%)": round(rendimiento_real * 100, 2)
+            })
+        
+        # Convertimos la lista en un DataFrame de Pandas
+        df_financiero = pd.DataFrame(datos_anios)
+        
+        # --- 2. MOSTRAR MÉTRICA PRINCIPAL ---
+        st.metric(
+            label="Dinero Total Acumulado", 
+            value=f"${saldo_actual:,.2f}", 
+            delta=f"+{tasa_interes}% Interés Anual"
+        )
+        
+        # --- 3. CREACIÓN DEL MAPA DE CALOR CON PLOTLY ---
+        st.subheader("🔥 Mapa de Calor: ¿Tu dinero está seguro?")
+        st.write("Si el rendimiento es menor a la inflación, tu dinero pierde valor (Zona Roja).")
+        
+        # Creamos una matriz visual basada en el Rendimiento Real
+        # Usamos una escala de color que va de Rojo (Peligro) a Verde (Ganancia)
+        fig_heatmap = px.density_heatmap(
+            df_financiero,
+            x="Año",
+            y=["Rendimiento Real (%)"],
+            z="Rendimiento Real (%)",
+            color_continuous_scale=["#FF4B4B", "#F0F2F6", "#00F5A0"], # Rojo -> Gris -> Verde brillante
+            text_auto=True
+        )
+        
+        # Ajustes visuales para que se adapte perfectamente a Streamlit
+        fig_heatmap.update_layout(
+            height=200, 
+            margin=dict(l=10, r=10, t=10, b=10),
+            coloraxis_showscale=False # Ocultamos la barra lateral de escala para limpiar la pantalla
+        )
+        
+        # Renderizamos el mapa de calor interactivo de Plotly en Streamlit
+        st.plotly_chart(fig_heatmap, use_container_width=True)
+        
+        # --- 4. PROCEDIMIENTO MATEMÁTICO EN LATEX ---
+        st.subheader("📝 Procedimiento Matemático")
+        st.latex(rf"V_f = {capital_inicial} \times (1 + {tasa_decimal})^{{{anios}}} + \sum_{{t=1}}^{{{anios}}} \text{{Ahorro}} \times (1 + {tasa_decimal})^t")
+
         total_acumulado = capital_inicial * ((1 + tasa_decimal) ** anios)
         
         # 1. Métricas de Impacto Visual
