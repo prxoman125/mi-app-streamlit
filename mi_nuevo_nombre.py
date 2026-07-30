@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- INYECCIÓN DE CSS PARA DISEÑO INTEGRAL DE ALTA GAMA CON DEGRADADO ---
+# --- INYECCIÓN DE CSS PARA DISEÑO INTEGRAL DE ALTA GAMA CON DEGRADADO REAL ---
 st.markdown("""
     <style>
         /* Fondo general oscuro de alta gama */
@@ -31,13 +31,13 @@ st.markdown("""
             border-radius: 8px;
             padding: 15px;
         }
-        /* CAMBIO: Fondo degradado azul oscuro para la columna izquierda (col1) */
-        div[data-testid="column"]:nth-of-type(1) {
-            background: linear-gradient(135deg, #0A1432 0%, #12255C 100%);
-            border: 1px solid #1E3A8A;
+        /* CORRECCIÓN: Fondo degradado azul marino/zafiro institucional puro para la columna de entrada */
+        div[data-testid="column"] {
+            background: linear-gradient(180deg, #0D1B3E 0%, #070F26 100%) !important;
+            border: 1px solid #1E3A8A !important;
             border-radius: 8px;
             padding: 20px;
-            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.05);
         }
         /* Ajuste para que los inputs numéricos combinen con el fondo oscuro */
         input {
@@ -144,7 +144,7 @@ t = {
     }
 }[idioma]
 
-# --- INICIALIZACIÓN ESTABLE DEL ESTADO DE MEMORIA (SESSION STATE) ---
+# --- REINGENIERÍA: FIJACIÓN ESTABLE DEL ESTADO DE MEMORIA (SESSION STATE) ---
 if "calculado" not in st.session_state:
     st.session_state.calculado = False
 if "df_financiero" not in st.session_state:
@@ -156,13 +156,10 @@ if "total_invertido_global" not in st.session_state:
 if "idioma_previo" not in st.session_state:
     st.session_state.idioma_previo = idioma
 
-# Si el usuario cambia el idioma, recalculamos las columnas del DataFrame de memoria para evitar errores de visualización
+# Normalización automática si se altera el idioma del sistema con datos en memoria
 if st.session_state.idioma_previo != idioma and not st.session_state.df_financiero.empty:
     st.session_state.idioma_previo = idioma
-    # Forzamos una actualización de las etiquetas de las columnas basándonos en el nuevo idioma seleccionado
-    columnas_antiguas = st.session_state.df_financiero.columns.tolist()
-    nuevas_columnas = [t["col_anio"], t["col_saldo"], t["col_rend"]]
-    st.session_state.df_financiero.columns = nuevas_columnas
+    st.session_state.df_financiero.columns = [t["col_anio"], t["col_saldo"], t["col_rend"]]
 
 # --- ENCABEZADO CORPORATIVO ---
 st.title(t["titulo"])
@@ -190,7 +187,7 @@ with st.sidebar:
         impuesto_premium = 0     
         volatilidad_premium = 0  
 
-# --- COLUMNA 1: PANEL DE CONTROL DE ALTA GAMA (ENTRADAS MANUALES CON DEGRADADO CSS) ---
+# --- COLUMNA 1: PANEL DE CONTROL DE ALTA GAMA (CON LA CORRECCIÓN DEL HISTORIAL DEL BOTÓN) ---
 with col1:
     st.header(t["p_control"])
     st.write(t["p_desc"])
@@ -203,3 +200,11 @@ with col1:
     st.write("") 
     calcular = st.button(t["ejecutar"], use_container_width=True)
 
+    # El botón ahora escribe datos fijos en la memoria de persistencia de Streamlit
+    if calcular:
+        tasa_decimal = tasa_interes / 100
+        inflacion_decimal = inflacion_premium / 100
+        
+        datos_anios = []
+        saldo_actual = capital_inicial
+Usa el código con precaución.st.session_state.total_invertido_global = capital_inicial + (ahorro_mensual * 12 * anios)for anio in range(1, anios + 1):interes_ganado = saldo_actual * tasa_decimalsaldo_actual += interes_ganado + (ahorro_mensual * 12)rendimiento_real = tasa_interes - (inflacion_decimal * 100)datos_anios.append({t["col_anio"]: f"{t['col_anio']} {anio}",t["col_saldo"]: round(saldo_actual, 2),t["col_rend"]: round(rendimiento_real, 2)})st.session_state.df_financiero = pd.DataFrame(datos_anios)st.session_state.saldo_final_global = saldo_actualst.session_state.calculado = True--- COLUMNA 2: RESULTADOS ANALÍTICOS (LEIDOS DESDE EL ESTADO PERSISTENTE) ---with col2:st.header(t["res_analiticos"])if st.session_state.calculado:df_financiero = st.session_state.df_financierosaldo_final_global = st.session_state.saldo_final_globaltotal_invertido_global = st.session_state.total_invertido_globaltasa_decimal = tasa_interes / 100if usuario_pago and impuesto_premium > 0:ganancia_bruta = max(0.0, saldo_final_global - total_invertido_global)retencion_impuestos = ganancia_bruta * (impuesto_premium / 100)saldo_mostrar = saldo_final_global - retencion_impuestoselse:saldo_mostrar = saldo_final_globalst.metric(label=t["cap_neto"],value=f"${saldo_mostrar:,.2f}",delta=f"+{tasa_interes}% {t['retorno_bruto']}")st.subheader(t["auditoria"])st.write(f"{t['desglose_infla']} {inflacion_premium}%:")def color_semaforo(val):if val > 0:color = '#0D2B45'texto = '#00E5FF'else:color = '#3A151D'texto = '#FF6B6B'return f'background-color: {color}; color: {texto}; font-weight: bold;'columna_rendimiento = t["col_rend"]df_estilizado = df_financiero.style.map(color_semaforo, subset=[columna_rendimiento]) .format({t["col_saldo"]: "${:,.2f}", columna_rendimiento: "{:+.2f}%"})st.dataframe(df_estilizado, use_container_width=True, hide_index=True)st.subheader(t["proc_mat"])st.latex(rf"V_f = {capital_inicial} \times (1 + {tasa_decimal})^{{{anios}}} + \sum_{{t=1}}^{{{anios}}} ({ahorro_mensual} \times 12) \times (1 + {tasa_decimal})^t")else:st.info(t["info_init"])4. FILA INFERIOR DE ANCHO COMPLETO: PROTOCOLO INSTITUCIONALst.divider()st.header(t["mod_avanzados"])if not usuario_pago:st.info(t["aviso_premium"])st.button(t["btn_premium"], use_container_width=True)else:if st.session_state.calculado and not st.session_state.df_financiero.empty:p_col1, p_col2 = st.columns(2)with p_col1:st.subheader(t["sim_montecarlo"])st.write(t["desc_montecarlo"])simulaciones = 500resultados_finales = []rendimientos_simulados = np.random.normal(loc=tasa_interes / 100,scale=volatilidad_premium / 100,size=(simulaciones, anios))for sim in range(simulaciones):saldo_sim = capital_inicialfor anio in range(anios):r = rendimientos_simulados[sim, anio]saldo_sim = (saldo_sim * (1 + r)) + (ahorro_mensual * 12)resultados_finales.append(saldo_sim)df_simulaciones = pd.DataFrame({"Resultados": resultados_finales})fig_hist = px.histogram(df_simulaciones,x="Resultados",nbins=30,color_discrete_sequence=['#1E3A8A'])fig_hist.update_layout(height=250,margin=dict(l=10, r=10, t=10, b=10),plot_bgcolor="rgba(0,0,0,0)",paper_bgcolor="rgba(0,0,0,0)",font=dict(color="#E2E8F0"),dragmode=False)st.plotly_chart(fig_hist, use_container_width=True, config={'displayModeBar': False})st.subheader(t["e_sharpe"])tasa_libre_riesgo = 0.04exceso_retorno = (tasa_interes / 100) - tasa_libre_riesgosharpe_ratio = exceso_retorno / (volatilidad_premium / 100) if volatilidad_premium > 0 else 0if sharpe_ratio >= 1:st.success(f"Sharpe Ratio: {sharpe_ratio:.2f} ({t['sharpe_ok']})")else:st.warning(f"Sharpe Ratio: {sharpe_ratio:.2f} ({t['sharpe_no']})")with p_col2:st.subheader(t["gestion_preserv"])retiro_anual_seguro = st.session_state.saldo_final_global * 0.04retiro_mensual_seguro = retiro_anual_seguro / 12st.info(f"{t['retiro_sug']} ${retiro_mensual_seguro:,.2f} {t['sin_amortizar']}")st.subheader(t["costo_oport"])capital_devaluado = capital_inicialfor _ in range(anios):capital_devaluado = capital_devaluado * (1 - (inflacion_premium/100))perdida_oportunidad = st.session_state.saldo_final_global - capital_devaluadost.error(f"{t['perdida_patr']} ${perdida_oportunidad:,.2f}")st.subheader(t["export_corp"])csv_data = st.session_state.df_financiero.to_csv(index=False).encode('utf-8')st.download_button(label=t["btn_csv"],data=csv_data,file_name="quantum_capital_report.csv",mime="text/csv",use_container_width=True)else:st.info(t["info_premium"])
