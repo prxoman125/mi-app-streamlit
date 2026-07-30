@@ -6,6 +6,18 @@ from scipy.integrate import solve_ivp
 # 1. CONFIGURACIÓN DE LA PÁGINA
 st.set_page_config(page_title="Calculador Balistico Avanzado", layout="wide")
 
+# Estilo CSS para forzar la temática morado claro / lavanda en los contenedores de métricas
+st.markdown("""
+    <style>
+    div[data-testid="stMetric"] {
+        background-color: #F3E5F5;
+        border: 1px solid #E1BEE7;
+        padding: 15px;
+        border-radius: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("Calculador de Trayectorias Balisticas con Doble Vista")
 st.markdown("""
 Sistema de calculo avanzado con resistencia aerodinamica y desviacion por viento. 
@@ -15,8 +27,8 @@ Al modificar los controles de la izquierda, las graficas se actualizaran de inme
 # 2. SECCIÓN PRINCIPAL ENVOLVIENDO LOS CONTROLES Y GRÁFICAS EN UN FRAGMENTO (ELIMINA EL PARPADEO)
 @st.fragment
 def renderizar_simulador():
-    # Creamos dos columnas: una estrecha para controles y una ancha para las gráficas
-    col_controles, col_graficas = st.columns()
+    # CORRECCIÓN AQUÍ: Se especifica explícitamente el número o proporción de columnas [1, 3]
+    col_controles, col_graficas = st.columns([1, 3])
     
     with col_controles:
         st.subheader("Parametros de Configuracion")
@@ -75,7 +87,7 @@ def renderizar_simulador():
     
     condiciones_iniciales = [0.0, h_laser, 0.0, vx0, vy0, 0.0]
 
-    # CORRECCIÓN AQUÍ: Se extrae variables[0] para obtener la distancia X actual y evitar el TypeError
+    # Se extrae variables para obtener la distancia X actual
     def cruza_diana(t, variables):
         return distancia - variables[0]
     cruza_diana.terminal = True
@@ -92,10 +104,10 @@ def renderizar_simulador():
     ver_mira = visibilidad in ["Mostrar Todo", "Ocultar Bala (Solo Apunte)"]
 
     # PALETA DE COLORES EN MORADO CLARO / LAVANDA
-    color_suelo = "#E6E6FA"       # Lavanda muy claro
-    color_mira = "#B39DDB"        # Morado claro pastel
-    color_bala = "#7E57C2"        # Morado medio (destacado)
-    color_diana = "#4527A0"       # Morado oscuro institucional
+    color_suelo = "#E1BEE7"       # Lavanda claro
+    color_mira = "#CE93D8"        # Morado pastel
+    color_bala = "#9C27B0"        # Morado intermedio (destacado)
+    color_diana = "#4A148C"       # Morado oscuro institucional
 
     with col_graficas:
         # TABLA DE MÉTRICAS RÁPIDAS
@@ -153,7 +165,7 @@ def renderizar_simulador():
         
         # Punto exacto de impacto
         if ver_bala:
-            fig_superior.add_trace(go.Scatter(x=[distancia], y=[z_vals[-1]], mode='markers', marker=dict(size=12, color=color_diana, symbol='compound'), name='Impacto Real'))
+            fig_superior.add_trace(go.Scatter(x=[distancia], y=[z_vals[-1]], mode='markers', marker=dict(size=12, color=color_diana, symbol='diamond'), name='Impacto Real'))
 
         fig_superior.update_layout(hovermode="closest", height=320, dragmode="pan", margin=dict(t=10, b=10))
         fig_superior.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
