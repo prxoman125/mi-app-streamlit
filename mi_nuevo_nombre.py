@@ -241,7 +241,7 @@ TEXTS = {
         "empty_history": "No records saved in history yet.",
         "select_prompt": "⚠️ Please select an Application Profile / Profession in the sidebar to start the simulation.",
         "record_saved": "✅ Measurement saved into history.",
-        "target_2d_title": "🎯 2D Front View (Reticle / Target)"
+        "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
     }
 }
 
@@ -579,10 +579,30 @@ with col_2d:
         title=dict(text=txt["target_2d_title"], font=dict(color="#00F0FF", size=14)),
         paper_bgcolor='#070814', plot_bgcolor='#070814',
         height=460, margin=dict(l=10, r=10, t=35, b=10),
-        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#a0a5c0"), title=f"X ({h_unit})"),
-        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#a0a5c0"), title=f"Y ({h_unit})"),
-        scaleanchor="x", scaleratio=1,
-        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(14, 15, 29, 0.8)")
+        xaxis=dict(
+            range=[-max_radius*1.2, max_radius*1.2], 
+            showgrid=False, 
+            zeroline=False, 
+            tickfont=dict(color="#a0a5c0"), 
+            title=f"X ({h_unit})"
+        ),
+        yaxis=dict(
+            range=[-max_radius*1.2, max_radius*1.2], 
+            showgrid=False, 
+            zeroline=False, 
+            tickfont=dict(color="#a0a5c0"), 
+            title=f"Y ({h_unit})",
+            scaleanchor="x",
+            scaleratio=1
+        ),
+        legend=dict(
+            orientation="h", 
+            y=-0.1, 
+            x=0.5, 
+            xanchor="center", 
+            font=dict(color="white", size=9), 
+            bgcolor="rgba(14, 15, 29, 0.8)"
+        )
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
