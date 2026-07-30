@@ -1,3 +1,4 @@
+%%writefile app.py
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -100,7 +101,7 @@ TEXTS = {
         "profile_select": "Application Profile / Profession",
         "profile_placeholder": "-- Select a Profession / Career --",
         "unit_select": "Unit System",
-        "metric": "Metric (inches, yards)",
+        "metric": "Metric (cm, meters)",
         "imperial": "Imperial (inches, yards)",
         "params": "Input Parameters",
         "h_mira": "Vertical Collimation Line (Y)",
@@ -161,11 +162,12 @@ def reset_inputs_to_zero():
 st.sidebar.header(txt["params"])
 h_unit, d_unit = ("cm", "m") if is_metric else ("in", "yd")
 
-H_mira = st.sidebar.number_input(f"{txt['h_mira']} ({h_unit})", value=st.session_state["h_mira_val"], key="h_mira_val")
-Z_mira = st.sidebar.number_input(f"{txt['z_mira']} ({h_unit})", value=st.session_state["z_mira_val"], key="z_mira_val")
-H_extra = st.sidebar.number_input(f"{txt['h_extra']} ({h_unit})", value=st.session_state["h_extra_val"], key="h_extra_val")
-Z_extra = st.sidebar.number_input(f"{txt['z_extra']} ({h_unit})", value=st.session_state["z_extra_val"], key="z_extra_val")
-D_val = st.sidebar.number_input(f"{txt['dist_input']} ({d_unit})", min_value=0.1, value=max(1.0, st.session_state["dist_val"]), key="dist_val")
+# --- ENTRADAS DE PARÁMETROS CON PASO (STEP) DE 1 EN 1 ---
+H_mira = st.sidebar.number_input(f"{txt['h_mira']} ({h_unit})", value=st.session_state["h_mira_val"], step=1.0, key="h_mira_val")
+Z_mira = st.sidebar.number_input(f"{txt['z_mira']} ({h_unit})", value=st.session_state["z_mira_val"], step=1.0, key="z_mira_val")
+H_extra = st.sidebar.number_input(f"{txt['h_extra']} ({h_unit})", value=st.session_state["h_extra_val"], step=1.0, key="h_extra_val")
+Z_extra = st.sidebar.number_input(f"{txt['z_extra']} ({h_unit})", value=st.session_state["z_extra_val"], step=1.0, key="z_extra_val")
+D_val = st.sidebar.number_input(f"{txt['dist_input']} ({d_unit})", min_value=1.0, value=max(1.0, st.session_state["dist_val"]), step=1.0, key="dist_val")
 
 st.sidebar.markdown("---")
 ref_angle_y = st.sidebar.number_input(txt['ref_angle_y'], value=st.session_state["ref_angle_y_val"], format="%.2f", key="ref_angle_y_val")
@@ -214,7 +216,7 @@ ax1.plot([0, D_cm], [H_mira_cm, y_target], color='#00d2ff', linestyle='-', linew
 ax1.scatter(D_cm, y_target, color='#33ff77', s=120, zorder=5, label='Punto Requerido')
 ax1.scatter(0, H_mira_cm, color='#00d2ff', s=100, marker='X', zorder=5, label='Origen Sensor')
 
-# Ajuste dinamico de limites sin colapsar
+# Ajuste dinámico de límites sin colapsar
 y_min = min(0, H_mira_cm, y_target)
 y_max = max(0, H_mira_cm, y_target)
 margin_y = max(abs(y_max - y_min) * 0.2, 10.0)
@@ -231,7 +233,7 @@ ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=2, facecolor='#
 # 2. GRÁFICA DE DIANA VISTA FRONTAL (Z vs Y)
 ax2.set_facecolor('#0b0c1b')
 
-# Radio visual asegurado para no ser invisible
+# Radio visual asegurado
 circle_target = plt.Circle((0, 0), radius=max(beam_radius_cm * 2, 2.0), color='#ffcc00', fill=False, linestyle='--', linewidth=1.5, label='Área Receptor')
 circle_beam = plt.Circle((diff_z_cm, diff_y_cm), radius=max(beam_radius_cm, 1.0), color='#00d2ff', alpha=0.4, label='Tamaño Haz (Spot)')
 
@@ -240,7 +242,7 @@ ax2.add_patch(circle_beam)
 ax2.scatter(0, 0, color='#ff4444', marker='+', s=180, linewidth=2, label='Centro Referencia')
 ax2.scatter(diff_z_cm, diff_y_cm, color='#33ff77', marker='x', s=140, linewidth=2, label='Centro del Haz')
 
-# Ajuste de escala dinamico sin encoger la diana
+# Ajuste de escala dinámico
 limit_z = max(abs(diff_z_cm) + beam_radius_cm * 2, 10.0)
 limit_y = max(abs(diff_y_cm) + beam_radius_cm * 2, 10.0)
 max_limit = max(limit_z, limit_y)
