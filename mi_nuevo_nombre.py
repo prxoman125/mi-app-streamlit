@@ -404,84 +404,129 @@ if save_clicked:
     st.session_state["history"].append(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICA INTERACTIVA 3D CON PLOTLY ---
+# --- GRÁFICA INTERACTIVA 3D ULTRA-PROFESIONAL Y ESTILIZADA ---
 pos_mira = (0, H_mira_cm)
 pos_impacto_mira = (D_cm, y_target_point)
 
 fig = go.Figure()
 
-# Eje óptico de referencia (Línea Roja)
+# 1. PLANO DE SUELO DE CUADRÍCULA (GRID GROUND SCI-FI)
+grid_x = np.linspace(0, max(D_cm, 10), 10)
+grid_y = np.linspace(-max(abs(H_extra_cm)*1.5, 20), max(abs(H_extra_cm)*1.5, 20), 10)
+gx, gy = np.meshgrid(grid_x, grid_y)
+gz = np.zeros_like(gx)
+
+fig.add_trace(go.Surface(
+    x=gx, y=gy, z=gz,
+    colorscale=[[0, '#0a0c1b'], [1, '#161936']],
+    showscale=False,
+    opacity=0.6,
+    hoverinfo='none',
+    name="Suelo (Z=0)"
+))
+
+# 2. PROYECCIONES DE SOMBRA (LÍNEAS DE REFERENCIA AL SUELO)
+fig.add_trace(go.Scatter3d(
+    x=[0, D_cm, D_cm, 0], y=[0, 0, 0, 0], z=[0, 0, y_target_point, pos_mira[1]],
+    mode='lines',
+    line=dict(color='rgba(0, 210, 255, 0.15)', width=2, dash='dot'),
+    showlegend=False,
+    hoverinfo='none'
+))
+
+# 3. EJE ÓPTICO DE REFERENCIA (LÍNEA ROJA NEÓN CON BORDES)
 fig.add_trace(go.Scatter3d(
     x=[0, D_cm], y=[0, 0], z=[0, y_ref_end],
     mode='lines+markers',
     name=f"{txt['laser_label']} ({ref_angle_deg:.2f}°)",
-    line=dict(color='#ff4444', width=6, dash='dash'),
-    marker=dict(size=4, color='#ff4444')
+    line=dict(color='#FF0055', width=7, dash='dash'),
+    marker=dict(size=4, color='#FF0055')
 ))
 
-# Eje del sensor ajustable (Línea Azul Claro)
+# 4. EJE DEL SENSOR AJUSTABLE (LÍNEA AZUL CIAN BRILLANTE)
 fig.add_trace(go.Scatter3d(
     x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
     mode='lines+markers',
     name=f"{txt['sight_label']} (α = {angulo_deg:.2f}°)",
-    line=dict(color='#00d2ff', width=8),
-    marker=dict(size=4, color='#00d2ff')
+    line=dict(color='#00F0FF', width=9),
+    marker=dict(size=5, color='#00F0FF')
 ))
 
-# Puntos clave
+# 5. MARCADORES DE PUNTOS CLAVE (DIAMANTES & CÍRCULOS RESALTADOS)
 fig.add_trace(go.Scatter3d(
     x=[D_cm], y=[0], z=[y_ref_end],
     mode='markers',
     name=txt["target_center"],
-    marker=dict(size=9, color='#ffcc00', symbol='circle')
+    marker=dict(size=9, color='#FFE600', symbol='circle', line=dict(color='white', width=1))
 ))
 
 fig.add_trace(go.Scatter3d(
     x=[D_cm], y=[0], z=[y_target_point],
     mode='markers',
     name=txt["target_point"],
-    marker=dict(size=9, color='#33ff77', symbol='diamond')
+    marker=dict(size=10, color='#00FF66', symbol='diamond', line=dict(color='white', width=1))
 ))
 
+# 6. LÍNEA VERTICAL DEL DESAJUSTE (AMARILLA RESALTADA)
+if abs(y_target_point - y_ref_end) > 0.001:
+    fig.add_trace(go.Scatter3d(
+        x=[D_cm, D_cm], y=[0, 0], z=[y_ref_end, y_target_point],
+        mode='lines',
+        name=f"Δ {txt['diff_height']}",
+        line=dict(color='#FFE600', width=5, dash='dot')
+    ))
+
+# 7. ESTILIZADO DE LAYOUT Y ESCENA 3D (CYBERPUNK INDUSTRIAL)
 fig.update_layout(
     title=dict(
-        text=f"{txt['title_graph']}: {D_val:.1f} {d_unit} | {txt['req_angle']}: {angulo_deg:.4f}° ({moa:.1f} MOA / {mrad:.2f} mrad)",
-        font=dict(color="white", size=14)
+        text=f"📐 <b>{txt['title_graph']}</b>: {D_val:.1f} {d_unit} | <b>{txt['req_angle']}</b>: {angulo_deg:.4f}°",
+        font=dict(color="#00F0FF", size=15)
     ),
-    paper_bgcolor='#0b0c1b',
-    plot_bgcolor='#0b0c1b',
-    height=450,
-    margin=dict(l=10, r=10, t=40, b=10),
+    paper_bgcolor='#070814',
+    plot_bgcolor='#070814',
+    height=500,
+    margin=dict(l=5, r=5, t=40, b=5),
     scene=dict(
+        aspectmode='manual',
+        aspectratio=dict(x=2.2, y=1, z=1.2),
         xaxis=dict(
-            title=dict(text='Distancia (cm)', font=dict(color="white")),
-            backgroundcolor="#0b0c1b",
-            gridcolor="#1f2242",
-            tickfont=dict(color="white")
+            title=dict(text='Distancia (cm)', font=dict(color="#00d2ff", size=11)),
+            backgroundcolor="#070814",
+            gridcolor="#1f244d",
+            showbackground=True,
+            zerolinecolor="#00F0FF",
+            tickfont=dict(color="#a0a5c0", size=10)
         ),
         yaxis=dict(
-            title=dict(text='Eje Y', font=dict(color="white")),
-            backgroundcolor="#0b0c1b",
-            gridcolor="#1f2242",
-            tickfont=dict(color="white")
+            title=dict(text='Eje Lateral', font=dict(color="#00d2ff", size=11)),
+            backgroundcolor="#070814",
+            gridcolor="#1f244d",
+            showbackground=True,
+            zerolinecolor="#00F0FF",
+            tickfont=dict(color="#a0a5c0", size=10)
         ),
         zaxis=dict(
-            title=dict(text='Altura (cm)', font=dict(color="white")),
-            backgroundcolor="#0b0c1b",
-            gridcolor="#1f2242",
-            tickfont=dict(color="white")
+            title=dict(text='Elevación (cm)', font=dict(color="#00d2ff", size=11)),
+            backgroundcolor="#070814",
+            gridcolor="#1f244d",
+            showbackground=True,
+            zerolinecolor="#00F0FF",
+            tickfont=dict(color="#a0a5c0", size=10)
         ),
         camera=dict(
-            eye=dict(x=1.5, y=-1.8, z=0.8)
+            eye=dict(x=1.7, y=-1.4, z=0.65)
         )
     ),
     legend=dict(
         orientation="h",
         yanchor="bottom",
-        y=-0.1,
+        y=-0.08,
         xanchor="center",
         x=0.5,
-        font=dict(color="white")
+        font=dict(color="white", size=11),
+        bgcolor="rgba(14, 15, 29, 0.8)",
+        bordercolor="#23264d",
+        borderwidth=1
     )
 )
 
