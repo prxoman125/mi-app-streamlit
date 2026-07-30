@@ -16,7 +16,7 @@ Al modificar los controles de la izquierda, las graficas se actualizaran de inme
 @st.fragment
 def renderizar_simulador():
     # Creamos dos columnas: una estrecha para controles y una ancha para las gráficas
-    col_controles, col_graficas = st.columns([1, 3])
+    col_controles, col_graficas = st.columns()
     
     with col_controles:
         st.subheader("Parametros de Configuracion")
@@ -57,7 +57,7 @@ def renderizar_simulador():
     rho = 1.225     # Densidad del aire estándar kg/m³
     g = 9.81        # Gravedad de la Tierra
 
-    # Ecuaciones diferenciales de balística real en 3D (Eje X=Distancia, Eje Y=Altura, Eje Z=Desviación Lateral)
+    # Ecuaciones diferenciales de balística real en 3D
     def modelo_balistico(t, variables):
         x, y, z, vx, vy, vz = variables
         v = np.sqrt(vx**2 + vy**2 + vz**2)
@@ -65,38 +65,43 @@ def renderizar_simulador():
         
         ax = -factor_arrastre * v * vx
         ay = -g - (factor_arrastre * v * vy)
-        az = factor_arrastre * (v_viento - vz) # El viento empuja el proyectil lateralmente
+        az = factor_arrastre * (v_viento - vz)
         return [vx, vy, vz, ax, ay, az]
 
-    # Cálculo del ángulo de sitio inicial para que el proyectil salga apuntando hacia la diana
-    # (El láser siempre viaja recto horizontal, la bala sigue la física parabólica)
+    # Cálculo del ángulo de sitio inicial
     angulo_rad = np.arctan((h_mira_absolute - h_laser) / distancia)
     vx0 = v0 * np.cos(angulo_rad)
     vy0 = v0 * np.sin(angulo_rad)
     
     condiciones_iniciales = [0.0, h_laser, 0.0, vx0, vy0, 0.0]
 
-    # Evento de parada cuando cruza la distancia de la diana
+    # CORRECCIÓN AQUÍ: Se extrae variables[0] para obtener la distancia X actual y evitar el TypeError
     def cruza_diana(t, variables):
-        return distancia - variables
+        return distancia - variables[0]
     cruza_diana.terminal = True
 
     # Resolver la trayectoria real en el espacio
     solucion = solve_ivp(modelo_balistico, t_span=(0, 5), y0=condiciones_iniciales, events=cruza_diana, max_step=0.01)
     
-    x_vals = solucion.y
-    y_vals = solucion.y # Alturas (Vista Lateral)
-    z_vals = solucion.y # Desviaciones por viento (Vista Superior)
+    x_vals = solucion.y[0]
+    y_vals = solucion.y[1] # Alturas (Vista Lateral)
+    z_vals = solucion.y[2] # Desviaciones por viento (Vista Superior)
 
     # Determinar qué elementos se renderizan según la opción de los botones de visibilidad
     ver_bala = visibilidad in ["Mostrar Todo", "Ocultar Apunte (Solo Bala)"]
     ver_mira = visibilidad in ["Mostrar Todo", "Ocultar Bala (Solo Apunte)"]
 
+    # PALETA DE COLORES EN MORADO CLARO / LAVANDA
+    color_suelo = "#E6E6FA"       # Lavanda muy claro
+    color_mira = "#B39DDB"        # Morado claro pastel
+    color_bala = "#7E57C2"        # Morado medio (destacado)
+    color_diana = "#4527A0"       # Morado oscuro institucional
+
     with col_graficas:
         # TABLA DE MÉTRICAS RÁPIDAS
         m1, m2 = st.columns(2)
         with m1:
-            st.metric("Caida de la Bala en Destino", f"{(y_vals[-1]*100):.2f} cm del suelo")
+            st.metric("Caica de la Bala en Destino", f"{(y_vals[-1]*100):.2f} cm del suelo")
         with m2:
             st.metric("Desviacion por Viento Lateral", f"{(z_vals[-1]*100):.2f} cm")
 
@@ -107,18 +112,18 @@ def renderizar_simulador():
         fig_lateral = go.Figure()
 
         # Suelo
-        fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Suelo', line=dict(color='green', width=2, dash='dash')))
+        fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Suelo', line=dict(color=color_suelo, width=3)))
         
-        # Línea Láser / Apunte de la mira (Eje recto de referencia)
+        # Línea de la mira
         if ver_mira:
-            fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[h_mira_absolute, h_laser], mode='lines', name='Linea de la Mira', line=dict(color='blue', width=2, dash='dot')))
+            fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[h_mira_absolute, h_laser], mode='lines', name='Linea de la Mira', line=dict(color=color_mira, width=2, dash='dot')))
         
-        # Trayectoria Real de la Bala cayendo por gravedad y aire
+        # Trayectoria Real de la Bala
         if ver_bala:
-            fig_lateral.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', name='Trayectoria Proyectil', line=dict(color='red', width=3)))
+            fig_lateral.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', name='Trayectoria Proyectil', line=dict(color=color_bala, width=3)))
 
         # Cuerpo Diana Lateral
-        fig_lateral.add_trace(go.Scatter(x=[distancia, distancia], y=[h_laser - radio_diana, h_laser + radio_diana], mode='lines', name='Diana', line=dict(color='black', width=6)))
+        fig_lateral.add_trace(go.Scatter(x=[distancia, distancia], y=[h_laser - radio_diana, h_laser + radio_diana], mode='lines', name='Diana', line=dict(color=color_diana, width=6)))
 
         fig_lateral.update_layout(hovermode="closest", height=320, dragmode="pan", margin=dict(t=10, b=10))
         fig_lateral.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
@@ -133,22 +138,22 @@ def renderizar_simulador():
         fig_superior = go.Figure()
 
         # Línea de Centro Cero (Trayectoria ideal sin viento)
-        fig_superior.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Eje Central Objetivo', line=dict(color='gray', width=1.5, dash='dash')))
+        fig_superior.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Eje Central Objetivo', line=dict(color=color_suelo, width=1.5, dash='dash')))
 
-        # Trayectoria de desvío de la bala por empuje del aire
+        # Trayectoria de desvío de la bala
         if ver_bala:
-            fig_superior.add_trace(go.Scatter(x=x_vals, y=z_vals, mode='lines', name='Desviacion de Bala', line=dict(color='crimson', width=3)))
+            fig_superior.add_trace(go.Scatter(x=x_vals, y=z_vals, mode='lines', name='Desviacion de Bala', line=dict(color=color_bala, width=3)))
 
-        # Línea recta horizontal del Láser (Siempre apunta al centro de la diana a 180° rectos)
+        # Línea de la mira
         if ver_mira:
-            fig_superior.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Linea de Mira (Superior)', line=dict(color='blue', width=2, dash='dot')))
+            fig_superior.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Linea de Mira (Superior)', line=dict(color=color_mira, width=2, dash='dot')))
 
-        # Diana vista desde arriba (Ancho representado de forma plana horizontal en destino)
-        fig_superior.add_trace(go.Scatter(x=[distancia, distancia], y=[-radio_diana, radio_diana], mode='lines', name='Ancho Diana', line=dict(color='black', width=6)))
+        # Diana vista desde arriba
+        fig_superior.add_trace(go.Scatter(x=[distancia, distancia], y=[-radio_diana, radio_diana], mode='lines', name='Ancho Diana', line=dict(color=color_diana, width=6)))
         
-        # Punto exacto de impacto lateral
+        # Punto exacto de impacto
         if ver_bala:
-            fig_superior.add_trace(go.Scatter(x=[distancia], y=[z_vals[-1]], mode='markers', marker=dict(size=12, color='gold', symbol='diamond'), name='Impacto Real'))
+            fig_superior.add_trace(go.Scatter(x=[distancia], y=[z_vals[-1]], mode='markers', marker=dict(size=12, color=color_diana, symbol='compound'), name='Impacto Real'))
 
         fig_superior.update_layout(hovermode="closest", height=320, dragmode="pan", margin=dict(t=10, b=10))
         fig_superior.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
@@ -156,5 +161,5 @@ def renderizar_simulador():
 
         st.plotly_chart(fig_superior, use_container_width=True, config={"displayModeBar": False})
 
-# Ejecutamos la función de fragmento protegida contra parpadeos
+# Ejecutamos la función
 renderizar_simulador()
