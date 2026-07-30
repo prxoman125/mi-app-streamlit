@@ -404,7 +404,7 @@ if save_clicked:
     st.session_state["history"].append(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICA INTERACTIVA 3D CON PLOTLY (SIN SALTOS DE TAMAÑO) ---
+# --- GRÁFICA INTERACTIVA 3D CON PLOTLY ---
 pos_mira = (0, H_mira_cm)
 pos_impacto_mira = (D_cm, y_target_point)
 
@@ -453,9 +453,24 @@ fig.update_layout(
     height=450,
     margin=dict(l=10, r=10, t=40, b=10),
     scene=dict(
-        xaxis=dict(title='Distancia (cm)', backgroundcolor="#0b0c1b", gridcolor="#1f2242", titlefont=dict(color="white"), tickfont=dict(color="white")),
-        yaxis=dict(title='Eje Y', backgroundcolor="#0b0c1b", gridcolor="#1f2242", titlefont=dict(color="white"), tickfont=dict(color="white")),
-        zaxis=dict(title='Altura (cm)', backgroundcolor="#0b0c1b", gridcolor="#1f2242", titlefont=dict(color="white"), tickfont=dict(color="white")),
+        xaxis=dict(
+            title=dict(text='Distancia (cm)', font=dict(color="white")),
+            backgroundcolor="#0b0c1b",
+            gridcolor="#1f2242",
+            tickfont=dict(color="white")
+        ),
+        yaxis=dict(
+            title=dict(text='Eje Y', font=dict(color="white")),
+            backgroundcolor="#0b0c1b",
+            gridcolor="#1f2242",
+            tickfont=dict(color="white")
+        ),
+        zaxis=dict(
+            title=dict(text='Altura (cm)', font=dict(color="white")),
+            backgroundcolor="#0b0c1b",
+            gridcolor="#1f2242",
+            tickfont=dict(color="white")
+        ),
         camera=dict(
             eye=dict(x=1.5, y=-1.8, z=0.8)
         )
