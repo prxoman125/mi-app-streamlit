@@ -6,11 +6,11 @@ import numpy as np
 st.set_page_config(page_title="Mira Láser Interactiva", layout="wide")
 
 st.title("🎯 Alineador Geométrico de Mira Telescópica")
-st.write("Ajusta la altura de la mira usando el control lateral para calcular el ángulo exacto.")
+st.write("Ajusta la altura de la mira y la desviación del punto de apunte en la diana.")
 
 # Distancia horizontal fija en metros (equivale a 1000 cm)
 distancia_fija_m = 10.0 
-y_laser_fijo = 10.0  # El láser está completamente fijo a 10 cm
+y_laser_fijo = 0.0  # El láser está fijo en el centro de la diana (0 cm)
 
 # --- ESTRUCTURA EN 3 COLUMNAS: [Izquierda, Centro (Gráfica), Derecha] ---
 col_izq, col_grafica, col_der = st.columns([1, 3, 1])
@@ -23,24 +23,24 @@ with col_izq:
         min_value=1.0, max_value=5.0, value=5.0, step=0.5
     )
 
-# 2. Columna Derecha: Diana (Fija en 10 cm, desactivada para evitar fallos de rango)
+# 2. Columna Derecha: Punto de Apunte en la Diana (-10 cm a 10 cm)
 with col_der:
     st.subheader("Diana")
     y_diana = st.slider(
-        "Altura de la Diana (cm):", 
-        min_value=1.0, max_value=10.0, value=10.0, disabled=True
+        "Punto de apunte en Diana (cm):", 
+        min_value=-10.0, max_value=10.0, value=0.0, step=0.5
     )
 
 # --- CÁLCULO TRIGONOMÉTRICO ---
+# Cateto opuesto: Diferencia entre la altura de la mira y el punto objetivo en la diana
 altura_relativa_m = (y_mira - y_diana) / 100.0
 angulo_rad = np.arctan(altura_relativa_m / distancia_fija_m)
 angulo_deg = np.degrees(angulo_rad)
 
-# --- PREPARACIÓN LIMPIA DE DATOS PARA EL GRÁFICO ---
-# Estructuramos un solo DataFrame explícito con los puntos (0,0) a (10,10)
+# --- PREPARACIÓN DE DATOS PARA EL GRÁFICO ---
 chart_data = pd.DataFrame({
     'Distancia (m)': [0.0, distancia_fija_m],
-    'Láser (Fijo)': [y_laser_fijo, y_laser_fijo],
+    'Láser (Fijo en 0 cm)': [y_laser_fijo, y_laser_fijo],
     'Línea de Visión': [y_mira, y_diana]
 }).set_index('Distancia (m)')
 
@@ -59,8 +59,8 @@ with col_res1:
 
 with col_res2:
     if y_mira > y_diana:
-        st.info(f"💡 Apunta la mira hacia **abajo** un total de {abs(angulo_deg):.4f}° para interceptar el punto del láser.")
+        st.info(f"💡 Apunta la mira hacia **abajo** un total de {abs(angulo_deg):.4f}° para dar en el punto objetivo.")
     elif y_mira < y_diana:
-        st.info(f"💡 Apunta la mira hacia **arriba** un total de {abs(angulo_deg):.4f}° para interceptar el punto del láser.")
+        st.info(f"💡 Apunta la mira hacia **arriba** un total de {abs(angulo_deg):.4f}° para dar en el punto objetivo.")
     else:
         st.success("🎯 Sistema perfectamente paralelo. Ángulo de inclinación: 0°.")
