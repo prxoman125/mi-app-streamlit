@@ -6,7 +6,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
-# --- ESTILOS CSS PERSONALIZADOS (CORREGIDOS PARA EVITAR SALTOS VISUALES) ---
+# --- ESTILOS CSS PERSONALIZADOS (CORREGIDOS) ---
 st.markdown("""
     <style>
         /* Fondo y contenedor de la barra lateral */
@@ -67,31 +67,23 @@ st.markdown("""
             box-shadow: 0px 0px 10px rgba(255, 77, 109, 0.6);
         }
 
-        /* Cajas estables para la gráfica (Evitan colapso de tamaño al refrescar rápido) */
+        /* Marcos decorativos ajustables para la gráfica */
         .glow-box-blue {
             border-radius: 12px;
             border: 2px solid #00d2ff;
             box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
-            padding: 4px;
+            padding: 6px;
             background-color: #0b0c1b;
-            min-height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            margin-bottom: 15px;
         }
 
         .glow-box-red {
             border-radius: 12px;
             border: 2px solid #ff4444;
             box-shadow: 0 0 15px rgba(255, 68, 68, 0.4);
-            padding: 4px;
+            padding: 6px;
             background-color: #0b0c1b;
-            min-height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            margin-bottom: 15px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -410,7 +402,7 @@ if save_clicked:
     st.session_state["history"].append(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICA RIGIDA Y ESTABLE EN RENDIMIENTO ---
+# --- GRÁFICA MATPLOTLIB ---
 fig, ax = plt.subplots(figsize=(10, 4.2), dpi=100)
 pos_laser, pos_mira = (0, 0), (0, H_mira_cm)
 pos_diana_centro, pos_impacto_mira = (D_cm, y_ref_end), (D_cm, y_target_point)
@@ -445,11 +437,8 @@ ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=4, facecolor='#1
 
 plt.tight_layout()
 
-# Renderizado dentro del contenedor CSS estricto
-st.markdown(f'<div class="{glow_class}">', unsafe_allow_html=True)
+# --- MOSTRAR LA GRÁFICA SANA Y SIN CAJAS VACÍAS ---
 st.pyplot(fig, use_container_width=True, clear_figure=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
 plt.close(fig)
 
 # --- MÉTRICAS EXPANDIDAS ---
