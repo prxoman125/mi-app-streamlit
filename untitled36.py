@@ -8,10 +8,10 @@ st.set_page_config(page_title="Mira Laser Interactiva", layout="wide")
 st.title("Alineador Geometrico de Mira Telescopica")
 st.write("Ajusta la altura de la mira, la desviacion en la diana y la distancia para calcular el angulo exacto.")
 
-# --- ESTRUCTURA EN 3 COLUMNAS: [Izquierda, Centro (Grafica), Derecha] ---
+# --- 1. CAPTURA DE CONTROLES (PRIMERO DEFINIMOS TODOS LOS SLIDERS) ---
 col_izq, col_grafica, col_der = st.columns([1, 3, 1])
 
-# 1. Columna Izquierda: Control de la Mira (1 cm a 5 cm)
+# Control de la Mira (Izquierda)
 with col_izq:
     st.subheader("Mira")
     y_mira = st.slider(
@@ -19,7 +19,7 @@ with col_izq:
         min_value=1.0, max_value=5.0, value=5.0, step=0.5
     )
 
-# 2. Columna Derecha: Punto de Apunte en la Diana (-10 cm a 10 cm)
+# Control de la Diana (Derecha)
 with col_der:
     st.subheader("Diana")
     y_diana = st.slider(
@@ -27,78 +27,73 @@ with col_der:
         min_value=-10.0, max_value=10.0, value=0.0, step=0.5
     )
 
-# 3. Columna Central: Grafica y Control de Distancia
+# Control de Distancia (Abajo en la columna central)
 with col_grafica:
     st.subheader("Visualizacion del Sistema")
-    
-    # Barra deslizable de distancia (abajo de la grafica / espacio de visualizacion)
     distancia_m = st.slider(
         "Distancia entre la mira y la diana (metros):",
         min_value=1.0, max_value=100.0, value=10.0, step=1.0
     )
 
-    y_laser_fijo = 0.0  # El laser esta fijo en el centro de la diana (0 cm)
+# --- 2. PREPARACION DE DATOS ---
+y_laser_fijo = 0.0  # El laser esta fijo en el centro de la diana (0 cm)
 
-    # --- PREPARACION DE DATOS EN FORMATO LARGO ---
-    # Creamos registros específicos para los puntos de origen (0m) y destino (distancia_m)
-    chart_data_long = pd.DataFrame([
-        {'Distancia': 0.0, 'Altura': y_laser_fijo, 'Elemento': 'Laser', 'Icono': 'circle'},
-        {'Distancia': distancia_m, 'Altura': y_laser_fijo, 'Elemento': 'Laser', 'Icono': 'diamond'}, # Diamante para el laser en diana
-        {'Distancia': 0.0, 'Altura': y_mira, 'Elemento': 'Linea de Vision', 'Icono': 'cross'},       # Cruz/Reticula para la mira
-        {'Distancia': distancia_m, 'Altura': y_diana, 'Elemento': 'Linea de Vision', 'Icono': 'triangle-down'} # Triangulo en destino
-    ])
+chart_data_long = pd.DataFrame([
+    {'Distancia': 0.0, 'Altura': y_laser_fijo, 'Elemento': 'Laser', 'Icono': 'circle'},
+    {'Distancia': distancia_m, 'Altura': y_laser_fijo, 'Elemento': 'Laser', 'Icono': 'diamond'},
+    {'Distancia': 0.0, 'Altura': y_mira, 'Elemento': 'Linea de Vision', 'Icono': 'cross'},
+    {'Distancia': distancia_m, 'Altura': y_diana, 'Elemento': 'Linea de Vision', 'Icono': 'triangle-down'}
+])
 
-    # --- DEFINICION DEL GRAFICO VEGA-LITE ---
-    vega_lite_spec = {
-        "width": "container",
-        "height": 400,
-        "data": {"values": chart_data_long.to_dict('records')},
-        "encoding": {
-            "x": {
-                "field": "Distancia", 
-                "type": "quantitative", 
-                "title": "Distancia (m)",
-                "scale": {"domain": [0, distancia_m]} # Mantiene la escala del eje X sincronizada
-            },
-            "y": {
-                "field": "Altura", 
-                "type": "quantitative", 
-                "title": "Altura (cm)",
-                "scale": {"domain": [-12, 12]} # Rango fijo en Y para evitar saltos bruscos
-            },
-            "color": {
-                "field": "Elemento", 
-                "type": "nominal", 
-                "scale": {"domain": ["Laser", "Linea de Vision"], "range": ["#e74c3c", "#2980b9"]}
-            }
+# --- 3. DEFINICION Y RENDERIZADO DEL GRAFICO ---
+vega_lite_spec = {
+    "width": "container",
+    "height": 400,
+    "data": {"values": chart_data_long.to_dict('records')},
+    "encoding": {
+        "x": {
+            "field": "Distancia", 
+            "type": "quantitative", 
+            "title": "Distancia (m)",
+            "scale": {"domain": [0, distancia_m]}
         },
-        "layer": [
-            # Capa 1: Lineas de trayectoria
-            {
-                "mark": {"type": "line", "strokeWidth": 3}
-            },
-            # Capa 2: Iconos/Simbolos diferenciados en cada extremo
-            {
-                "mark": {"type": "point", "size": 150, "filled": True},
-                "encoding": {
-                    "shape": {"field": "Icono", "type": "nominal", "scale": None}
-                }
+        "y": {
+            "field": "Altura", 
+            "type": "quantitative", 
+            "title": "Altura (cm)",
+            "scale": {"domain": [-12, 12]}
+        },
+        "color": {
+            "field": "Elemento", 
+            "type": "nominal", 
+            "scale": {"domain": ["Laser", "Linea de Vision"], "range": ["#e74c3c", "#2980b9"]}
+        }
+    },
+    "layer": [
+        {
+            "mark": {"type": "line", "strokeWidth": 3}
+        },
+        {
+            "mark": {"type": "point", "size": 150, "filled": True},
+            "encoding": {
+                "shape": {"field": "Icono", "type": "nominal", "scale": None}
             }
-        ]
-    }
+        }
+    ]
+}
 
-    # Renderizado interactivo usando una clave dinamica para forzar la actualizacion
-    st.vega_lite_chart(vega_lite_spec, use_container_width=True, key=f"chart_{y_mira}_{y_diana}_{distancia_m}")
+# Renders de la gráfica dentro de la columna central con una clave fija
+with col_grafica:
+    st.vega_lite_chart(vega_lite_spec, use_container_width=True, key="grafica_laser")
 
-
-# --- CALCULO TRIGONOMETRICO ---
+# --- 4. CALCULO TRIGONOMETRICO ---
 altura_relativa_m = (y_mira - y_diana) / 100.0
 angulo_rad = np.arctan(altura_relativa_m / distancia_m)
 angulo_deg = np.degrees(angulo_rad)
 
 st.divider()
 
-# --- PANEL DE RESULTADOS Y MENSAJE DE GUIA ---
+# --- 5. PANEL DE RESULTADOS Y MENSAJE DE GUIA ---
 col_res1, col_res2 = st.columns([1, 2])
 
 with col_res1:
