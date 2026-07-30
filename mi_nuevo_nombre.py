@@ -129,9 +129,10 @@ fig.add_trace(go.Scatter(
     mode='markers', marker=dict(size=12, color='gold', symbol='star'), name='Punto de Apuntado'
 ))
 
+# CONFIGURACIÓN CORREGIDA AQUÍ: Se usan sub-diccionarios independientes para evitar conflictos con Python 3.14
 fig.update_layout(
-    xaxis_title="Distancia Horizontal (Metros)",
-    yaxis_title="Altura desde el Suelo (Metros)",
+    xaxis=dict(title="Distancia Horizontal (Metros)"),
+    yaxis=dict(title="Altura desde el Suelo (Metros)"),
     hovermode="closest",
     height=500,
     legend=dict(orient="h", yanchor="bottom", y=1.12, xanchor="right", x=1)
