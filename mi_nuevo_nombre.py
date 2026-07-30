@@ -8,6 +8,86 @@ import pandas as pd
 # ---------------------------------------------------------
 st.set_page_config(page_title="Software Modular: Topografía & Ciencias", layout="wide")
 
+# ---------------------------------------------------------
+# INYECCIÓN DE CSS MONOCROMÁTICO (DARK / MINIMALISTA)
+# ---------------------------------------------------------
+st.markdown("""
+    <style>
+    /* 1. Fondo principal y tipografía general */
+    .stApp {
+        background-color: #0D0F12 !important;
+        color: #E6E8EA !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* 2. Estilo de Encabezados */
+    h1, h2, h3, h4, h5, h6, .stHeader {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.5px;
+    }
+
+    /* 3. Tarjetas de Métricas (st.metric) */
+    [data-testid="stMetric"] {
+        background-color: #161A20 !important;
+        border: 1px solid #2B303A !important;
+        padding: 16px !important;
+        border-radius: 8px !important;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    [data-testid="stMetricValue"] {
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #9DA8B6 !important;
+        font-size: 0.85rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* 4. Inputs, Selectbox y Sliders */
+    div[data-baseweb="select"] > div,
+    div[data-baseweb="input"] > div,
+    .stNumberInput input {
+        background-color: #161A20 !important;
+        border: 1px solid #2B303A !important;
+        color: #FFFFFF !important;
+        border-radius: 6px !important;
+    }
+    div[data-baseweb="select"]:hover > div,
+    div[data-baseweb="input"]:hover > div {
+        border-color: #4A5260 !important;
+    }
+
+    /* Sliders */
+    div[data-baseweb="slider"] {
+        padding-top: 10px;
+    }
+
+    /* 5. Cuadros de Información (st.info, st.warning) */
+    div[data-testid="stNotification"] {
+        background-color: #1A1F26 !important;
+        border: 1px solid #363D4A !important;
+        color: #D1D5DB !important;
+        border-radius: 6px !important;
+    }
+
+    /* 6. Editor de Datos (st.data_editor) */
+    div[data-testid="stDataEditor"] {
+        background-color: #161A20 !important;
+        border: 1px solid #2B303A !important;
+        border-radius: 8px !important;
+        padding: 4px;
+    }
+
+    /* 7. Línea divisoria (st.divider) */
+    hr {
+        border-color: #2B303A !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Constantes Físicas para el Motor de Ciencias
 G_CONST = 6.67430e-11   # Constante de gravitación universal (m^3 kg^-1 s^-2)
 M_SOLAR = 1.98847e30   # Masa del Sol en kg (para escala de sliders)
