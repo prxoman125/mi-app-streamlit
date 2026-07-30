@@ -1,158 +1,160 @@
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
-import pandas as pd
+from scipy.integrate import solve_ivp
 
 # 1. CONFIGURACIÓN DE LA PÁGINA
-st.set_page_config(page_title="Calculador Óptico de Mira", layout="wide")
+st.set_page_config(page_title="Calculador Balistico Avanzado", layout="wide")
 
-st.title("🎯 Calculador de Ángulo de Mira y Trayectoria Láser")
+st.title("Calculador de Trayectorias Balisticas con Doble Vista")
 st.markdown("""
-Este software calcula el **ángulo de inclinación exacto de una mira telescópica/óptica** montada sobre un eje láser horizontal.
-Modifica los parámetros en la barra lateral para ver cómo cambian los ángulos y las trayectorias en tiempo real.
+Sistema de calculo avanzado con resistencia aerodinamica y desviacion por viento. 
+Al modificar los controles de la izquierda, las graficas se actualizaran de inmediato sin parpadear.
 """)
 
-# 2. BARRA LATERAL - ENTRADA DE DATOS (INPUTS)
-st.sidebar.header("🎛️ Configuración del Sistema")
+# 2. SECCIÓN PRINCIPAL ENVOLVIENDO LOS CONTROLES Y GRÁFICAS EN UN FRAGMENTO (ELIMINA EL PARPADEO)
+@st.fragment
+def renderizar_simulador():
+    # Creamos dos columnas: una estrecha para controles y una ancha para las gráficas
+    col_controles, col_graficas = st.columns([1, 3])
+    
+    with col_controles:
+        st.subheader("Parametros de Configuracion")
+        
+        # Parámetros de Distancia y Geometría
+        distancia_m = st.slider("Distancia a la Diana (metros)", min_value=1.0, max_value=1000.0, value=300.0, step=5.0)
+        altura_laser_cm = st.slider("Altura del Canon desde el suelo (cm)", min_value=25.0, max_value=50.0, value=25.0, step=0.5)
+        altura_mira_cm = st.slider("Altura de la Mira sobre el Laser (cm)", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
+        diametro_diana_cm = st.slider("Diametro de la Diana (cm)", min_value=20.0, max_value=30.0, value=20.0, step=1.0)
+        
+        # Parámetros del Proyectil y Clima (Física)
+        st.markdown("---")
+        st.markdown("**Condiciones Balisticas de Entorno**")
+        v0 = st.slider("Velocidad Inicial del Proyectil (m/s)", min_value=100, max_value=1200, value=800, step=50)
+        v_viento = st.slider("Velocidad del Viento Lateral (m/s)", min_value=-20, max_value=20, value=8, step=1, 
+                             help="Valores positivos empujan a la derecha, valores negativos a la izquierda.")
+        
+        # Filtro visual solicitado: Mostrar/Ocultar trayectos de forma interactiva sin recargar
+        st.markdown("---")
+        st.markdown("**Capas Visuales de la Grafica**")
+        visibilidad = st.pills(
+            "Selecciona los elementos a desplegar en el mapa:",
+            ["Mostrar Todo", "Ocultar Bala (Solo Apunte)", "Ocultar Apunte (Solo Bala)"],
+            selection_mode="single",
+            default="Mostrar Todo"
+        )
 
-# Distancia (de 1 a 1000 metros)
-distancia_m = st.sidebar.slider("📏 Distancia a la Diana (Metros)", min_value=1.0, max_value=1000.0, value=50.0, step=0.5)
+    # 3. CONVERSIÓN DE UNIDADES Y MOTOR DE CÁLCULO FÍSICO
+    distancia = distancia_m
+    h_laser = altura_laser_cm / 100.0
+    h_mira_absolute = (altura_laser_cm + altura_mira_cm) / 100.0
+    radio_diana = (diametro_diana_cm / 2.0) / 100.0
+    
+    # Parámetros físicos fijos de la bala (Calibre estándar 7.62mm)
+    m = 0.015       # Masa en kg (15 gramos)
+    Cd = 0.3        # Coeficiente de arrastre aerodinámico
+    A = 0.000045    # Área frontal en m²
+    rho = 1.225     # Densidad del aire estándar kg/m³
+    g = 9.81        # Gravedad de la Tierra
 
-# Altura del Láser (de 25 cm a 50 cm)
-altura_laser_cm = st.sidebar.slider("📐 Altura del Láser desde el suelo (cm)", min_value=25.0, max_value=50.0, value=25.0, step=0.5)
+    # Ecuaciones diferenciales de balística real en 3D (Eje X=Distancia, Eje Y=Altura, Eje Z=Desviación Lateral)
+    def modelo_balistico(t, variables):
+        x, y, z, vx, vy, vz = variables
+        v = np.sqrt(vx**2 + vy**2 + vz**2)
+        factor_arrastre = 0.5 * rho * Cd * A / m
+        
+        ax = -factor_arrastre * v * vx
+        ay = -g - (factor_arrastre * v * vy)
+        az = factor_arrastre * (v_viento - vz) # El viento empuja el proyectil lateralmente
+        return [vx, vy, vz, ax, ay, az]
 
-# Altura de la Mira sobre el Láser (de 1 cm a 5 cm)
-altura_mira_cm = st.sidebar.slider("👁️ Altura de la Mira sobre el Láser (cm)", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
+    # Cálculo del ángulo de sitio inicial para que el proyectil salga apuntando hacia la diana
+    # (El láser siempre viaja recto horizontal, la bala sigue la física parabólica)
+    angulo_rad = np.arctan((h_mira_absolute - h_laser) / distancia)
+    vx0 = v0 * np.cos(angulo_rad)
+    vy0 = v0 * np.sin(angulo_rad)
+    
+    condiciones_iniciales = [0.0, h_laser, 0.0, vx0, vy0, 0.0]
 
-# Tamaño de la Diana (Diámetro de 20 cm a 30 cm)
-diametro_diana_cm = st.sidebar.slider("🎯 Diámetro de la Diana (cm)", min_value=20.0, max_value=30.0, value=20.0, step=1.0)
+    # Evento de parada cuando cruza la distancia de la diana
+    def cruza_diana(t, variables):
+        return distancia - variables
+    cruza_diana.terminal = True
 
-# Punto de impacto deseado (Desviación respecto al centro)
-radio_maximo = diametro_diana_cm / 2.0
-st.sidebar.subheader("🎯 Objetivo de Apuntado")
-desviacion_cm = st.sidebar.slider("Ajustar Punto de Impacto (cm respecto al centro)", 
-                                  min_value=-float(radio_maximo), 
-                                  max_value=float(radio_maximo), 
-                                  value=0.0, 
-                                  step=0.5,
-                                  help="0.0 es el centro. Valores positivos son más arriba, negativos más abajo.")
+    # Resolver la trayectoria real en el espacio
+    solucion = solve_ivp(modelo_balistico, t_span=(0, 5), y0=condiciones_iniciales, events=cruza_diana, max_step=0.01)
+    
+    x_vals = solucion.y
+    y_vals = solucion.y # Alturas (Vista Lateral)
+    z_vals = solucion.y # Desviaciones por viento (Vista Superior)
 
-# 3. CONVERSIÓN DE UNIDADES A METROS
-distancia = distancia_m
-h_laser = altura_laser_cm / 100.0
-h_mira_absolute = (altura_laser_cm + altura_mira_cm) / 100.0
-radio_diana = radio_maximo / 100.0
-desviacion_objetivo = desviacion_cm / 100.0
+    # Determinar qué elementos se renderizan según la opción de los botones de visibilidad
+    ver_bala = visibilidad in ["Mostrar Todo", "Ocultar Apunte (Solo Bala)"]
+    ver_mira = visibilidad in ["Mostrar Todo", "Ocultar Bala (Solo Apunte)"]
 
-# El centro de la diana siempre está a la altura del láser
-h_centro_diana = h_laser 
-h_punto_impacto = h_centro_diana + desviacion_objetivo
+    with col_graficas:
+        # TABLA DE MÉTRICAS RÁPIDAS
+        m1, m2 = st.columns(2)
+        with m1:
+            st.metric("Caida de la Bala en Destino", f"{(y_vals[-1]*100):.2f} cm del suelo")
+        with m2:
+            st.metric("Desviacion por Viento Lateral", f"{(z_vals[-1]*100):.2f} cm")
 
-# 4. CÁLCULO TRIGONOMÉTRICO
-angulo_centro_rad = np.arctan((h_mira_absolute - h_centro_diana) / distancia)
-angulo_centro_deg = np.degrees(angulo_centro_rad)
+        # -----------------------------------------------------------------
+        # GRÁFICA 1: VISTA LATERAL (Distancia vs Altura)
+        # -----------------------------------------------------------------
+        st.subheader("Vista Lateral (Perfil de Elevacion)")
+        fig_lateral = go.Figure()
 
-angulo_variable_rad = np.arctan((h_mira_absolute - h_punto_impacto) / distancia)
-angulo_variable_deg = np.degrees(angulo_variable_rad)
+        # Suelo
+        fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Suelo', line=dict(color='green', width=2, dash='dash')))
+        
+        # Línea Láser / Apunte de la mira (Eje recto de referencia)
+        if ver_mira:
+            fig_lateral.add_trace(go.Scatter(x=[0.0, distancia], y=[h_mira_absolute, h_laser], mode='lines', name='Linea de la Mira', line=dict(color='blue', width=2, dash='dot')))
+        
+        # Trayectoria Real de la Bala cayendo por gravedad y aire
+        if ver_bala:
+            fig_lateral.add_trace(go.Scatter(x=x_vals, y=y_vals, mode='lines', name='Trayectoria Proyectil', line=dict(color='red', width=3)))
 
-moa_centro = angulo_centro_deg * 60
-moa_variable = angulo_variable_deg * 60
+        # Cuerpo Diana Lateral
+        fig_lateral.add_trace(go.Scatter(x=[distancia, distancia], y=[h_laser - radio_diana, h_laser + radio_diana], mode='lines', name='Diana', line=dict(color='black', width=6)))
 
-# 5. DESPLEGAR MÉTRICAS
-st.subheader("📊 Ángulos de Ajuste Calculados")
-col1, col2, col3 = st.columns(3)
+        fig_lateral.update_layout(hovermode="closest", height=320, dragmode="pan", margin=dict(t=10, b=10))
+        fig_lateral.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
+        fig_lateral.update_yaxes(title_text="Altura (Metros)", fixedrange=True)
 
-with col1:
-    st.metric(
-        label="📐 Inclinación al Centro de la Diana", 
-        value=f"{angulo_centro_deg:.4f}°", 
-        delta=f"{moa_centro:.2f} MOA",
-        delta_color="off"
-    )
-with col2:
-    st.metric(
-        label="🎯 Inclinación al Objetivo Ajustado", 
-        value=f"{angulo_variable_deg:.4f}°",
-        delta=f"{moa_variable:.2f} MOA",
-        delta_color="off"
-    )
-with col3:
-    posicion_texto = "Centro" if desviacion_cm == 0 else ("Arriba" if desviacion_cm > 0 else "Abajo")
-    st.metric(label="📍 Estado del Impacto", value=f"{abs(desviacion_cm)} cm hacia {posicion_texto}")
+        st.plotly_chart(fig_lateral, use_container_width=True, config={"displayModeBar": False})
 
-# 6. GENERACIÓN DEL GRÁFICO INTERACTIVO (Trayectorias)
-st.subheader("📉 Simulación Visual de las Líneas de Visión (Vista Lateral)")
+        # -----------------------------------------------------------------
+        # GRÁFICA 2: VISTA DESDE ARRIBA (Distancia vs Desviación Z)
+        # -----------------------------------------------------------------
+        st.subheader("Vista Superior (Desviacion por Resistencia del Aire)")
+        fig_superior = go.Figure()
 
-fig = go.Figure()
+        # Línea de Centro Cero (Trayectoria ideal sin viento)
+        fig_superior.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Eje Central Objetivo', line=dict(color='gray', width=1.5, dash='dash')))
 
-# Línea del Suelo (Fijada a altura 0)
-fig.add_trace(go.Scatter(
-    x=[0.0, distancia], y=[0.0, 0.0],
-    mode='lines', name='Suelo', line=dict(color='green', width=2, dash='dash')
-))
+        # Trayectoria de desvío de la bala por empuje del aire
+        if ver_bala:
+            fig_superior.add_trace(go.Scatter(x=x_vals, y=z_vals, mode='lines', name='Desviacion de Bala', line=dict(color='crimson', width=3)))
 
-# Línea del Láser (Eje Horizontal)
-fig.add_trace(go.Scatter(
-    x=[0.0, distancia], y=[float(h_laser), float(h_centro_diana)],
-    mode='lines', name='Rayo Láser (Eje Horizontal)', line=dict(color='red', width=3)
-))
+        # Línea recta horizontal del Láser (Siempre apunta al centro de la diana a 180° rectos)
+        if ver_mira:
+            fig_superior.add_trace(go.Scatter(x=[0.0, distancia], y=[0.0, 0.0], mode='lines', name='Linea de Mira (Superior)', line=dict(color='blue', width=2, dash='dot')))
 
-# Línea de la Mira apuntando al objetivo elegido
-fig.add_trace(go.Scatter(
-    x=[0.0, distancia], y=[float(h_mira_absolute), float(h_punto_impacto)],
-    mode='lines', name='Línea de Visión de la Mira', line=dict(color='blue', width=2, dash='dot')
-))
+        # Diana vista desde arriba (Ancho representado de forma plana horizontal en destino)
+        fig_superior.add_trace(go.Scatter(x=[distancia, distancia], y=[-radio_diana, radio_diana], mode='lines', name='Ancho Diana', line=dict(color='black', width=6)))
+        
+        # Punto exacto de impacto lateral
+        if ver_bala:
+            fig_superior.add_trace(go.Scatter(x=[distancia], y=[z_vals[-1]], mode='markers', marker=dict(size=12, color='gold', symbol='diamond'), name='Impacto Real'))
 
-# Cuerpo vertical de la diana
-y_diana_superior = h_centro_diana + radio_diana
-y_diana_inferior = h_centro_diana - radio_diana
-fig.add_trace(go.Scatter(
-    x=[distancia, distancia], y=[float(y_diana_inferior), float(y_diana_superior)],
-    mode='lines', name='Cuerpo de la Diana', line=dict(color='black', width=6)
-))
+        fig_superior.update_layout(hovermode="closest", height=320, dragmode="pan", margin=dict(t=10, b=10))
+        fig_superior.update_xaxes(title_text="Distancia Horizontal (Metros)", fixedrange=False)
+        fig_superior.update_yaxes(title_text="Desviacion Izquierda / Derecha (Metros)", fixedrange=True)
 
-# Anillos/Sucesiones de la diana (Cada 5 cm de división)
-divisiones = np.arange(-radio_diana, radio_diana + 0.01, 0.05)
-for div in divisiones:
-    fig.add_trace(go.Scatter(
-        x=[distancia, distancia], y=[float(h_centro_diana + div), float(h_centro_diana + div)],
-        mode='markers', marker=dict(size=6, color='gray'), showlegend=False
-    ))
+        st.plotly_chart(fig_superior, use_container_width=True, config={"displayModeBar": False})
 
-# Punto de impacto exacto
-fig.add_trace(go.Scatter(
-    x=[distancia], y=[float(h_punto_impacto)],
-    mode='markers', marker=dict(size=14, color='gold', symbol='star'), name='Punto de Apuntado'
-))
-
-# CONFIGURACIÓN ULTRA-COMPATIBLE Y COMPORTAMIENTO DE ARRASTRE MEJORADO
-fig.update_layout(
-    title="Representación Geométrica del Sistema",
-    hovermode="closest",
-    height=500,
-    dragmode="pan" # Activa la mano para arrastrar por defecto
-)
-
-# Colocamos las etiquetas y bloqueamos el eje Y para que solo se mueva en horizontal
-fig.update_xaxes(
-    title_text="Distancia Horizontal (Metros)",
-    fixedrange=False # Permite mover y arrastrar libremente en horizontal
-)
-fig.update_yaxes(
-    title_text="Altura desde el Suelo (Metros)",
-    fixedrange=True # ¡BLOQUEADO! No se moverá verticalmente al arrastrar
-)
-
-# Renderizamos la gráfica ocultando la barra de íconos molestos en la esquina superior derecha
-st.plotly_chart(
-    fig, 
-    use_container_width=True, 
-    config={"displayModeBar": False} # Desactiva el zoom de caja y los íconos de Plotly
-)
-
-# 7. NOTAS TÉCNICAS
-st.info(f"""
-💡 **Análisis Geométrico:** 
-* La mira física se encuentra actualmente a una altura absoluta de **{altura_laser_cm + altura_mira_cm} cm** respecto al suelo.
-* Para compensar la altura de montaje, la mira debe inclinarse hacia abajo un ángulo de **{angulo_variable_deg:.4f} grados** para intersectar tu objetivo a una distancia de **{distancia_m} metros**.
-""")
+# Ejecutamos la función de fragmento protegida contra parpadeos
+renderizar_simulador()
