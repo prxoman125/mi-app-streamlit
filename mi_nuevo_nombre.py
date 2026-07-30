@@ -83,60 +83,60 @@ with col3:
 # 6. GENERACIÓN DEL GRÁFICO INTERACTIVO (Trayectorias)
 st.subheader("📉 Simulación Visual de las Líneas de Visión (Vista Lateral)")
 
-fig = go.Figure()
-
-x_trayectoria = np.array([0, distancia])
+# Creamos todos los trazos (data) de forma independiente
+trazos = []
 
 # Línea del Suelo (Fijada a altura 0)
-fig.add_trace(go.Scatter(
-    x=x_trayectoria, y=np.array([0.0, 0.0]),
+trazos.append(go.Scatter(
+    x=[0.0, distancia], y=[0.0, 0.0],
     mode='lines', name='Suelo', line=dict(color='green', width=2, dash='dash')
 ))
 
-# Línea del Láser (Eje Horizontal)
-fig.add_trace(go.Scatter(
-    x=x_trayectoria, y=[h_laser, h_centro_diana],
+# Línea del Láser (Eje Horizontal) con los argumentos explícitos x e y bien definidos
+trazos.append(go.Scatter(
+    x=[0.0, distancia], y=[float(h_laser), float(h_centro_diana)],
     mode='lines', name='Rayo Láser (Eje Horizontal)', line=dict(color='red', width=3)
 ))
 
 # Línea de la Mira apuntando al objetivo elegido
-fig.add_trace(go.Scatter(
-    x=x_trayectoria, y=[h_mira_absolute, h_punto_impacto],
+trazos.append(go.Scatter(
+    x=[0.0, distancia], y=[float(h_mira_absolute), float(h_punto_impacto)],
     mode='lines', name='Línea de Visión de la Mira', line=dict(color='blue', width=2, dash='dot')
 ))
 
-# Dibujar la Diana en el extremo final
+# Cuerpo vertical de la diana
 y_diana_superior = h_centro_diana + radio_diana
 y_diana_inferior = h_centro_diana - radio_diana
-
-# Sucesiones/Anillos de la diana (Cada 5 cm de división)
-divisiones = np.arange(-radio_diana, radio_diana + 0.01, 0.05)
-for div in divisiones:
-    fig.add_trace(go.Scatter(
-        x=[distancia, distancia], y=[h_centro_diana + div, h_centro_diana + div],
-        mode='markers', marker=dict(size=8, color='black'), showlegend=False
-    ))
-
-# Cuerpo vertical de la diana
-fig.add_trace(go.Scatter(
-    x=[distancia, distancia], y=[y_diana_inferior, y_diana_superior],
+trazos.append(go.Scatter(
+    x=[distancia, distancia], y=[float(y_diana_inferior), float(y_diana_superior)],
     mode='lines', name='Cuerpo de la Diana', line=dict(color='black', width=6)
 ))
 
+# Anillos/Sucesiones de la diana (Cada 5 cm de división)
+divisiones = np.arange(-radio_diana, radio_diana + 0.01, 0.05)
+for div in divisiones:
+    trazos.append(go.Scatter(
+        x=[distancia, distancia], y=[float(h_centro_diana + div), float(h_centro_diana + div)],
+        mode='markers', marker=dict(size=6, color='gray'), showlegend=False
+    ))
+
 # Punto de impacto exacto
-fig.add_trace(go.Scatter(
-    x=[distancia], y=[h_punto_impacto],
-    mode='markers', marker=dict(size=12, color='gold', symbol='star'), name='Punto de Apuntado'
+trazos.append(go.Scatter(
+    x=[distancia], y=[float(h_punto_impacto)],
+    mode='markers', marker=dict(size=14, color='gold', symbol='star'), name='Punto de Apuntado'
 ))
 
-# CONFIGURACIÓN CORREGIDA AQUÍ: Se usan sub-diccionarios independientes para evitar conflictos con Python 3.14
-fig.update_layout(
+# DEFINICIÓN DIRECTA DEL DISEÑO (Sin usar update_layout posterior para evitar problemas de compatibilidad)
+diseno_grafico = go.Layout(
     xaxis=dict(title="Distancia Horizontal (Metros)"),
     yaxis=dict(title="Altura desde el Suelo (Metros)"),
     hovermode="closest",
     height=500,
     legend=dict(orient="h", yanchor="bottom", y=1.12, xanchor="right", x=1)
 )
+
+# Inicializamos la figura con los componentes ya estructurados de raíz
+fig = go.Figure(data=trazos, layout=diseno_grafico)
 
 st.plotly_chart(fig, use_container_width=True)
 
