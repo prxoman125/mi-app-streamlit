@@ -1,151 +1,155 @@
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
-from scipy.integrate import solve_ivp
+import pandas as pd
 
 # 1. CONFIGURACIÓN DE LA PÁGINA
-st.set_page_config(page_title="Calculador Balístico 3D", layout="wide")
+st.set_page_config(page_title="Calculador Óptico de Mira", layout="wide")
 
-st.title("🚀 Calculador Balístico Pro y Simulador de Trayectorias 3D")
+st.title("🎯 Calculador de Ángulo de Mira y Trayectoria Láser")
 st.markdown("""
-Esta aplicación resuelve las **ecuaciones diferenciales de movimiento con resistencia aerodinámica del aire y viento lateral**. 
-¡Ideal para estudiar física avanzada, balística deportiva o programación de videojuegos!
+Este software calcula el **ángulo de inclinación exacto de una mira telescópica/óptica** montada sobre un eje láser horizontal.
+Modifica los parámetros en la barra lateral para ver cómo cambian los ángulos y las trayectorias en tiempo real.
 """)
 
 # 2. BARRA LATERAL - ENTRADA DE DATOS (INPUTS)
-st.sidebar.header("🔧 Parámetros del Disparo")
+st.sidebar.header("🎛️ Configuración del Sistema")
 
-# Datos del proyectil
-v0 = st.sidebar.slider("Velocidad Inicial (m/s)", min_value=100, max_value=1200, value=800, step=50, 
-                       help="Velocidad a la que sale la bala del cañón.")
-angulo_deg = st.sidebar.slider("Ángulo de Elevación (grados)", min_value=0.0, max_value=85.0, value=15.0, step=0.5)
+# Distancia (de 1 a 1000 metros)
+distancia_m = st.sidebar.slider("📏 Distancia a la Diana (Metros)", min_value=1.0, max_value=1000.0, value=50.0, step=0.5)
 
-# Datos del entorno
-v_viento = st.sidebar.slider("Viento Lateral (m/s)", min_value=-30, max_value=30, value=10, step=1,
-                             help="Valores positivos empujan a la derecha, negativos a la izquierda.")
+# Altura del Láser (de 25 cm a 50 cm)
+altura_laser_cm = st.sidebar.slider("📐 Altura del Láser desde el suelo (cm)", min_value=25.0, max_value=50.0, value=25.0, step=0.5)
 
-# Selector de gravedad (¡Para darle variedad técnica!)
-entorno = st.sidebar.selectbox("Entorno / Gravedad", 
-                               ["Tierra (9.81 m/s²)", "Marte (3.71 m/s²)", "Luna (1.62 m/s²)"])
-if "Tierra" in entorno:
-    g = 9.81
-elif "Marte" in entorno:
-    g = 3.71
-else:
-    g = 1.62
+# Altura de la Mira sobre el Láser (de 1 cm a 5 cm)
+altura_mira_cm = st.sidebar.slider("👁️ Altura de la Mira sobre el Láser (cm)", min_value=1.0, max_value=5.0, value=3.0, step=0.1)
 
-# Configuración avanzada de la bala (Física real)
-st.sidebar.subheader("⚙️ Propiedades Aerodinámicas Avanzadas")
-peso_gramos = st.sidebar.number_input("Masa de la bala (Gramos)", min_value=1.0, max_value=500.0, value=15.0)
-m = peso_gramos / 1000.0 # Convertir a kg para las fórmulas
-Cd = st.sidebar.slider("Coeficiente de Arrastre (Cd)", min_value=0.1, max_value=0.9, value=0.3, step=0.05,
-                       help="Qué tan aerodinámica es la bala. Menor número significa más aerodinámica.")
-diametro_mm = st.sidebar.slider("Calibre / Diámetro (mm)", min_value=4.0, max_value=20.0, value=7.62, step=0.1)
-radio_m = (diametro_mm / 2.0) / 1000.0
-A = np.pi * (radio_m ** 2) # Área frontal
-rho = 1.225 # Densidad del aire estándar en kg/m³
+# Tamaño de la Diana (Diámetro de 20 cm a 30 cm)
+diametro_diana_cm = st.sidebar.slider("🎯 Diámetro de la Diana (cm)", min_value=20.0, max_value=30.0, value=20.0, step=1.0)
 
-# 3. EL MOTOR MATEMÁTICO (CÁLCULOS DIFÍCILES)
-# Ecuaciones diferenciales de movimiento en 3D
-def modelo_balistico(t, variables, m, Cd, A, rho, g, v_viento):
-    x, y, z, vx, vy, vz = variables
-    
-    # Velocidad total actual de la bala
-    v = np.sqrt(vx**2 + vy**2 + vz**2)
-    
-    # Fuerza de resistencia del aire (Frenado)
-    factor_arrastre = 0.5 * rho * Cd * A / m
-    
-    # Aceleraciones en cada eje
-    ax = -factor_arrastre * v * vx
-    ay = -g - (factor_arrastre * v * vy)
-    az = factor_arrastre * (v_viento - vz) # El viento empuja lateralmente
-    
-    return [vx, vy, vz, ax, ay, az]
+# Punto de impacto deseado (Desviación respecto al centro)
+radio_maximo = diametro_diana_cm / 2.0
+st.sidebar.subheader("🎯 Objetivo de Apuntado")
+desviacion_cm = st.sidebar.slider("Ajustar Punto de Impacto (cm respecto al centro)", 
+                                  min_value=-float(radio_maximo), 
+                                  max_value=float(radio_maximo), 
+                                  value=0.0, 
+                                  step=0.5,
+                                  help="0.0 es el centro. Valores positivos son más arriba, negativos más abajo.")
 
-# Condiciones iniciales del disparo
-angulo_rad = np.radians(angulo_deg)
-vx0 = v0 * np.cos(angulo_rad)
-vy0 = v0 * np.sin(angulo_rad)
-vz0 = 0.0 # Sale alineada en el eje Z
+# 3. CONVERSIÓN DE UNIDADES A METROS (Para consistencia física)
+distancia = distancia_m
+h_laser = altura_laser_cm / 100.0
+h_mira_absoluta = (altura_laser_cm + altura_mira_cm) / 100.0
+radio_diana = radio_maximo / 100.0
+desviacion_objetivo = desviacion_cm / 100.0
 
-condiciones_iniciales = [0.0, 0.0, 0.0, vx0, vy0, vz0] # [x, y, z, vx, vy, vz]
+# El centro de la diana siempre está a la altura del láser según tus instrucciones
+h_centro_diana = h_laser 
+h_punto_impacto = h_centro_diana + desviacion_objetivo
 
-# Evento para detener la simulación cuando la bala toque el suelo (y = 0)
-def bala_toca_suelo(t, variables, *args):
-    return variables[1] # Monitorea la variable 'y' (altura)
-bala_toca_suelo.terminal = True
-bala_toca_suelo.direction = -1
+# 4. CÁLCULO TRIGONOMÉTRICO DIFÍCIL (Ángulos de inclinación)
+# Ángulo para apuntar al CENTRO exacto
+# Cateto opuesto = h_mira_absoluta - h_centro_diana = altura_mira_cm
+# Cateto adyacente = distancia_m
+angulo_centro_rad = np.arctan((h_mira_absoluta - h_centro_diana) / distancia)
+angulo_centro_deg = np.degrees(angulo_centro_rad)
 
-# Resolver numéricamente las ecuaciones paso a paso en el tiempo (máximo 200 segundos)
-solucion = solve_ivp(
-    modelo_balistico, 
-    t_span=(0, 200), 
-    y0=condiciones_iniciales, 
-    args=(m, Cd, A, rho, g, v_viento),
-    events=bala_toca_suelo,
-    max_step=0.01 # Precisión milimétrica
-)
+# Ángulo para apuntar al PUNTO VARIABLE (Más arriba o más abajo)
+angulo_variable_rad = np.arctan((h_mira_absoluta - h_punto_impacto) / distancia)
+angulo_variable_deg = np.degrees(angulo_variable_rad)
 
-# Extraer los datos de la trayectoria calculada
-x_vals = solucion.y[0]
-y_vals = solucion.y[1]
-z_vals = solucion.y[2]
-tiempos = solucion.t
+# Convertir a minutos de ángulo (MOA) - Muy usado en miras profesionales
+moa_centro = angulo_centro_deg * 60
+moa_variable = angulo_variable_deg * 60
 
-# Asegurarse de que el último punto sea exactamente el suelo
-if y_vals[-1] < 0:
-    y_vals[-1] = 0
-
-# 4. MOSTRAR RESULTADOS PRINCIPALES (MÉTRICAS)
+# 5. DESPLEGAR MÉTRICAS DE RESULTADOS
+st.subheader("📊 Ángulos de Ajuste Calculados")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric(label="🎯 Alcance Máximo (Destino)", value=f"{x_vals[-1]:.2f} metros")
+    st.metric(
+        label="📐 Inclinación al Centro de la Diana", 
+        value=f"{angulo_centro_deg:.4f}°", 
+        delta=f"{moa_centro:.2f} MOA",
+        delta_color="off"
+    )
 with col2:
-    st.metric(label="🌪️ Desviación Lateral (Eje Z)", value=f"{z_vals[-1]:.2f} metros")
+    st.metric(
+        label="🎯 Inclinación al Objetivo Ajustado", 
+        value=f"{angulo_variable_deg:.4f}°",
+        delta=f"{moa_variable:.2f} MOA",
+        delta_color="off"
+    )
 with col3:
-    st.metric(label="⏱️ Tiempo de Vuelo Total", value=f"{tiempos[-1]:.2f} segundos")
+    posicion_texto = "Centro" if desviacion_cm == 0 else ("Arriba" if desviacion_cm > 0 else "Abajo")
+    st.metric(label="📍 Estado del Impacto", value=f"{abs(desviacion_cm)} cm hacia {posicion_texto}")
 
-# 5. RENDERIZAR GRÁFICO INTERACTIVO 3D
-st.subheader("📊 Visualización de la Trayectoria en 3D")
+# 6. GENERACIÓN DEL GRÁFICO INTERACTIVO (Trayectorias)
+st.subheader("📉 Simulación Visual de las Líneas de Visión (Vista Lateral)")
 
 fig = go.Figure()
 
-# Línea de la trayectoria de la bala
-fig.add_trace(go.Scatter3d(
-    x=x_vals, y=z_vals, z=y_vals, # Plotly usa Z para la altura por defecto, por eso invertimos los ejes visualmente
-    mode='lines',
-    line=dict(color='red', width=4),
-    name='Trayectoria de la Bala'
+# Eje X: de 0 a la distancia configurada
+x_trayectoria = np.array([0, distancia])
+
+# Línea del Suelo
+fig.add_trace(go.Scatter(
+    x=x_trayectoria, y=[0, 0],
+    mode='lines', name='Suelo', line=dict(color='green', width=2, dash='dash')
 ))
 
-# Punto de impacto en el destino
-fig.add_trace(go.Scatter3d(
-    x=[x_vals[-1]], y=[z_vals[-1]], z=[y_vals[-1]],
-    mode='markers',
-    marker=dict(size=6, color='black', symbol='diamond'),
-    name='Punto de Impacto'
+# Línea del Láser (Siempre recto horizontal al centro de la diana)
+fig.add_trace(go.Scatter(
+    x=x_trayectoria, y=[h_laser, h_centro_diana],
+    mode='lines', name='Rayo Láser (Eje Horizontal)', line=dict(color='red', width=3)
 ))
 
-# Configuración del diseño del gráfico (Ejes, títulos, rotación)
+# Línea de la Mira apuntando al objetivo elegido
+fig.add_trace(go.Scatter(
+    x=x_trayectoria, y=[h_mira_absoluta, h_punto_impacto],
+    mode='lines', name='Línea de Visión de la Mira', line=dict(color='blue', width=2, dash='dot')
+))
+
+# Dibujar la Diana en el extremo final (Línea vertical que representa sus divisiones)
+y_diana_superior = h_centro_diana + radio_diana
+y_diana_inferior = h_centro_diana - radio_diana
+
+# Sucesiones/Anillos de la diana (Cada 5 cm de división)
+divisiones = np.arange(-radio_diana, radio_diana + 0.01, 0.05)
+for div in divisiones:
+    fig.add_trace(go.Scatter(
+        x=[distancia, distancia], y=[h_centro_diana + div, h_centro_diana + div],
+        mode='markers', marker=dict(size=8, color='black'), showlegend=False
+    ))
+
+# Cuerpo vertical de la diana
+fig.add_trace(go.Scatter(
+    x=[distancia, distancia], y=[y_diana_inferior, y_diana_superior],
+    mode='lines', name='Cuerpo de la Diana', line=dict(color='black', width=6)
+))
+
+# Punto de impacto exacto elegido por el usuario
+fig.add_trace(go.Scatter(
+    x=[distancia], y=[h_punto_impacto],
+    mode='markers', marker=dict(size=12, color='gold', symbol='star'), name='Punto de Apuntado'
+))
+
+# Configuración de diseño y escalas del gráfico
 fig.update_layout(
-    scene=dict(
-        xaxis_title='Distancia (Metros)',
-        yaxis_title='Desviación Viento (Metros)',
-        zaxis_title='Altura (Metros)',
-        aspectmode='data' # Mantiene la proporción física real de los ejes
-    ),
-    margin=dict(l=0, r=0, b=0, t=40),
-    height=600,
-    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+    xaxis_title="Distancia Horizontal (Metros)",
+    yaxis_title="Altura desde el Suelo (Metros)",
+    hovermode="closest",
+    height=500,
+    legend=dict(orient="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-# 6. EXPLICACIÓN CIENTÍFICA / APRENDIZAJE
-st.info("""
-💡 **¿Qué hace difícil a este cálculo?** Si el aire no existiera, la bala viajaría en una parábola perfecta simétrica. 
-Sin embargo, debido al **arrastre aerodinámico ($Cd$)**, la bala pierde velocidad rápidamente a medida que avanza. 
-Notarás en el gráfico que la curva de caída al final de la trayectoria es mucho más inclinada que al inicio.
+# 7. NOTAS TÉCNICAS Y EXPLICACIÓN
+st.info(f"""
+💡 **Análisis Geométrico:** 
+* La mira física se encuentra actualmente a una altura absoluta de **{altura_laser_cm + altura_mira_cm} cm** respecto al suelo.
+* Para compensar la altura de montaje (paralaje vertical), la mira debe inclinarse hacia abajo un ángulo de **{angulo_variable_deg:.4f} grados** para intersectar tu objetivo a una distancia de **{distancia_m} metros**.
+* Si la distancia aumenta mucho (ej. 1000m), notarás que el ángulo requerido se vuelve extremadamente pequeño (tiende a 0°), ya que las dos líneas se vuelven prácticamente paralelas a gran distancia.
 """)
