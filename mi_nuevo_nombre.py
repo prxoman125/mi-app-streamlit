@@ -6,7 +6,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Simulador de Colimación Óptica Avanzado", layout="wide")
 
-# --- ESTILOS CSS PERSONALIZADOS ---
+# --- ESTILOS CSS PERSONALIZADOS Y CONTENEDORES FIJOS ---
 st.markdown("""
     <style>
         [data-testid="stSidebar"] {
@@ -52,16 +52,13 @@ st.markdown("""
             border: 1px solid #ff4d6d !important;
         }
 
-        @keyframes glowBlue {
-            0% { box-shadow: 0 0 35px 12px rgba(0, 210, 255, 0.85); border-color: #00d2ff; }
-            100% { box-shadow: 0 0 0px 0px rgba(0, 210, 255, 0); border-color: transparent; }
-        }
-
-        .glow-box {
-            animation: glowBlue 1s ease-out forwards;
+        .glow-box-container {
+            background-color: #0b0c1b;
             border-radius: 12px;
             border: 2px solid #00d2ff;
-            padding: 4px;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+            margin-bottom: 20px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -103,7 +100,7 @@ TEXTS = {
         "profile_select": "Application Profile / Profession",
         "profile_placeholder": "-- Select a Profession / Career --",
         "unit_select": "Unit System",
-        "metric": "Metric (cm, meters)",
+        "metric": "Metric (inches, yards)",
         "imperial": "Imperial (inches, yards)",
         "params": "Input Parameters",
         "h_mira": "Vertical Collimation Line (Y)",
@@ -151,8 +148,6 @@ for key in ["h_mira_val", "z_mira_val", "h_extra_val", "z_extra_val", "dist_val"
 
 if "history" not in st.session_state:
     st.session_state["history"] = []
-if "confirm_clear" not in st.session_state:
-    st.session_state["confirm_clear"] = False
 
 def reset_inputs_to_zero():
     st.session_state["h_mira_val"] = 0.0
@@ -164,7 +159,7 @@ def reset_inputs_to_zero():
     st.session_state["ref_angle_z_val"] = 0.0
 
 st.sidebar.header(txt["params"])
-h_unit, d_unit = (txt["metric"].split()[1][1:3], "m") if is_metric else ("in", "yd")
+h_unit, d_unit = ("cm", "m") if is_metric else ("in", "yd")
 
 H_mira = st.sidebar.number_input(f"{txt['h_mira']} ({h_unit})", value=st.session_state["h_mira_val"], key="h_mira_val")
 Z_mira = st.sidebar.number_input(f"{txt['z_mira']} ({h_unit})", value=st.session_state["z_mira_val"], key="z_mira_val")
@@ -204,43 +199,65 @@ angle_y_deg = math.degrees(math.atan2(diff_y_cm, D_cm))
 angle_z_deg = math.degrees(math.atan2(diff_z_cm, D_cm))
 total_angular_dev_deg = math.sqrt(angle_y_deg**2 + angle_z_deg**2)
 
-# Divergencia del haz Gaussiano: W(d) = W0 + d * tan(theta/2)
+# Divergencia del haz Gaussiano
 waist_cm = waist_mm / 10.0
 beam_radius_cm = waist_cm + (D_cm * math.tan(math.radians(divergence_mrad / 1000.0 * 180 / math.pi)))
 
-# --- VISUALIZACIÓN GRÁFICA (Doble Panel) ---
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4.5))
+# --- GENERACIÓN DE GRÁFICAS MEJORADA Y ESTABLE ---
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
 fig.patch.set_facecolor('#0b0c1b')
 
-# Gráfica 1: Perfil Lateral (X vs Y)
+# 1. GRÁFICA LATERAL (X vs Y)
 ax1.set_facecolor('#0b0c1b')
-ax1.plot([0, D_cm], [0, y_target], '#ff4444', linestyle='--', label='Ref Laser')
-ax1.plot([0, D_cm], [H_mira_cm, y_target], '#00d2ff', label='Sensor Axis')
-ax1.scatter(D_cm, y_target, color='#33ff77', s=100, zorder=5, label='Target Point')
-ax1.set_title(txt["graph_profile"], color='white')
-ax1.grid(True, alpha=0.2, color='cyan')
-ax1.tick_params(colors='white')
-ax1.legend(facecolor='#12132c', labelcolor='white')
+ax1.plot([0, D_cm], [0, y_target], color='#ff4444', linestyle='--', linewidth=2, label='Láser Ref.')
+ax1.plot([0, D_cm], [H_mira_cm, y_target], color='#00d2ff', linestyle='-', linewidth=2, label='Eje Sensor')
+ax1.scatter(D_cm, y_target, color='#33ff77', s=120, zorder=5, label='Punto Requerido')
+ax1.scatter(0, H_mira_cm, color='#00d2ff', s=100, marker='X', zorder=5, label='Origen Sensor')
 
-# Gráfica 2: Vista de Diana Frontal (Z vs Y)
+# Ajuste dinamico de limites sin colapsar
+y_min = min(0, H_mira_cm, y_target)
+y_max = max(0, H_mira_cm, y_target)
+margin_y = max(abs(y_max - y_min) * 0.2, 10.0)
+
+ax1.set_xlim(-D_cm * 0.05, D_cm * 1.1)
+ax1.set_ylim(y_min - margin_y, y_max + margin_y)
+ax1.set_title(txt["graph_profile"], color='white', fontsize=12, fontweight='bold', pad=10)
+ax1.grid(True, alpha=0.2, color='cyan')
+ax1.tick_params(colors='white', labelsize=9)
+
+# Leyenda debajo de la gráfica 1
+ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=2, facecolor='#12132c', edgecolor='#333566', labelcolor='white', fontsize=9)
+
+# 2. GRÁFICA DE DIANA VISTA FRONTAL (Z vs Y)
 ax2.set_facecolor('#0b0c1b')
-circle_target = plt.Circle((0, 0), radius=beam_radius_cm*2, color='#ffcc00', fill=False, linestyle=':', label='Target Area')
-circle_beam = plt.Circle((diff_z_cm, diff_y_cm), radius=beam_radius_cm, color='#00d2ff', alpha=0.4, label='Beam Spot')
+
+# Radio visual asegurado para no ser invisible
+circle_target = plt.Circle((0, 0), radius=max(beam_radius_cm * 2, 2.0), color='#ffcc00', fill=False, linestyle='--', linewidth=1.5, label='Área Receptor')
+circle_beam = plt.Circle((diff_z_cm, diff_y_cm), radius=max(beam_radius_cm, 1.0), color='#00d2ff', alpha=0.4, label='Tamaño Haz (Spot)')
+
 ax2.add_patch(circle_target)
 ax2.add_patch(circle_beam)
-ax2.scatter(0, 0, color='#ff4444', marker='+', s=150, label='Center Ref')
-ax2.scatter(diff_z_cm, diff_y_cm, color='#33ff77', marker='x', s=100, label='Beam Center')
+ax2.scatter(0, 0, color='#ff4444', marker='+', s=180, linewidth=2, label='Centro Referencia')
+ax2.scatter(diff_z_cm, diff_y_cm, color='#33ff77', marker='x', s=140, linewidth=2, label='Centro del Haz')
 
-limit = max(abs(diff_z_cm), abs(diff_y_cm), beam_radius_cm * 3, 5.0)
-ax2.set_xlim(-limit, limit)
-ax2.set_ylim(-limit, limit)
-ax2.set_aspect('equal')
-ax2.set_title(txt["graph_target"], color='white')
+# Ajuste de escala dinamico sin encoger la diana
+limit_z = max(abs(diff_z_cm) + beam_radius_cm * 2, 10.0)
+limit_y = max(abs(diff_y_cm) + beam_radius_cm * 2, 10.0)
+max_limit = max(limit_z, limit_y)
+
+ax2.set_xlim(-max_limit, max_limit)
+ax2.set_ylim(-max_limit, max_limit)
+ax2.set_aspect('equal', adjustable='box')
+ax2.set_title(txt["graph_target"], color='white', fontsize=12, fontweight='bold', pad=10)
 ax2.grid(True, alpha=0.2, color='cyan')
-ax2.tick_params(colors='white')
-ax2.legend(facecolor='#12132c', labelcolor='white', loc='upper right')
+ax2.tick_params(colors='white', labelsize=9)
 
-st.markdown('<div class="glow-box">', unsafe_allow_html=True)
+# Leyenda debajo de la gráfica 2
+ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=2, facecolor='#12132c', edgecolor='#333566', labelcolor='white', fontsize=9)
+
+plt.subplots_adjust(bottom=0.28, wspace=0.3)
+
+st.markdown('<div class="glow-box-container">', unsafe_allow_html=True)
 st.pyplot(fig)
 st.markdown('</div>', unsafe_allow_html=True)
 
