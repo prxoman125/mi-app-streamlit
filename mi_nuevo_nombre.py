@@ -1,8 +1,8 @@
 import streamlit as st
 import numpy as np
-import matplotlib.pyplot as plt
 import math
 import pandas as pd
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
@@ -404,49 +404,73 @@ if save_clicked:
     st.session_state["history"].append(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICA MATPLOTLIB (TAMAÑO Y LÍMITES TOTALMENTE ESTÁTICOS) ---
-fig, ax = plt.subplots(figsize=(10, 4.0), dpi=100)
-pos_laser, pos_mira = (0, 0), (0, H_mira_cm)
-pos_diana_centro, pos_impacto_mira = (D_cm, y_ref_end), (D_cm, y_target_point)
+# --- GRÁFICA INTERACTIVA 3D CON PLOTLY (SIN SALTOS DE TAMAÑO) ---
+pos_mira = (0, H_mira_cm)
+pos_impacto_mira = (D_cm, y_target_point)
 
-# Definimos límites fijos proporcionales para la vista
-x_min = -max(D_cm, 10) * 0.05
-x_max = max(D_cm, 10) * 1.15
+fig = go.Figure()
 
-max_y_range = max(abs(pos_mira[1]), abs(pos_diana_centro[1]), abs(pos_impacto_mira[1]), 50.0)
-y_bottom = -max_y_range * 1.25
-y_top = max_y_range * 1.25
+# Eje óptico de referencia (Línea Roja)
+fig.add_trace(go.Scatter3d(
+    x=[0, D_cm], y=[0, 0], z=[0, y_ref_end],
+    mode='lines+markers',
+    name=f"{txt['laser_label']} ({ref_angle_deg:.2f}°)",
+    line=dict(color='#ff4444', width=6, dash='dash'),
+    marker=dict(size=4, color='#ff4444')
+))
 
-ax.set_facecolor("#0b0c1b")
-fig.patch.set_facecolor("#0b0c1b")
+# Eje del sensor ajustable (Línea Azul Claro)
+fig.add_trace(go.Scatter3d(
+    x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
+    mode='lines+markers',
+    name=f"{txt['sight_label']} (α = {angulo_deg:.2f}°)",
+    line=dict(color='#00d2ff', width=8),
+    marker=dict(size=4, color='#00d2ff')
+))
 
-gradient = np.linspace(0, 1, 256).reshape(256, 1)
-ax.imshow(gradient, aspect='auto', cmap='magma', extent=[x_min, x_max, y_bottom, y_top], origin='lower', alpha=0.12)
+# Puntos clave
+fig.add_trace(go.Scatter3d(
+    x=[D_cm], y=[0], z=[y_ref_end],
+    mode='markers',
+    name=txt["target_center"],
+    marker=dict(size=9, color='#ffcc00', symbol='circle')
+))
 
-ax.plot([0, D_cm], [0, y_ref_end], color='#ff4444', linestyle='--', linewidth=2, label=f"{txt['laser_label']} ({ref_angle_deg:.2f}°)")
-ax.plot([0, D_cm], [pos_mira[1], pos_impacto_mira[1]], color='#00d2ff', linestyle='-', linewidth=2.5, label=f'{txt["sight_label"]} (α = {angulo_deg:.2f}°)')
+fig.add_trace(go.Scatter3d(
+    x=[D_cm], y=[0], z=[y_target_point],
+    mode='markers',
+    name=txt["target_point"],
+    marker=dict(size=9, color='#33ff77', symbol='diamond')
+))
 
-SIZE_SMALL, SIZE_LARGE = 160, 180
-ax.scatter(*pos_laser, color='#ff4444', s=SIZE_SMALL, marker='P', zorder=6)
-ax.scatter(*pos_mira, color='#00d2ff', s=SIZE_SMALL, marker='X', zorder=6)
-ax.scatter(*pos_diana_centro, color='#ffcc00', s=SIZE_LARGE, marker='o', edgecolors='white', linewidth=1.5, zorder=6, label=txt["target_center"])
-ax.scatter(*pos_impacto_mira, color='#33ff77', s=SIZE_LARGE, marker='D', edgecolors='black', linewidth=1, zorder=6, label=txt["target_point"])
+fig.update_layout(
+    title=dict(
+        text=f"{txt['title_graph']}: {D_val:.1f} {d_unit} | {txt['req_angle']}: {angulo_deg:.4f}° ({moa:.1f} MOA / {mrad:.2f} mrad)",
+        font=dict(color="white", size=14)
+    ),
+    paper_bgcolor='#0b0c1b',
+    plot_bgcolor='#0b0c1b',
+    height=450,
+    margin=dict(l=10, r=10, t=40, b=10),
+    scene=dict(
+        xaxis=dict(title='Distancia (cm)', backgroundcolor="#0b0c1b", gridcolor="#1f2242", titlefont=dict(color="white"), tickfont=dict(color="white")),
+        yaxis=dict(title='Eje Y', backgroundcolor="#0b0c1b", gridcolor="#1f2242", titlefont=dict(color="white"), tickfont=dict(color="white")),
+        zaxis=dict(title='Altura (cm)', backgroundcolor="#0b0c1b", gridcolor="#1f2242", titlefont=dict(color="white"), tickfont=dict(color="white")),
+        camera=dict(
+            eye=dict(x=1.5, y=-1.8, z=0.8)
+        )
+    ),
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=-0.1,
+        xanchor="center",
+        x=0.5,
+        font=dict(color="white")
+    )
+)
 
-ax.set_title(f"{txt['title_graph']}: {D_val:.1f} {d_unit} | {txt['req_angle']}: {angulo_deg:.4f}° ({moa:.1f} MOA / {mrad:.2f} mrad)", color='white', fontsize=11, fontweight='bold', pad=12)
-
-ax.set_xlim(x_min, x_max)
-ax.set_ylim(y_bottom, y_top)
-ax.grid(True, linestyle=':', alpha=0.2, color='cyan')
-ax.tick_params(colors='white', labelsize=9)
-
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4, facecolor='#12132c', edgecolor='#333566', labelcolor='white', framealpha=0.9, fontsize=9)
-
-# Evita que el lienzo cambie de tamaño según el texto
-fig.subplots_adjust(top=0.88, bottom=0.22, left=0.08, right=0.96)
-
-# --- MOSTRAR LA GRÁFICA ---
-st.pyplot(fig, use_container_width=True, clear_figure=True)
-plt.close(fig)
+st.plotly_chart(fig, use_container_width=True, key="grafica_optica_3d")
 
 # --- MÉTRICAS EXPANDIDAS ---
 st.markdown(f"""
