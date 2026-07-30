@@ -397,7 +397,7 @@ if save_clicked:
         "Distancia": f"{D_val:.1f} {d_unit}",
         "Línea Colimación": f"{H_mira:.2f} {h_unit}",
         "Desviación Impacto": f"{H_extra:.2f} {h_unit}",
-        "Inclinación Ref (°)" : f"{ref_angle_deg:.2f}°",
+        "Inclinación Ref (°)": f"{ref_angle_deg:.2f}°",
         "Dif. Altura": f"{diff_height_display:.2f} {h_unit}",
         "Ángulo (α)": f"{angulo_deg:.4f}°",
         "MOA": f"{moa:.2f}",
@@ -409,8 +409,8 @@ if save_clicked:
     st.session_state["history"].append(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICA ---
-fig, ax = plt.subplots(figsize=(10, 4.2))
+# --- GRÁFICA CORREGIDA Y ESTABILIZADA ---
+fig, ax = plt.subplots(figsize=(10, 4.5), dpi=100)
 pos_laser, pos_mira = (0, 0), (0, H_mira_cm)
 pos_diana_centro, pos_impacto_mira = (D_cm, y_ref_end), (D_cm, y_target_point)
 
@@ -418,10 +418,11 @@ x_min, x_max = -max(D_cm, 10)*0.1, max(D_cm, 10)*1.15
 y_raw_min = min(0, pos_mira[1], pos_diana_centro[1], pos_impacto_mira[1])
 y_raw_max = max(0, pos_mira[1], pos_diana_centro[1], pos_impacto_mira[1])
 y_range = max(abs(y_raw_max - y_raw_min), 10.0)
-y_bottom, y_top = y_raw_min - (y_range * 0.05) - 5, y_raw_max + (y_range * 0.05) + 5
+y_bottom, y_top = y_raw_min - (y_range * 0.15) - 5, y_raw_max + (y_range * 0.15) + 5
 
 ax.set_facecolor("#0b0c1b")
 fig.patch.set_facecolor("#0b0c1b")
+
 gradient = np.linspace(0, 1, 256).reshape(256, 1)
 ax.imshow(gradient, aspect='auto', cmap='magma', extent=[x_min, x_max, y_bottom, y_top], origin='lower', alpha=0.12)
 
@@ -435,16 +436,21 @@ ax.scatter(*pos_diana_centro, color='#ffcc00', s=SIZE_LARGE, marker='o', edgecol
 ax.scatter(*pos_impacto_mira, color='#33ff77', s=SIZE_LARGE, marker='D', edgecolors='black', linewidth=1, zorder=6, label=txt["target_point"])
 
 ax.set_title(f"{txt['title_graph']}: {D_val:.1f} {d_unit} | {txt['req_angle']}: {angulo_deg:.4f}° ({moa:.1f} MOA / {mrad:.2f} mrad)", color='white', fontsize=11, fontweight='bold')
-ax.set_xlim(x_min, x_max); ax.set_ylim(y_bottom, y_top)
+ax.set_xlim(x_min, x_max)
+ax.set_ylim(y_bottom, y_top)
 ax.grid(True, linestyle=':', alpha=0.2, color='cyan')
 ax.tick_params(colors='white', labelsize=9)
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4, facecolor='#12132c', edgecolor='#333566', labelcolor='white', framealpha=0.9, fontsize=9)
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=4, facecolor='#12132c', edgecolor='#333566', labelcolor='white', framealpha=0.9, fontsize=9)
+
+plt.tight_layout()
 
 graph_container = st.container()
 with graph_container:
     st.markdown(f'<div class="{glow_class}">', unsafe_allow_html=True)
-    st.pyplot(fig)
+    st.pyplot(fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
+plt.close(fig)
 
 # --- MÉTRICAS EXPANDIDAS ---
 st.markdown(f"""
