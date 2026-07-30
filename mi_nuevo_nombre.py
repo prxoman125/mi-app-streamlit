@@ -1,159 +1,67 @@
-import math
+from taipy.gui import Gui
 import numpy as np
-import pandas as pd
 import plotly.graph_objects as go
-import streamlit as st
 
-# Configuración inicial
-st.set_page_config(page_title="Calculadora de Mira y Láser", layout="wide")
+# 1. Variables iniciales que controlan la física
+v0_fps = 2700       # Velocidad de la bala
+viento_mph = 10     # Viento lateral
+distancia_max = 800 # Distancia del disparo en metros
 
-# CSS para fijar la barra lateral al 25% y bloquear el botón de colapsar
-st.markdown(
-    """
-    <style>
-    [data-testid="stSidebarCollapseButton"] {
-        display: none !important;
-    }
-    [data-testid="stSidebar"] {
-        width: 25vw !important;
-        min-width: 25vw !important;
-        max-width: 25vw !important;
-    }
-    [data-testid="stMainBlockContainer"] {
-        max-width: 100% !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# 2. El motor matemático rápido
+def calcular_trayectoria(v0_fps, viento_mph, dist_max):
+    # Física básica de gravedad y resistencia al viento
+    x = np.arange(0, dist_max + 10, 20)
+    factor_caida = 3000 / v0_fps
+    y = -((x / 50) ** 2) * factor_caida     # Caída vertical (cm)
+    z = -((x / 100) ** 2) * (viento_mph / 5) # Desvío por viento (cm)
+    return x, y, z
 
-# --- BARRA LATERAL (25% ANCHO) ---
-st.sidebar.header("⚙️ Configuración")
-
-# Punto Fijo: Diana / Láser
-altura_laser = st.sidebar.number_input(
-    "Altura del Láser / Diana (m):", value=5.0, step=0.5, disabled=True
-)
-
-st.sidebar.subheader("Ajustes de la Mira")
-distancia_mira = st.sidebar.number_input(
-    "Distancia horizontal a la Diana (m):", min_value=0.1, value=10.0, step=0.5
-)
-altura_mira = st.sidebar.number_input(
-    "Altura de la Mira (m):", min_value=0.0, value=2.0, step=0.5
-)
-
-# --- CÁLCULOS MATEMÁTICOS (NumPy & Math) ---
-diferencia_altura = altura_laser - altura_mira
-
-# Cálculo del ángulo usando trigonometría
-angulo_rad = math.atan2(diferencia_altura, distancia_mira)
-angulo_grados = math.degrees(angulo_rad)
-
-# --- PANTALLA PRINCIPAL (75% RESTANTE) ---
-st.title("🎯 Calculadora de Ángulo de Inclinación")
-st.caption(
-    "El láser está fijo en la diana. Ajusta la mira en el menú izquierdo para ver el ángulo necesario para apuntar al centro."
-)
-
-st.markdown("---")
-
-# Métrica del resultado en columnas
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        label="Diferencia de Altura", value=f"{diferencia_altura:+.2f} m"
+# 3. Función de actualización del gráfico
+def generar_figura(v0_fps, viento_mph, dist_max):
+    x, y, z = calcular_trayectoria(v0_fps, viento_mph, dist_max)
+    
+    fig = go.Figure(data=[go.Scatter3d(
+        x=x, y=z, z=y, 
+        mode='lines', 
+        line=dict(color='#FF4B4B', width=5)
+    )])
+    
+    fig.update_layout(
+        scene=dict(
+            xaxis_title="Distancia (m)", 
+            yaxis_title="Viento (cm)", 
+            zaxis_title="Caída (cm)"
+        ),
+        margin=dict(l=0, r=0, b=0, t=0),
+        template="plotly_dark"
     )
+    return fig
 
-with col2:
-    st.metric(
-        label="Ángulo de Inclinación", value=f"{angulo_grados:+.2f}°"
-    )
+# Generar la figura inicial
+grafico_3d = generar_figura(v0_fps, viento_mph, distancia_max)
 
-with col3:
-    if angulo_grados > 0:
-        st.metric("Orientación", "Inclinar hacia ARRIBA ⬆️")
-    elif angulo_grados < 0:
-        st.metric("Orientación", "Inclinar hacia ABAJO ⬇️")
-    else:
-        st.metric("Orientación", "Totalmente NIVELADO ➡️")
+def actualizar(state):
+    state.grafico_3d = generar_figura(state.v0_fps, state.viento_mph, state.distancia_max)
 
-st.markdown("---")
+# 4. Diseño de la interfaz gráfica
+pantalla = """
+# 🎯 Simulador de Trayectoria 3D
 
-# --- GRÁFICO INTERACTIVO (Plotly) ---
-st.subheader("📐 Representación Visual del Disparo")
+<|layout|columns=1 2|
+### 🛠️ Controles de Simulación
+* **Velocidad (FPS):**
+<|{v0_fps}|slider|min=1500|max=4000|on_change=actualizar|>
 
-# Crear la figura interactiva de Plotly
-fig = go.Figure()
+* **Viento Lateral (MPH):**
+<|{viento_mph}|slider|min=0|max=30|on_change=actualizar|>
 
-# 1. Línea de referencia horizontal (piso/suelo)
-fig.add_trace(
-    go.Scatter(
-        x=[0, distancia_mira + 2],
-        y=[0, 0],
-        mode="lines",
-        name="Suelo",
-        line=dict(color="gray", dash="dash"),
-    )
-)
+* **Distancia Máxima (Metros):**
+<|{distancia_max}|slider|min=100|max=1500|step=100|on_change=actualizar|>
 
-# 2. Línea horizontal de referencia para la mira
-fig.add_trace(
-    go.Scatter(
-        x=[0, distancia_mira],
-        y=[altura_mira, altura_mira],
-        mode="lines",
-        name="Nivel Cero de Mira",
-        line=dict(color="lightgray", dash="dot"),
-    )
-)
+### 📊 Gráfico 3D Interactivo
+<|{grafico_3d}|chart|>
+|>
+"""
 
-# 3. Línea de Visión (Desde la Mira hasta el Láser)
-fig.add_trace(
-    go.Scatter(
-        x=[0, distancia_mira],
-        y=[altura_mira, altura_laser],
-        mode="lines+markers",
-        name=f"Trayectoria ({angulo_grados:.2f}°)",
-        line=dict(color="#10b981", width=3),
-    )
-)
-
-# 4. Punto: Mira
-fig.add_trace(
-    go.Scatter(
-        x=[0],
-        y=[altura_mira],
-        mode="markers+text",
-        name="Mira",
-        text=["Mira"],
-        textposition="top center",
-        marker=dict(size=14, color="#3b82f6", symbol="square"),
-    )
-)
-
-# 5. Punto: Láser / Diana Fijo
-fig.add_trace(
-    go.Scatter(
-        x=[distancia_mira],
-        y=[altura_laser],
-        mode="markers+text",
-        name="Centro Diana (Láser Fijo)",
-        text=["Láser / Diana"],
-        textposition="top center",
-        marker=dict(size=16, color="#ef4444", symbol="circle-cross"),
-    )
-)
-
-# Ajustes de diseño de la gráfica
-fig.update_layout(
-    xaxis_title="Distancia Horizontal (metros)",
-    yaxis_title="Altura (metros)",
-    height=450,
-    margin=dict(l=20, r=20, t=30, b=20),
-    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-)
-
-# Mostrar en Streamlit usando Plotly
-st.plotly_chart(fig, use_container_width=True)
+if __name__ == "__main__":
+    Gui(page=pantalla).run(dark_mode=True, notebook=-1, width="100%", height="600px")
