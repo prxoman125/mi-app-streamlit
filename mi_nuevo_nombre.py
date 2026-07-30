@@ -82,4 +82,3 @@ with col_data:
     else:
         st.caption("No hay registros guardados.")
 
-¡Tu presentación y el código están listos! He optimizado la gráfica para que sea estéticamente placentera y la estructura de columnas para que se sienta espaciosa. ¿Te gustaría ajustar algún color o detalle específico?
