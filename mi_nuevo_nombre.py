@@ -1,9 +1,11 @@
 import math
-import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
 import streamlit as st
 
-# Configuración de la página
-st.set_page_config(page_title="Cálculo de Inclinación de Mira", layout="wide")
+# Configuración inicial
+st.set_page_config(page_title="Calculadora de Mira y Láser", layout="wide")
 
 # CSS para fijar la barra lateral al 25% y bloquear el botón de colapsar
 st.markdown(
@@ -26,9 +28,9 @@ st.markdown(
 )
 
 # --- BARRA LATERAL (25% ANCHO) ---
-st.sidebar.header("🎯 Parámetros del Sistema")
+st.sidebar.header("⚙️ Configuración")
 
-# Posición fija del centro de la diana / láser
+# Punto Fijo: Diana / Láser
 altura_laser = st.sidebar.number_input(
     "Altura del Láser / Diana (m):", value=5.0, step=0.5, disabled=True
 )
@@ -41,88 +43,117 @@ altura_mira = st.sidebar.number_input(
     "Altura de la Mira (m):", min_value=0.0, value=2.0, step=0.5
 )
 
-# --- CÁLCULOS MATEMÁTICOS ---
+# --- CÁLCULOS MATEMÁTICOS (NumPy & Math) ---
 diferencia_altura = altura_laser - altura_mira
 
-# Ángulo en radianes y conversión a grados
+# Cálculo del ángulo usando trigonometría
 angulo_rad = math.atan2(diferencia_altura, distancia_mira)
 angulo_grados = math.degrees(angulo_rad)
 
 # --- PANTALLA PRINCIPAL (75% RESTANTE) ---
-st.title("🎯 Calculadora de Ángulo para Mira de Caza/Tiro")
+st.title("🎯 Calculadora de Ángulo de Inclinación")
 st.caption(
-    "El láser está fijo en el centro de la diana. Ajusta la posición de la mira para obtener el ángulo de inclinación."
+    "El láser está fijo en la diana. Ajusta la mira en el menú izquierdo para ver el ángulo necesario para apuntar al centro."
 )
 
 st.markdown("---")
 
-# Métricas principales arriba
+# Métrica del resultado en columnas
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("Diferencia de Altura", f"{diferencia_altura:+.2f} m")
+    st.metric(
+        label="Diferencia de Altura", value=f"{diferencia_altura:+.2f} m"
+    )
 
 with col2:
-    st.metric("Ángulo de Inclinación", f"{angulo_grados:+.2f}°")
+    st.metric(
+        label="Ángulo de Inclinación", value=f"{angulo_grados:+.2f}°"
+    )
 
 with col3:
     if angulo_grados > 0:
-        st.metric("Orientación", "Inclinado hacia ARRIBA ⬆️")
+        st.metric("Orientación", "Inclinar hacia ARRIBA ⬆️")
     elif angulo_grados < 0:
-        st.metric("Orientación", "Inclinado hacia ABAJO ⬇️")
+        st.metric("Orientación", "Inclinar hacia ABAJO ⬇️")
     else:
-        st.metric("Orientación", "Completamente NIVELADO ➡️")
+        st.metric("Orientación", "Totalmente NIVELADO ➡️")
 
 st.markdown("---")
 
-# --- GRÁFICO VISUAL (SIMULACIÓN) ---
-st.subheader("📐 Simulación Visual")
+# --- GRÁFICO INTERACTIVO (Plotly) ---
+st.subheader("📐 Representación Visual del Disparo")
 
-fig, ax = plt.subplots(figsize=(8, 3.5))
+# Crear la figura interactiva de Plotly
+fig = go.Figure()
 
-# Dibujar la línea de suelo
-ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
-
-# Dibujar Diana y Láser (Fijo en x=distancia_mira, y=altura_laser)
-ax.plot(
-    distancia_mira,
-    altura_laser,
-    "ro",
-    markersize=12,
-    label="Centro Diana / Láser",
-)
-ax.annotate(
-    " Diana (Láser Fijo)",
-    (distancia_mira, altura_laser),
-    textcoords="offset points",
-    xytext=(10, -5),
+# 1. Línea de referencia horizontal (piso/suelo)
+fig.add_trace(
+    go.Scatter(
+        x=[0, distancia_mira + 2],
+        y=[0, 0],
+        mode="lines",
+        name="Suelo",
+        line=dict(color="gray", dash="dash"),
+    )
 )
 
-# Dibujar la Mira (en x=0, y=altura_mira)
-ax.plot(0, altura_mira, "bs", markersize=10, label="Mira")
-ax.annotate(
-    " Mira", (0, altura_mira), textcoords="offset points", xytext=(-35, -5)
+# 2. Línea horizontal de referencia para la mira
+fig.add_trace(
+    go.Scatter(
+        x=[0, distancia_mira],
+        y=[altura_mira, altura_mira],
+        mode="lines",
+        name="Nivel Cero de Mira",
+        line=dict(color="lightgray", dash="dot"),
+    )
 )
 
-# Línea de visión de la Mira al Láser
-ax.plot(
-    [0, distancia_mira],
-    [altura_mira, altura_laser],
-    "g--",
-    linewidth=2,
-    label=f"Línea de Visión ({angulo_grados:.2f}°)",
+# 3. Línea de Visión (Desde la Mira hasta el Láser)
+fig.add_trace(
+    go.Scatter(
+        x=[0, distancia_mira],
+        y=[altura_mira, altura_laser],
+        mode="lines+markers",
+        name=f"Trayectoria ({angulo_grados:.2f}°)",
+        line=dict(color="#10b981", width=3),
+    )
 )
 
-# Línea horizontal de referencia para la mira
-ax.plot([0, distancia_mira], [altura_mira, altura_mira], "k:", alpha=0.4)
+# 4. Punto: Mira
+fig.add_trace(
+    go.Scatter(
+        x=[0],
+        y=[altura_mira],
+        mode="markers+text",
+        name="Mira",
+        text=["Mira"],
+        textposition="top center",
+        marker=dict(size=14, color="#3b82f6", symbol="square"),
+    )
+)
 
-# Configuración del gráfico
-ax.set_xlim(-1, distancia_mira + 2)
-ax.set_ylim(-1, max(altura_laser, altura_mira) + 2)
-ax.set_xlabel("Distancia Horizontal (m)")
-ax.set_ylabel("Altura (m)")
-ax.legend(loc="upper left")
-ax.grid(True, linestyle=":", alpha=0.6)
+# 5. Punto: Láser / Diana Fijo
+fig.add_trace(
+    go.Scatter(
+        x=[distancia_mira],
+        y=[altura_laser],
+        mode="markers+text",
+        name="Centro Diana (Láser Fijo)",
+        text=["Láser / Diana"],
+        textposition="top center",
+        marker=dict(size=16, color="#ef4444", symbol="circle-cross"),
+    )
+)
 
-# Mostrar en Streamlit
-st.pyplot(fig)
+# Ajustes de diseño de la gráfica
+fig.update_layout(
+    xaxis_title="Distancia Horizontal (metros)",
+    yaxis_title="Altura (metros)",
+    height=450,
+    margin=dict(l=20, r=20, t=30, b=20),
+    legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+)
+
+# Mostrar en Streamlit usando Plotly
+st.plotly_chart(fig, use_container_width=True)
