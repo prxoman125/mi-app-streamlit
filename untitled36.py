@@ -6,10 +6,11 @@ import numpy as np
 st.set_page_config(page_title="Mira Láser Interactiva", layout="wide")
 
 st.title("🎯 Alineador Geométrico de Mira Telescópica")
-st.write("Ajusta la altura de la mira o de la diana usando los controles laterales para calcular el ángulo exacto.")
+st.write("Ajusta la altura de la mira usando el control lateral para calcular el ángulo exacto.")
 
 # Distancia horizontal fija en metros (equivale a 1000 cm)
 distancia_fija_m = 10.0 
+y_laser_fijo = 10.0  # El láser está completamente fijo a 10 cm
 
 # --- ESTRUCTURA EN 3 COLUMNAS: [Izquierda, Centro (Gráfica), Derecha] ---
 col_izq, col_grafica, col_der = st.columns([1, 3, 1])
@@ -22,36 +23,26 @@ with col_izq:
         min_value=1.0, max_value=5.0, value=5.0, step=0.5
     )
 
-# 2. Columna Derecha: Control de la Diana (fijo en 10 cm)
+# 2. Columna Derecha: Diana (Fija en 10 cm, desactivada para evitar fallos de rango)
 with col_der:
     st.subheader("Diana")
     y_diana = st.slider(
         "Altura de la Diana (cm):", 
-        min_value=10.0, max_value=10.0, value=10.0, step=0.5
+        min_value=1.0, max_value=10.0, value=10.0, disabled=True
     )
 
 # --- CÁLCULO TRIGONOMÉTRICO ---
-# El láser está fijo a 10 cm
-y_laser_fijo = 10.0
-
 altura_relativa_m = (y_mira - y_diana) / 100.0
 angulo_rad = np.arctan(altura_relativa_m / distancia_fija_m)
 angulo_deg = np.degrees(angulo_rad)
 
-# --- PREPARACIÓN DE DATOS PARA EL GRÁFICO ---
-# Línea del Láser fija a 10 cm a lo largo de toda la distancia
-laser_data = pd.DataFrame({
-    'Distancia (m)': [0, distancia_fija_m],
-    'Láser': [y_laser_fijo, y_laser_fijo]
+# --- PREPARACIÓN LIMPIA DE DATOS PARA EL GRÁFICO ---
+# Estructuramos un solo DataFrame explícito con los puntos (0,0) a (10,10)
+chart_data = pd.DataFrame({
+    'Distancia (m)': [0.0, distancia_fija_m],
+    'Láser (Fijo)': [y_laser_fijo, y_laser_fijo],
+    'Línea de Visión': [y_mira, y_diana]
 }).set_index('Distancia (m)')
-
-# Línea de Visión de la Mira (desde y_mira hasta y_diana)
-vision_data = pd.DataFrame({
-    'Distancia (m)': [0, distancia_fija_m],
-    'Láser / Línea de Visión': [y_mira, y_diana]
-}).set_index('Distancia (m)')
-
-chart_data = pd.concat([laser_data, vision_data], axis=1)
 
 # 3. Columna Central: Gráfica de la Visualización
 with col_grafica:
