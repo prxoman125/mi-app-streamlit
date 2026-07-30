@@ -9,75 +9,102 @@ import pandas as pd
 st.set_page_config(page_title="Software Modular: Topografia & Ciencias", layout="wide")
 
 # ---------------------------------------------------------
-# INYECCIÓN DE CSS MONOCROMÁTICO (NEGROS Y GRISES OSCUROS)
+# INYECCIÓN DE CSS ENTERPRISE (HIGH-END DARK UI)
 # ---------------------------------------------------------
 st.markdown("""
     <style>
-    /* 1. Fondo principal y tipografía general */
+    /* 1. Fondo principal y tipografía general estilo Enterprise */
     .stApp {
-        background-color: #050505 !important;
-        color: #D4D4D4 !important;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #090A0F !important;
+        color: #C5C9D3 !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Ocultar barra superior por defecto de Streamlit */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
     }
 
     /* 2. Estilo de Encabezados */
-    h1, h2, h3, h4, h5, h6, .stHeader {
-        color: #FFFFFF !important;
+    h1, h2, h3 {
+        color: #F0F2F5 !important;
         font-weight: 600 !important;
-        letter-spacing: -0.5px;
+        letter-spacing: -0.02em !important;
+        margin-bottom: 0.8rem !important;
     }
+    
+    h1 { font-size: 1.5rem !important; }
+    h2 { font-size: 1.25rem !important; }
+    h3 { font-size: 1rem !important; }
 
-    /* 3. Tarjetas de Métricas (st.metric) */
+    /* 3. Tarjetas de Métricas Ejecutivas */
     [data-testid="stMetric"] {
-        background-color: #121212 !important;
-        border: 1px solid #262626 !important;
-        padding: 16px !important;
-        border-radius: 6px !important;
+        background-color: #12151E !important;
+        border: 1px solid #232836 !important;
+        border-top: 2px solid #3B4254 !important;
+        padding: 18px 20px !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
     [data-testid="stMetricValue"] {
         color: #FFFFFF !important;
+        font-size: 1.6rem !important;
         font-weight: 700 !important;
+        letter-spacing: -0.01em;
     }
     [data-testid="stMetricLabel"] {
-        color: #8C8C8C !important;
-        font-size: 0.85rem !important;
+        color: #7A8499 !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.08em;
     }
 
     /* 4. Inputs, Selectbox y Sliders */
     div[data-baseweb="select"] > div,
     div[data-baseweb="input"] > div,
     .stNumberInput input {
-        background-color: #121212 !important;
-        border: 1px solid #262626 !important;
-        color: #FFFFFF !important;
-        border-radius: 4px !important;
+        background-color: #12151E !important;
+        border: 1px solid #232836 !important;
+        color: #F0F2F5 !important;
+        border-radius: 6px !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease;
     }
+    
     div[data-baseweb="select"]:hover > div,
     div[data-baseweb="input"]:hover > div {
-        border-color: #404040 !important;
+        border-color: #3B4254 !important;
     }
 
-    /* 5. Cuadros de Información (st.info, st.warning) */
+    /* Labels de los controles */
+    .stSelectbox label, .stSlider label, .stNumberInput label {
+        color: #9DA5B4 !important;
+        font-size: 0.85rem !important;
+        font-weight: 500 !important;
+    }
+
+    /* 5. Cuadros de Información */
     div[data-testid="stNotification"] {
-        background-color: #171717 !important;
-        border: 1px solid #262626 !important;
-        color: #A3A3A3 !important;
-        border-radius: 4px !important;
-    }
-
-    /* 6. Editor de Datos (st.data_editor) */
-    div[data-testid="stDataEditor"] {
-        background-color: #121212 !important;
-        border: 1px solid #262626 !important;
+        background-color: #12151E !important;
+        border: 1px solid #232836 !important;
+        border-left: 3px solid #5A657D !important;
+        color: #C5C9D3 !important;
         border-radius: 6px !important;
-        padding: 4px;
     }
 
-    /* 7. Línea divisoria (st.divider) */
+    /* 6. Editor de Datos */
+    div[data-testid="stDataEditor"] {
+        background-color: #12151E !important;
+        border: 1px solid #232836 !important;
+        border-radius: 8px !important;
+        padding: 6px;
+    }
+
+    /* 7. Separadores visuales */
     hr {
-        border-color: #262626 !important;
+        border-color: #1D222E !important;
+        margin: 1.5rem 0 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -93,6 +120,15 @@ PROPIEDADES_MATERIALES = {
     "Roca fragmentada / Volada": {"esponjamiento": 1.50, "talud_opt": 45.0},
     "Grava": {"esponjamiento": 1.15, "talud_opt": 38.0}
 }
+
+# Configuración del maquetado base para Plotly 3D (para encajar impecable en el tema oscuro)
+PLOTLY_LAYOUT_BASE = dict(
+    template="plotly_dark",
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=0, r=0, b=0, t=10),
+    font=dict(family="Inter, sans-serif", color="#7A8499", size=11)
+)
 
 # ---------------------------------------------------------
 # 2. ESTRUCTURA PRINCIPAL (3 COLUMNAS: [1, 2, 1])
@@ -208,7 +244,7 @@ with col_central:
         costo_total_obra = (vol_corte_bancal * costo_corte_m3) + (vol_relleno_bancal * costo_relleno_m3)
         viajes_camion = int(np.ceil(vol_corte_suelto / capacidad_camion_m3)) if capacidad_camion_m3 > 0 else 0
 
-        # Renders 3D
+        # Renders 3D (Colores mantenidos)
         fig.add_trace(go.Surface(z=Z, x=X, y=Y, colorscale="Earth", name="Terreno"))
         Z_plano = np.full_like(Z, cota_corte)
         fig.add_trace(go.Surface(
@@ -232,8 +268,14 @@ with col_central:
             st.warning("Revisa las coordenadas ingresadas en la tabla de la derecha.")
 
         fig.update_layout(
-            scene=dict(xaxis_title="X (m)", yaxis_title="Y (m)", zaxis_title="Elevación (m)", aspectratio=dict(x=1, y=1, z=0.6)),
-            margin=dict(l=0, r=0, b=0, t=10)
+            **PLOTLY_LAYOUT_BASE,
+            scene=dict(
+                xaxis_title="X (m)", yaxis_title="Y (m)", zaxis_title="Elevación (m)",
+                aspectratio=dict(x=1, y=1, z=0.6),
+                xaxis=dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#232836", showbackground=True),
+                yaxis=dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#232836", showbackground=True),
+                zaxis=dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#232836", showbackground=True)
+            )
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -248,6 +290,7 @@ with col_central:
         r = np.sqrt(X**2 + Y**2) + 0.5
         Z = - (G_CONST * M_kg) / (r * 1e8)
 
+        # Renders 3D (Colores mantenidos)
         fig.add_trace(go.Surface(z=Z, x=X, y=Y, colorscale="Viridis", name="Embudo Gravitatorio"))
 
         # Control de errores al graficar partículas
@@ -266,12 +309,18 @@ with col_central:
             st.warning("Revisa las coordenadas de las partículas en la tabla de la derecha.")
 
         fig.update_layout(
-            scene=dict(xaxis_title="X (UA)", yaxis_title="Y (UA)", zaxis_title="Potencial (Φ)", aspectratio=dict(x=1, y=1, z=0.6)),
-            margin=dict(l=0, r=0, b=0, t=10)
+            **PLOTLY_LAYOUT_BASE,
+            scene=dict(
+                xaxis_title="X (UA)", yaxis_title="Y (UA)", zaxis_title="Potencial (Φ)",
+                aspectratio=dict(x=1, y=1, z=0.6),
+                xaxis=dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#232836", showbackground=True),
+                yaxis=dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#232836", showbackground=True),
+                zaxis=dict(backgroundcolor="rgba(0,0,0,0)", gridcolor="#232836", showbackground=True)
+            )
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # --- MÉTRICAS INFERIORES SOLICITADAS PARA CIENCIAS ---
+        # --- MÉTRICAS INFERIORES PARA CIENCIAS ---
         m1, m2, m3 = st.columns(3)
         
         m1.metric(
