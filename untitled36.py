@@ -39,14 +39,54 @@ with col_grafica:
 
     y_laser_fijo = 0.0  # El laser esta fijo en el centro de la diana (0 cm)
 
-    # --- PREPARACION DE DATOS PARA EL GRAFICO ---
-    chart_data = pd.DataFrame({
-        'Distancia (m)': [0.0, distancia_m],
-        'Laser (Fijo en 0 cm)': [y_laser_fijo, y_laser_fijo],
-        'Linea de Vision': [y_mira, y_diana]
-    }).set_index('Distancia (m)')
+    # --- PREPARACION DE DATOS PARA EL GRAFICO (Formato Largo para Vega-Lite) ---
+    # Vega-Lite prefiere datos en formato "largo" (long format) para capas complejas.
+    chart_data_long = pd.DataFrame({
+        'Distancia (m)': [0.0, distancia_m, 0.0, distancia_m],
+        'Altura (cm)': [y_laser_fijo, y_laser_fijo, y_mira, y_diana],
+        'Tipo': ['Laser (Fijo en 0 cm)', 'Laser (Fijo en 0 cm)', 'Linea de Vision', 'Linea de Vision'],
+        # Definimos que simbolo queremos en cada punto extremo
+        'Simbolo': ['square', 'square', 'circle', 'circle'] 
+    })
 
-    st.line_chart(chart_data, y_label="Altura (cm)", height=400)
+    # --- DEFINICION DEL GRAFICO VEGA-LITE (Capas) ---
+    vega_lite_spec = {
+        "width": "container", # Ocupa todo el ancho disponible
+        "height": 400,
+        "data": {"values": chart_data_long.to_dict('records')},
+        "encoding": {
+            "x": {"field": "Distancia (m)", "type": "quantitative", "title": "Distancia (m)"},
+            "y": {"field": "Altura (cm)", "type": "quantitative", "title": "Altura (cm)"},
+            "color": {
+                "field": "Tipo", 
+                "type": "nominal", 
+                "legend": {"title": "Elemento"},
+                # Definimos colores explicitos para que coincidan con los simbolos
+                "scale": {"domain": ["Laser (Fijo en 0 cm)", "Linea de Vision"], "range": ["#1f77b4", "#ff7f0e"]}
+            }
+        },
+        "layer": [
+            # Capa 1: Las Lineas
+            {
+                "mark": {"type": "line", "interpolate": "linear"},
+                "encoding": {
+                    "strokeWidth": {"value": 2}
+                }
+            },
+            # Capa 2: Los Simbolos en los extremos
+            {
+                "mark": {"type": "point", "size": 100, "filled": True}, # Puntos rellenos y mas grandes
+                "encoding": {
+                    # Usamos el campo 'Simbolo' definido en el DataFrame
+                    "shape": {"field": "Simbolo", "type": "nominal", "scale": None} 
+                }
+            }
+        ]
+    }
+
+    # Renderizamos el grafico usando la definicion Vega-Lite
+    st.vega_lite_chart(vega_lite_spec, use_container_width=True)
+
 
 # --- CALCULO TRIGONOMETRICO ---
 # Cateto opuesto: Diferencia entre la altura de la mira y el punto objetivo en la diana (convertido a metros)
