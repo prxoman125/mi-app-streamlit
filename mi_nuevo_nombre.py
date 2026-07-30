@@ -77,7 +77,7 @@ with col2:
                 texto = '#32CD32' 
             else:
                 color = '#8B0000'  
-                texto = '#FF7F7F' 
+                texto = '#B71C1C' 
             return f'background-color: {color}; color: {texto}; font-weight: bold;'
 
         # Aplicamos la función de estilo a la columna correspondiente
