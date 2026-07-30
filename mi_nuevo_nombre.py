@@ -6,7 +6,7 @@ import pandas as pd
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
-# --- ESTILOS CSS PERSONALIZADOS (CON BOTONES + Y - EN AZUL CLARO) ---
+# --- ESTILOS CSS PERSONALIZADOS ---
 st.markdown("""
     <style>
         /* Fondo y contenedor de la barra lateral */
@@ -404,16 +404,18 @@ if save_clicked:
     st.session_state["history"].append(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICA MATPLOTLIB ---
-fig, ax = plt.subplots(figsize=(10, 4.2), dpi=100)
+# --- GRÁFICA MATPLOTLIB (TAMAÑO Y LÍMITES TOTALMENTE ESTÁTICOS) ---
+fig, ax = plt.subplots(figsize=(10, 4.0), dpi=100)
 pos_laser, pos_mira = (0, 0), (0, H_mira_cm)
 pos_diana_centro, pos_impacto_mira = (D_cm, y_ref_end), (D_cm, y_target_point)
 
-x_min, x_max = -max(D_cm, 10)*0.1, max(D_cm, 10)*1.15
-y_raw_min = min(0, pos_mira[1], pos_diana_centro[1], pos_impacto_mira[1])
-y_raw_max = max(0, pos_mira[1], pos_diana_centro[1], pos_impacto_mira[1])
-y_range = max(abs(y_raw_max - y_raw_min), 10.0)
-y_bottom, y_top = y_raw_min - (y_range * 0.15) - 5, y_raw_max + (y_range * 0.15) + 5
+# Definimos límites fijos proporcionales para la vista
+x_min = -max(D_cm, 10) * 0.05
+x_max = max(D_cm, 10) * 1.15
+
+max_y_range = max(abs(pos_mira[1]), abs(pos_diana_centro[1]), abs(pos_impacto_mira[1]), 50.0)
+y_bottom = -max_y_range * 1.25
+y_top = max_y_range * 1.25
 
 ax.set_facecolor("#0b0c1b")
 fig.patch.set_facecolor("#0b0c1b")
@@ -430,14 +432,17 @@ ax.scatter(*pos_mira, color='#00d2ff', s=SIZE_SMALL, marker='X', zorder=6)
 ax.scatter(*pos_diana_centro, color='#ffcc00', s=SIZE_LARGE, marker='o', edgecolors='white', linewidth=1.5, zorder=6, label=txt["target_center"])
 ax.scatter(*pos_impacto_mira, color='#33ff77', s=SIZE_LARGE, marker='D', edgecolors='black', linewidth=1, zorder=6, label=txt["target_point"])
 
-ax.set_title(f"{txt['title_graph']}: {D_val:.1f} {d_unit} | {txt['req_angle']}: {angulo_deg:.4f}° ({moa:.1f} MOA / {mrad:.2f} mrad)", color='white', fontsize=11, fontweight='bold')
+ax.set_title(f"{txt['title_graph']}: {D_val:.1f} {d_unit} | {txt['req_angle']}: {angulo_deg:.4f}° ({moa:.1f} MOA / {mrad:.2f} mrad)", color='white', fontsize=11, fontweight='bold', pad=12)
+
 ax.set_xlim(x_min, x_max)
 ax.set_ylim(y_bottom, y_top)
 ax.grid(True, linestyle=':', alpha=0.2, color='cyan')
 ax.tick_params(colors='white', labelsize=9)
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.18), ncol=4, facecolor='#12132c', edgecolor='#333566', labelcolor='white', framealpha=0.9, fontsize=9)
 
-plt.tight_layout()
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=4, facecolor='#12132c', edgecolor='#333566', labelcolor='white', framealpha=0.9, fontsize=9)
+
+# Evita que el lienzo cambie de tamaño según el texto
+fig.subplots_adjust(top=0.88, bottom=0.22, left=0.08, right=0.96)
 
 # --- MOSTRAR LA GRÁFICA ---
 st.pyplot(fig, use_container_width=True, clear_figure=True)
