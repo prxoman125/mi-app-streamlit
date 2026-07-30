@@ -10,8 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- INYECCIÓN DE CSS PARA DISEÑO INTEGRAL DE ALTA GAMA ---
-# Homologa el estilo de ambas columnas y cajas de entrada de datos
+# --- INYECCIÓN DE CSS PARA DISEÑO INTEGRAL DE ALTA GAMA CON DEGRADADO ---
 st.markdown("""
     <style>
         /* Fondo general oscuro de alta gama */
@@ -32,12 +31,13 @@ st.markdown("""
             border-radius: 8px;
             padding: 15px;
         }
-        /* Caja de fondo para homologar el panel de la izquierda con el de la derecha */
+        /* CAMBIO: Fondo degradado azul oscuro para la columna izquierda (col1) */
         div[data-testid="column"]:nth-of-type(1) {
-            background-color: #0D1B3E;
+            background: linear-gradient(135deg, #0A1432 0%, #12255C 100%);
             border: 1px solid #1E3A8A;
             border-radius: 8px;
             padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.05);
         }
         /* Ajuste para que los inputs numéricos combinen con el fondo oscuro */
         input {
@@ -144,6 +144,26 @@ t = {
     }
 }[idioma]
 
+# --- INICIALIZACIÓN ESTABLE DEL ESTADO DE MEMORIA (SESSION STATE) ---
+if "calculado" not in st.session_state:
+    st.session_state.calculado = False
+if "df_financiero" not in st.session_state:
+    st.session_state.df_financiero = pd.DataFrame()
+if "saldo_final_global" not in st.session_state:
+    st.session_state.saldo_final_global = 0.0
+if "total_invertido_global" not in st.session_state:
+    st.session_state.total_invertido_global = 0.0
+if "idioma_previo" not in st.session_state:
+    st.session_state.idioma_previo = idioma
+
+# Si el usuario cambia el idioma, recalculamos las columnas del DataFrame de memoria para evitar errores de visualización
+if st.session_state.idioma_previo != idioma and not st.session_state.df_financiero.empty:
+    st.session_state.idioma_previo = idioma
+    # Forzamos una actualización de las etiquetas de las columnas basándonos en el nuevo idioma seleccionado
+    columnas_antiguas = st.session_state.df_financiero.columns.tolist()
+    nuevas_columnas = [t["col_anio"], t["col_saldo"], t["col_rend"]]
+    st.session_state.df_financiero.columns = nuevas_columnas
+
 # --- ENCABEZADO CORPORATIVO ---
 st.title(t["titulo"])
 st.write(t["subtitulo"])
@@ -151,11 +171,6 @@ st.divider()
 
 # 2. CREACIÓN DE LA ESTRUCTURA DE DOS COLUMNAS
 col1, col2 = st.columns([1, 1.2])
-
-# Variables globales inicializadas para control de estado
-df_financiero = pd.DataFrame()
-saldo_final_global = 0.0
-total_invertido_global = 0.0
 
 # --- CONTROL DE LICENCIA (UBICADO EN EL SIDEBAR) ---
 with st.sidebar:
@@ -166,7 +181,6 @@ with st.sidebar:
     if usuario_pago:
         st.success(t["lic_ok"])
         st.subheader(t["v_macro"])
-        # ENTRADAS NUMÉRICAS MANUALES PARA PREMIUM (SIN SLIDERS)
         inflacion_premium = st.number_input(t["inflacion"], min_value=0.0, max_value=30.0, value=4.0, step=0.1)
         impuesto_premium = st.number_input(t["impuesto"], min_value=0, max_value=50, value=15, step=1)
         volatilidad_premium = st.number_input(t["volatilidad"], min_value=0, max_value=50, value=8, step=1)
@@ -176,12 +190,11 @@ with st.sidebar:
         impuesto_premium = 0     
         volatilidad_premium = 0  
 
-# --- COLUMNA 1: PANEL DE CONTROL DE ALTA GAMA (ENTRADAS MANUALES) ---
+# --- COLUMNA 1: PANEL DE CONTROL DE ALTA GAMA (ENTRADAS MANUALES CON DEGRADADO CSS) ---
 with col1:
     st.header(t["p_control"])
     st.write(t["p_desc"])
     
-    # ENTRADAS NUMÉRICAS MANUALES (REEMPLAZAN TODOS LOS SLIDERS)
     capital_inicial = st.number_input(t["cap_init"], min_value=0, value=10000, step=500)
     ahorro_mensual = st.number_input(t["ahorro"], min_value=0, value=500, step=50)
     anios = st.number_input(t["horizonte"], min_value=1, max_value=50, value=20, step=1)
@@ -190,29 +203,3 @@ with col1:
     st.write("") 
     calcular = st.button(t["ejecutar"], use_container_width=True)
 
-# --- COLUMNA 2: RESULTADOS ANALÍTICOS ---
-with col2:
-    st.header(t["res_analiticos"])
-    
-    if calcular:
-        tasa_decimal = tasa_interes / 100
-        inflacion_decimal = inflacion_premium / 100
-        
-        datos_anios = []
-        saldo_actual = capital_inicial
-        total_invertido_global = capital_inicial + (ahorro_mensual * 12 * anios)
-        
-        for anio in range(1, anios + 1):
-            interes_ganado = saldo_actual * tasa_decimal
-            saldo_actual += interes_ganado + (ahorro_mensual * 12)
-            rendimiento_real = tasa_interes - (inflacion_decimal * 100)
-            
-            datos_anios.append({
-                t["col_anio"]: f"{t['col_anio']} {anio}",
-                t["col_saldo"]: round(saldo_actual, 2),
-                t["col_rend"]: round(rendimiento_real, 2)
-            })
-        
-        df_financiero = pd.DataFrame(datos_anios)
-        saldo_final_global = saldo_actual
-        
