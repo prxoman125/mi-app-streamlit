@@ -39,57 +39,59 @@ with col_grafica:
 
     y_laser_fijo = 0.0  # El laser esta fijo en el centro de la diana (0 cm)
 
-    # --- PREPARACION DE DATOS PARA EL GRAFICO (Formato Largo para Vega-Lite) ---
-    # Vega-Lite prefiere datos en formato "largo" (long format) para capas complejas.
-    chart_data_long = pd.DataFrame({
-        'Distancia (m)': [0.0, distancia_m, 0.0, distancia_m],
-        'Altura (cm)': [y_laser_fijo, y_laser_fijo, y_mira, y_diana],
-        'Tipo': ['Laser (Fijo en 0 cm)', 'Laser (Fijo en 0 cm)', 'Linea de Vision', 'Linea de Vision'],
-        # Definimos que simbolo queremos en cada punto extremo
-        'Simbolo': ['square', 'square', 'circle', 'circle'] 
-    })
+    # --- PREPARACION DE DATOS EN FORMATO LARGO ---
+    # Creamos registros específicos para los puntos de origen (0m) y destino (distancia_m)
+    chart_data_long = pd.DataFrame([
+        {'Distancia': 0.0, 'Altura': y_laser_fijo, 'Elemento': 'Laser', 'Icono': 'circle'},
+        {'Distancia': distancia_m, 'Altura': y_laser_fijo, 'Elemento': 'Laser', 'Icono': 'diamond'}, # Diamante para el laser en diana
+        {'Distancia': 0.0, 'Altura': y_mira, 'Elemento': 'Linea de Vision', 'Icono': 'cross'},       # Cruz/Reticula para la mira
+        {'Distancia': distancia_m, 'Altura': y_diana, 'Elemento': 'Linea de Vision', 'Icono': 'triangle-down'} # Triangulo en destino
+    ])
 
-    # --- DEFINICION DEL GRAFICO VEGA-LITE (Capas) ---
+    # --- DEFINICION DEL GRAFICO VEGA-LITE ---
     vega_lite_spec = {
-        "width": "container", # Ocupa todo el ancho disponible
+        "width": "container",
         "height": 400,
         "data": {"values": chart_data_long.to_dict('records')},
         "encoding": {
-            "x": {"field": "Distancia (m)", "type": "quantitative", "title": "Distancia (m)"},
-            "y": {"field": "Altura (cm)", "type": "quantitative", "title": "Altura (cm)"},
+            "x": {
+                "field": "Distancia", 
+                "type": "quantitative", 
+                "title": "Distancia (m)",
+                "scale": {"domain": [0, distancia_m]} # Mantiene la escala del eje X sincronizada
+            },
+            "y": {
+                "field": "Altura", 
+                "type": "quantitative", 
+                "title": "Altura (cm)",
+                "scale": {"domain": [-12, 12]} # Rango fijo en Y para evitar saltos bruscos
+            },
             "color": {
-                "field": "Tipo", 
+                "field": "Elemento", 
                 "type": "nominal", 
-                "legend": {"title": "Elemento"},
-                # Definimos colores explicitos para que coincidan con los simbolos
-                "scale": {"domain": ["Laser (Fijo en 0 cm)", "Linea de Vision"], "range": ["#1f77b4", "#ff7f0e"]}
+                "scale": {"domain": ["Laser", "Linea de Vision"], "range": ["#e74c3c", "#2980b9"]}
             }
         },
         "layer": [
-            # Capa 1: Las Lineas
+            # Capa 1: Lineas de trayectoria
             {
-                "mark": {"type": "line", "interpolate": "linear"},
-                "encoding": {
-                    "strokeWidth": {"value": 2}
-                }
+                "mark": {"type": "line", "strokeWidth": 3}
             },
-            # Capa 2: Los Simbolos en los extremos
+            # Capa 2: Iconos/Simbolos diferenciados en cada extremo
             {
-                "mark": {"type": "point", "size": 100, "filled": True}, # Puntos rellenos y mas grandes
+                "mark": {"type": "point", "size": 150, "filled": True},
                 "encoding": {
-                    # Usamos el campo 'Simbolo' definido en el DataFrame
-                    "shape": {"field": "Simbolo", "type": "nominal", "scale": None} 
+                    "shape": {"field": "Icono", "type": "nominal", "scale": None}
                 }
             }
         ]
     }
 
-    # Renderizamos el grafico usando la definicion Vega-Lite
-    st.vega_lite_chart(vega_lite_spec, use_container_width=True)
+    # Renderizado interactivo usando una clave dinamica para forzar la actualizacion
+    st.vega_lite_chart(vega_lite_spec, use_container_width=True, key=f"chart_{y_mira}_{y_diana}_{distancia_m}")
 
 
 # --- CALCULO TRIGONOMETRICO ---
-# Cateto opuesto: Diferencia entre la altura de la mira y el punto objetivo en la diana (convertido a metros)
 altura_relativa_m = (y_mira - y_diana) / 100.0
 angulo_rad = np.arctan(altura_relativa_m / distancia_m)
 angulo_deg = np.degrees(angulo_rad)
