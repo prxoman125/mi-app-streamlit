@@ -73,11 +73,11 @@ with col2:
         # Función modificada con tonos opacos/pastel para evitar colores chillones
         def color_semaforo(val):
             if val > 0:
-                color = '#355749'  # Verde menta/oliva muy suave (mate)
-                texto = '#385723'  # Verde pino oscuro para el texto
+                color = '#355749' 
+                texto = '#32CD32' 
             else:
-                color = '#FCE4D6'  # Rojo salmón/arena muy suave (mate)
-                texto = '#C65911'  # Café/óxido oscuro para el texto
+                color = '#FCE4D6'  
+                texto = '#C65911' 
             return f'background-color: {color}; color: {texto}; font-weight: bold;'
 
         # Aplicamos la función de estilo a la columna correspondiente
