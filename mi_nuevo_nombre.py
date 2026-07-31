@@ -3,25 +3,83 @@ import numpy as np
 import math
 import pandas as pd
 import plotly.graph_objects as go
+import sqlite3
+from scipy import stats
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
+
+# --- BASE DE DATOS SQLITE ---
+DB_NAME = "colimacion_historial.db"
+
+def init_db():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS historial (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            perfil TEXT,
+            distancia TEXT,
+            h_mira TEXT,
+            h_extra TEXT,
+            spot_size TEXT,
+            angulo TEXT,
+            moa REAL,
+            mrad REAL,
+            direccion TEXT,
+            clics_moa INTEGER,
+            pulsos_mrad INTEGER,
+            incertidumbre TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def save_record_to_db(rec):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute('''
+        INSERT INTO historial 
+        (perfil, distancia, h_mira, h_extra, spot_size, angulo, moa, mrad, direccion, clics_moa, pulsos_mrad, incertidumbre)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        rec["Perfil / Carrera"], rec["Distancia"], rec["Línea Colimación"], 
+        rec["Desviación Impacto"], rec["Spot Size"], rec["Ángulo (α)"], 
+        rec["MOA"], rec["mrad"], rec["Dirección"], rec["Clics (1/4 MOA)"], 
+        rec["Pulsos (0.1 mrad)"], rec["Incertidumbre (±)"]
+    ))
+    conn.commit()
+    conn.close()
+
+def load_history_from_db():
+    conn = sqlite3.connect(DB_NAME)
+    df = pd.read_sql_query("SELECT id, fecha AS 'Fecha/Hora', perfil AS 'Perfil / Carrera', distancia AS 'Distancia', h_mira AS 'Línea Colimación', h_extra AS 'Desviación Impacto', spot_size AS 'Spot Size', angulo AS 'Ángulo (α)', moa AS 'MOA', mrad AS 'mrad', direccion AS 'Dirección', clics_moa AS 'Clics (1/4 MOA)', pulsos_mrad AS 'Pulsos (0.1 mrad)', incertidumbre AS 'Incertidumbre (±)' FROM historial ORDER BY id DESC", conn)
+    conn.close()
+    return df
+
+def clear_db():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("DELETE FROM historial")
+    conn.commit()
+    conn.close()
+
+# Inicializar Base de Datos
+init_db()
 
 # --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO) ---
 st.markdown("""
     <style>
-        /* Fondo principal de la aplicación */
         .stApp {
             background-color: #000000 !important;
             color: #e0e0e0 !important;
         }
 
-        /* Contenedor y fondo de la barra lateral */
         [data-testid="stSidebar"] {
             background-color: #0a0a0a !important;
             border-right: 1px solid #262626 !important;
         }
 
-        /* Estilo para los títulos de la barra lateral */
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
             color: #ffffff !important;
             font-size: 13px !important;
@@ -34,7 +92,6 @@ st.markdown("""
             padding-bottom: 4px;
         }
 
-        /* Rediseño de botones generales */
         div.stButton > button {
             background: linear-gradient(135deg, #1a1a1a 0%, #262626 100%) !important;
             color: #ffffff !important;
@@ -50,7 +107,6 @@ st.markdown("""
             border-color: #ffffff !important;
         }
 
-        /* Estilo para los botones + y - de los number_input */
         button[aria-label="Increase value"], 
         button[aria-label="Decrease value"],
         div[data-baseweb="spinbutton"] button,
@@ -72,14 +128,12 @@ st.markdown("""
             box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.3) !important;
         }
 
-        /* Entradas de texto, número y selects */
         div[data-baseweb="input"], div[data-baseweb="select"] > div {
             background-color: #121212 !important;
             border-color: #333333 !important;
             color: #ffffff !important;
         }
 
-        /* Botón Confirmar Borrado (Estilo oscuro sobrio) */
         div.btn-confirm-yes > div.stButton > button {
             background: linear-gradient(135deg, #1f2a1f 0%, #2a3a2a 100%) !important;
             color: #a3dda3 !important;
@@ -91,7 +145,6 @@ st.markdown("""
             box-shadow: 0px 0px 10px rgba(163, 221, 163, 0.3);
         }
 
-        /* Botón Cancelar Borrado (Estilo oscuro sobrio) */
         div.btn-confirm-cancel > div.stButton > button {
             background: linear-gradient(135deg, #2a1f1f 0%, #3a2a2a 100%) !important;
             color: #dda3a3 !important;
@@ -105,7 +158,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- DICCIONARIOS DE TRADUCCIÓN E IDIOMA ---
+# --- DICCIONARIOS DE TRADUCCIÓN ---
 TEXTS = {
     "ES": {
         "title": "Simulador de Alineación y Colimación Óptica Avanzado",
@@ -144,7 +197,8 @@ TEXTS = {
         "params": "Parámetros Geométricos",
         "phys_params": "Óptica & Entorno Físico",
         "reset_btn": "Reiniciar Valores a 0",
-        "save_btn": "💾 Registrar Medición",
+        "save_btn": "💾 Registrar Medición (DB)",
+        "export_csv": "📥 Exportar Historial (CSV)",
         "h_mira": "Línea de colimación",
         "h_extra": "Desviación del punto de impacto / Objetivo",
         "dist_input": "Distancia al receptor / Destino",
@@ -169,17 +223,17 @@ TEXTS = {
         "direction": "Dirección",
         "direction_up": "Arriba",
         "direction_down": "Abajo",
-        "resolution": "Resolución Mecánica",
         "spot_size_lbl": "Diámetro de Haz (Spot)",
         "curv_drop_lbl": "Caída x Curvatura",
-        "history_title": "Historial de Registros Guardados",
-        "clear_history": "Borrar Historial",
-        "confirm_clear_msg": "¿Estás seguro de que deseas borrar todo el historial?",
+        "uncertainty_lbl": "Incertidumbre (SciPy)",
+        "history_title": "Historial en Base de Datos (SQLite)",
+        "clear_history": "Borrar Base de Datos",
+        "confirm_clear_msg": "¿Estás seguro de que deseas borrar toda la base de datos?",
         "confirm_yes": "✔ Sí, Borrar",
         "confirm_cancel": "✖ Cancelar",
-        "empty_history": "No hay registros guardados en el historial.",
+        "empty_history": "No hay registros guardados en la base de datos.",
         "select_prompt": "⚠️ Por favor, seleccione un Perfil de Aplicación / Profesión en la barra lateral para iniciar la simulación.",
-        "record_saved": "✅ Medición registrada en el historial.",
+        "record_saved": "✅ Medición guardada permanentemente en SQLite.",
         "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
     },
     "EN": {
@@ -219,7 +273,8 @@ TEXTS = {
         "params": "Geometric Parameters",
         "phys_params": "Optics & Physical Environment",
         "reset_btn": "Reset Values to 0",
-        "save_btn": "💾 Save Measurement",
+        "save_btn": "💾 Save Measurement (DB)",
+        "export_csv": "📥 Export History (CSV)",
         "h_mira": "Collimation Line",
         "h_extra": "Impact Point Deviation / Target Offset",
         "dist_input": "Distance to Receiver / Destination",
@@ -244,17 +299,17 @@ TEXTS = {
         "direction": "Direction",
         "direction_up": "Up",
         "direction_down": "Down",
-        "resolution": "Mechanical Resolution",
         "spot_size_lbl": "Beam Diameter (Spot)",
         "curv_drop_lbl": "Curvature Drop",
-        "history_title": "Saved Records History",
-        "clear_history": "Clear History",
-        "confirm_clear_msg": "Are you sure you want to clear the entire history?",
+        "uncertainty_lbl": "Uncertainty (SciPy)",
+        "history_title": "Database Records (SQLite)",
+        "clear_history": "Clear Database",
+        "confirm_clear_msg": "Are you sure you want to clear the entire database?",
         "confirm_yes": "✔ Yes, Clear",
         "confirm_cancel": "✖ Cancel",
-        "empty_history": "No records saved in history yet.",
+        "empty_history": "No records saved in database yet.",
         "select_prompt": "⚠️ Please select an Application Profile / Profession in the sidebar to start the simulation.",
-        "record_saved": "✅ Measurement saved into history.",
+        "record_saved": "✅ Measurement saved permanently into SQLite.",
         "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
     }
 }
@@ -265,7 +320,7 @@ lang = st.sidebar.selectbox("Idioma / Language", ["Español", "English"])
 lang_code = "ES" if lang == "Español" else "EN"
 txt = TEXTS[lang_code]
 
-# --- MENÚ DESPLEGABLE DE PROFESIONES / CARRERAS ---
+# --- MENÚ DESPLEGABLE DE PROFESIONES ---
 st.sidebar.header(txt["profile_select"])
 profiles_options = [txt["profile_placeholder"]] + [
     txt["p1"], txt["p2"], txt["p3"], txt["p4"], txt["p5"], txt["p6"],
@@ -276,7 +331,6 @@ profiles_options = [txt["profile_placeholder"]] + [
 
 profile = st.sidebar.selectbox(txt["profile_select"], profiles_options, index=0)
 
-# --- BASE DE DATOS DE PARÁMETROS REALISTAS ---
 PROFILE_PRESETS = {
     txt["p1"]:  (True,  1.2,   0.15,  1.5,   0.05, 0.5),
     txt["p2"]:  (True,  2.5,   0.50,  6.0,   0.20, 0.8),
@@ -305,7 +359,6 @@ PROFILE_PRESETS = {
     txt["p25"]: (True,  20.0,  4.20,  220.0, 2.90, 1.0),
 }
 
-# --- DETECTAR CAMBIO DE PROFESIÓN Y CARGAR CONFIGURACIÓN ---
 if "current_profile" not in st.session_state:
     st.session_state["current_profile"] = profile
 
@@ -326,35 +379,21 @@ if profile != st.session_state["current_profile"]:
         st.session_state["ref_angle_val"] = 0.0
         st.session_state["laser_div_val"] = 1.0
 
-# --- SELECCIÓN DE UNIDADES DE MEDIDA ---
 if "unit_choice" not in st.session_state:
     st.session_state["unit_choice"] = txt["metric"]
 
 unit_sys = st.sidebar.radio(txt["unit_select"], [txt["metric"], txt["imperial"]], key="unit_choice")
 is_metric = (unit_sys == txt["metric"])
 
-# --- INICIALIZACIÓN DE SESSION STATE ---
-if "h_mira_val" not in st.session_state:
-    st.session_state["h_mira_val"] = 0.0
-if "h_extra_val" not in st.session_state:
-    st.session_state["h_extra_val"] = 0.0
-if "dist_val" not in st.session_state:
-    st.session_state["dist_val"] = 0.0
-if "ref_angle_val" not in st.session_state:
-    st.session_state["ref_angle_val"] = 0.0
-if "laser_div_val" not in st.session_state:
-    st.session_state["laser_div_val"] = 1.0
-if "temp_val" not in st.session_state:
-    st.session_state["temp_val"] = 20.0
-if "press_val" not in st.session_state:
-    st.session_state["press_val"] = 1013.25
-if "earth_curv_val" not in st.session_state:
-    st.session_state["earth_curv_val"] = False
-
-if "history" not in st.session_state:
-    st.session_state["history"] = []
-if "confirm_clear" not in st.session_state:
-    st.session_state["confirm_clear"] = False
+if "h_mira_val" not in st.session_state: st.session_state["h_mira_val"] = 0.0
+if "h_extra_val" not in st.session_state: st.session_state["h_extra_val"] = 0.0
+if "dist_val" not in st.session_state: st.session_state["dist_val"] = 0.0
+if "ref_angle_val" not in st.session_state: st.session_state["ref_angle_val"] = 0.0
+if "laser_div_val" not in st.session_state: st.session_state["laser_div_val"] = 1.0
+if "temp_val" not in st.session_state: st.session_state["temp_val"] = 20.0
+if "press_val" not in st.session_state: st.session_state["press_val"] = 1013.25
+if "earth_curv_val" not in st.session_state: st.session_state["earth_curv_val"] = False
+if "confirm_clear" not in st.session_state: st.session_state["confirm_clear"] = False
 
 def reset_inputs_to_zero():
     st.session_state["h_mira_val"] = 0.0
@@ -365,7 +404,6 @@ def reset_inputs_to_zero():
 
 st.sidebar.header(txt["params"])
 
-# --- CONTROLES DE ENTRADA GEOMÉTRICOS ---
 if is_metric:
     h_unit, d_unit = txt["cm"], txt["m"]
 else:
@@ -376,7 +414,6 @@ H_extra = st.sidebar.number_input(f"{txt['h_extra']} ({h_unit})", min_value=-500
 D_val = st.sidebar.number_input(f"{txt['dist_input']} ({d_unit})", min_value=0.0, max_value=2000.0, value=st.session_state["dist_val"], step=1.0, key="dist_val")
 ref_angle_deg = st.sidebar.number_input(txt['ref_angle_input'], min_value=-30.00, max_value=30.00, value=st.session_state["ref_angle_val"], step=0.10, format="%.2f", key="ref_angle_val")
 
-# --- CONTROLES DE FÍSICA Y ÓPTICA EN SIDEBAR ---
 st.sidebar.header(txt["phys_params"])
 laser_div_mrad = st.sidebar.number_input(txt["laser_div"], min_value=0.01, max_value=10.0, value=st.session_state["laser_div_val"], step=0.1, key="laser_div_val")
 temp_c = st.sidebar.number_input(txt["temp_input"], min_value=-40.0, max_value=60.0, value=st.session_state["temp_val"], step=1.0, key="temp_val")
@@ -386,7 +423,6 @@ use_earth_curv = st.sidebar.checkbox(txt["earth_curv"], value=st.session_state["
 save_clicked = st.sidebar.button(txt["save_btn"], use_container_width=True)
 st.sidebar.button(txt["reset_btn"], on_click=reset_inputs_to_zero, use_container_width=True)
 
-# Conversión interna a cm y metros
 if is_metric:
     D_m = D_val
     D_cm, H_mira_cm, H_extra_cm = D_val * 100, H_mira, H_extra
@@ -394,7 +430,7 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO PRINCIPAL (ESTILO MONOCROMÁTICO) ---
+# --- ENCABEZADO PRINCIPAL ---
 st.markdown(f"""
     <div style="background: linear-gradient(90deg, #121212 0%, #1a1a1a 100%);
                 padding: 10px 25px;
@@ -416,26 +452,22 @@ if profile == txt["profile_placeholder"]:
     st.warning(txt["select_prompt"])
     st.stop()
 
-# --- CÁLCULOS DE FÍSICA Y ÓPTICA APLICADA ---
-# 1. Curvatura terrestre (caída aparente Dh_curv en cm)
+# --- CÁLCULOS FÍSICOS Y DE INCERTIDUMBRE (SciPy) ---
 R_earth_m = 6371000.0
-k_refraction = 0.14  # Coeficiente estándar de refracción atmosférica
+k_refraction = 0.14
 if use_earth_curv and D_m > 0:
     R_eff = R_earth_m / (1 - k_refraction)
     curv_drop_cm = ((D_m ** 2) / (2 * R_eff)) * 100
 else:
     curv_drop_cm = 0.0
 
-# 2. Corrección por densidad del aire (Refracción por T y P)
 n_air = 1 + (77.6e-6 * press_hpa / (temp_c + 273.15))
-refraction_factor = (n_air - 1.00027) * 10.0  # Desviación micro-angular
+refraction_factor = (n_air - 1.00027) * 10.0
 
-# 3. Tamaño del Spot Láser (Diámetro en cm)
 div_rad = laser_div_mrad / 1000.0
 spot_diameter_cm = 0.2 + (2.0 * D_m * math.tan(div_rad / 2.0) * 100.0)
 spot_radius_cm = spot_diameter_cm / 2.0
 
-# 4. Trigonometría de alineación principal
 ref_angle_rad = math.radians(ref_angle_deg)
 y_ref_end = D_cm * math.tan(ref_angle_rad)
 y_target_point = y_ref_end + H_extra_cm - curv_drop_cm
@@ -452,13 +484,30 @@ diff_height_display = diferencia_altura_cm if is_metric else diferencia_altura_c
 spot_size_display = spot_diameter_cm if is_metric else spot_diameter_cm / 2.54
 curv_drop_display = curv_drop_cm if is_metric else curv_drop_cm / 2.54
 
+# CÁLCULO DE INCERTIDUMBRE ANGULAR (PROPAGACIÓN CON SCIPY/NUMPY)
+# Delta H_mira: ±0.05 cm, Delta Distancia: ±0.5 m, Delta Divergencia
+delta_h_cm = 0.05
+delta_d_cm = 50.0 if D_m > 0 else 0.1
+if D_cm > 0:
+    # Propagación del error: d(atan(y/x))
+    sigma_angle_rad = math.sqrt((delta_h_cm / D_cm)**2 + (diferencia_altura_cm * delta_d_cm / (D_cm**2 + diferencia_altura_cm**2))**2)
+    # Factor de confianza 95% usando SciPy norm.ppf
+    confidence_factor = stats.norm.ppf(0.975) # ~1.96
+    uncertainty_mrad = sigma_angle_rad * 1000.0 * confidence_factor
+    uncertainty_moa = math.degrees(sigma_angle_rad) * 60.0 * confidence_factor
+else:
+    uncertainty_mrad = 0.0
+    uncertainty_moa = 0.0
+
+uncertainty_str = f"±{uncertainty_mrad:.2f} mrad (95% IC)"
+
 is_up = (angulo_deg >= 0)
 direccion_str = txt["direction_up"] if is_up else txt["direction_down"]
 
 clicks_moa = abs(round(moa * 4))
 pulsos_mrad = abs(round(mrad * 10))
 
-# --- REGISTRO MANUAL AL PULSAR EL BOTÓN ---
+# --- REGISTRO A BASE DE DATOS EN SQLite ---
 if save_clicked:
     current_record = {
         "Perfil / Carrera": profile,
@@ -467,26 +516,25 @@ if save_clicked:
         "Desviación Impacto": f"{H_extra:.2f} {h_unit}",
         "Spot Size": f"{spot_size_display:.2f} {h_unit}",
         "Ángulo (α)": f"{angulo_deg:.4f}°",
-        "MOA": f"{moa:.2f}",
-        "mrad": f"{mrad:.2f}",
+        "MOA": moa,
+        "mrad": mrad,
         "Dirección": direccion_str,
         "Clics (1/4 MOA)": clicks_moa,
-        "Pulsos (0.1 mrad)": pulsos_mrad
+        "Pulsos (0.1 mrad)": pulsos_mrad,
+        "Incertidumbre (±)": uncertainty_str
     }
-    st.session_state["history"].append(current_record)
+    save_record_to_db(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- DISPOSICIÓN EN COLUMNAS: GRÁFICA 3D Y VISTA 2D DIANA ---
+# --- GRÁFICAS 3D Y 2D ---
 col_3d, col_2d = st.columns([1.75, 1.0])
 
 with col_3d:
-    # --- GRÁFICA INTERACTIVA 3D ---
     pos_mira = (0, H_mira_cm)
     pos_impacto_mira = (D_cm, y_target_point)
 
     fig3d = go.Figure()
 
-    # Plano de suelo Monocromático
     grid_x = np.linspace(0, max(D_cm, 10), 10)
     grid_y = np.linspace(-max(abs(H_extra_cm)*1.5, 20), max(abs(H_extra_cm)*1.5, 20), 10)
     gx, gy = np.meshgrid(grid_x, grid_y)
@@ -498,7 +546,6 @@ with col_3d:
         showscale=False, opacity=0.5, hoverinfo='none'
     ))
 
-    # Eje óptico de referencia (Línea Roja Neón)
     fig3d.add_trace(go.Scatter3d(
         x=[0, D_cm], y=[0, 0], z=[0, y_ref_end],
         mode='lines+markers',
@@ -507,7 +554,6 @@ with col_3d:
         marker=dict(size=4, color='#FF0055')
     ))
 
-    # Eje del sensor ajustable (Azul Cian Brilliant)
     fig3d.add_trace(go.Scatter3d(
         x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
         mode='lines+markers',
@@ -516,7 +562,6 @@ with col_3d:
         marker=dict(size=5, color='#00F0FF')
     ))
 
-    # Puntos clave
     fig3d.add_trace(go.Scatter3d(
         x=[D_cm], y=[0], z=[y_ref_end],
         mode='markers', name=txt["target_center"],
@@ -548,10 +593,8 @@ with col_3d:
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
 with col_2d:
-    # --- VISTA 2D DE LA DIANA / RETÍCULA ---
     fig2d = go.Figure()
 
-    # Anillos concéntricos de la diana
     max_radius = max(abs(diferencia_altura_cm) * 1.4, spot_radius_cm * 2.5, 5.0)
     rings = np.linspace(max_radius * 0.2, max_radius, 4)
 
@@ -563,11 +606,9 @@ with col_2d:
             fillcolor="rgba(30, 30, 30, 0.3)"
         )
 
-    # Ejes de la retícula
     fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#666666", width=1, dash="dot"))
     fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#666666", width=1, dash="dot"))
 
-    # Haz Láser Real con Spot Size (Circulo neón traslúcido)
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
         x0=-spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
@@ -576,14 +617,12 @@ with col_2d:
         fillcolor="rgba(0, 240, 255, 0.35)"
     )
 
-    # Punto de impacto central del sensor
     fig2d.add_trace(go.Scatter(
         x=[0], y=[diferencia_altura_cm],
         mode='markers', name=txt["target_point"],
         marker=dict(size=8, color='#00FF66', symbol='cross')
     ))
 
-    # Centro de la diana (0,0)
     fig2d.add_trace(go.Scatter(
         x=[0], y=[0],
         mode='markers', name=txt["target_center"],
@@ -594,34 +633,13 @@ with col_2d:
         title=dict(text=txt["target_2d_title"], font=dict(color="#ffffff", size=14)),
         paper_bgcolor='#000000', plot_bgcolor='#000000',
         height=460, margin=dict(l=10, r=10, t=35, b=10),
-        xaxis=dict(
-            range=[-max_radius*1.2, max_radius*1.2], 
-            showgrid=False, 
-            zeroline=False, 
-            tickfont=dict(color="#888888"), 
-            title=f"X ({h_unit})"
-        ),
-        yaxis=dict(
-            range=[-max_radius*1.2, max_radius*1.2], 
-            showgrid=False, 
-            zeroline=False, 
-            tickfont=dict(color="#888888"), 
-            title=f"Y ({h_unit})",
-            scaleanchor="x",
-            scaleratio=1
-        ),
-        legend=dict(
-            orientation="h", 
-            y=-0.1, 
-            x=0.5, 
-            xanchor="center", 
-            font=dict(color="white", size=9), 
-            bgcolor="rgba(18, 18, 18, 0.8)"
-        )
+        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"X ({h_unit})"),
+        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(18, 18, 18, 0.8)")
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS EXPANDIDAS (ESTILO NEGRO MONOCROMÁTICO) ---
+# --- MÉTRICAS Y RESULTADOS ---
 st.markdown(f"""
     <div style="display: flex; justify-content: space-between; align-items: center; background-color: #121212; border: 1px solid #262626; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
         <div style="text-align: center; flex: 1;">
@@ -640,19 +658,32 @@ st.markdown(f"""
             <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1;">
-            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['curv_drop_lbl']}</span><br>
-            <span style="color: #cccccc; font-size: 16px; font-weight: bold;">{curv_drop_display:.3f} {h_unit}</span>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
+            <span style="color: #a3dda3; font-size: 15px; font-weight: bold;">{uncertainty_str}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# --- TABLA DE HISTORIAL ---
+# --- TABLA DE HISTORIAL BASE DE DATOS SQLITE & EXPORTACIÓN CSV ---
 st.markdown("---")
-col_hist_head, col_hist_btn = st.columns([2.2, 1.8])
+df_db = load_history_from_db()
+
+col_hist_head, col_export, col_hist_btn = st.columns([2.0, 1.2, 1.2])
 
 with col_hist_head:
     st.subheader(txt["history_title"])
+
+with col_export:
+    if not df_db.empty:
+        csv_data = df_db.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label=txt["export_csv"],
+            data=csv_data,
+            file_name="historial_colimacion.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
 
 with col_hist_btn:
     if not st.session_state["confirm_clear"]:
@@ -666,7 +697,7 @@ with col_hist_btn:
         with col_yes:
             st.markdown('<div class="btn-confirm-yes">', unsafe_allow_html=True)
             if st.button(txt["confirm_yes"], use_container_width=True):
-                st.session_state["history"] = []
+                clear_db()
                 st.session_state["confirm_clear"] = False
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
@@ -678,16 +709,15 @@ with col_hist_btn:
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
-if st.session_state["history"]:
-    df_history = pd.DataFrame(st.session_state["history"])
+if not df_db.empty:
     st.dataframe(
-        df_history,
+        df_db,
         use_container_width=True,
         hide_index=True,
         column_config={
-            "Perfil / Carrera": st.column_config.TextColumn("Perfil / Carrera", width="medium"),
-            "Dirección": st.column_config.TextColumn("Dirección", width="small"),
             "MOA": st.column_config.NumberColumn("MOA", format="%.2f"),
             "mrad": st.column_config.NumberColumn("mrad", format="%.2f"),
         }
     )
+else:
+    st.info(txt["empty_history"])
