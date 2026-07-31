@@ -6,52 +6,59 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
-# --- ESTILOS CSS PERSONALIZADOS ---
+# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO) ---
 st.markdown("""
     <style>
-        /* Fondo y contenedor de la barra lateral */
+        /* Fondo principal de la aplicación */
+        .stApp {
+            background-color: #000000 !important;
+            color: #e0e0e0 !important;
+        }
+
+        /* Contenedor y fondo de la barra lateral */
         [data-testid="stSidebar"] {
-            background-color: #0e0f1d;
-            border-right: 1px solid #23264d;
+            background-color: #0a0a0a !important;
+            border-right: 1px solid #262626 !important;
         }
 
         /* Estilo para los títulos de la barra lateral */
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-            color: #00d2ff !important;
+            color: #ffffff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             letter-spacing: 0.8px;
             margin-top: 15px !important;
             margin-bottom: 8px !important;
-            border-bottom: 1px solid #1f2242;
+            border-bottom: 1px solid #262626 !important;
             padding-bottom: 4px;
         }
 
         /* Rediseño de botones generales */
         div.stButton > button {
-            background: linear-gradient(135deg, #1f2242 0%, #2b2f5c 100%) !important;
-            color: #00d2ff !important;
-            border: 1px solid #00d2ff !important;
+            background: linear-gradient(135deg, #1a1a1a 0%, #262626 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #444444 !important;
             border-radius: 6px !important;
             font-weight: 600 !important;
             transition: all 0.3s ease !important;
         }
         div.stButton > button:hover {
-            background: #00d2ff !important;
-            color: #0e0f1d !important;
-            box-shadow: 0px 0px 10px rgba(0, 210, 255, 0.4);
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+            border-color: #ffffff !important;
         }
 
-        /* Estilo para los botones + y - de los number_input (Azul claro) */
+        /* Estilo para los botones + y - de los number_input */
         button[aria-label="Increase value"], 
         button[aria-label="Decrease value"],
         div[data-baseweb="spinbutton"] button,
         [data-testid="stNumberInputStepDown"],
         [data-testid="stNumberInputStepUp"] {
-            color: #00d2ff !important;
-            background-color: #161836 !important;
-            border-color: #00d2ff !important;
+            color: #ffffff !important;
+            background-color: #121212 !important;
+            border-color: #333333 !important;
             transition: all 0.2s ease !important;
         }
 
@@ -60,33 +67,40 @@ st.markdown("""
         div[data-baseweb="spinbutton"] button:hover,
         [data-testid="stNumberInputStepDown"]:hover,
         [data-testid="stNumberInputStepUp"]:hover {
-            background-color: #00d2ff !important;
-            color: #0e0f1d !important;
-            box-shadow: 0px 0px 8px rgba(0, 210, 255, 0.7) !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.3) !important;
         }
 
-        /* Botón Verde (Confirmar Borrado) */
+        /* Entradas de texto, número y selects */
+        div[data-baseweb="input"], div[data-baseweb="select"] > div {
+            background-color: #121212 !important;
+            border-color: #333333 !important;
+            color: #ffffff !important;
+        }
+
+        /* Botón Confirmar Borrado (Estilo oscuro sobrio) */
         div.btn-confirm-yes > div.stButton > button {
-            background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%) !important;
-            color: #52b788 !important;
-            border: 1px solid #52b788 !important;
+            background: linear-gradient(135deg, #1f2a1f 0%, #2a3a2a 100%) !important;
+            color: #a3dda3 !important;
+            border: 1px solid #3d5a3d !important;
         }
         div.btn-confirm-yes > div.stButton > button:hover {
-            background: #52b788 !important;
-            color: #081c15 !important;
-            box-shadow: 0px 0px 10px rgba(82, 183, 136, 0.6);
+            background: #a3dda3 !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 10px rgba(163, 221, 163, 0.3);
         }
 
-        /* Botón Rojo (Cancelar Borrado) */
+        /* Botón Cancelar Borrado (Estilo oscuro sobrio) */
         div.btn-confirm-cancel > div.stButton > button {
-            background: linear-gradient(135deg, #4a0e17 0%, #780016 100%) !important;
-            color: #ff4d6d !important;
-            border: 1px solid #ff4d6d !important;
+            background: linear-gradient(135deg, #2a1f1f 0%, #3a2a2a 100%) !important;
+            color: #dda3a3 !important;
+            border: 1px solid #5a3d3d !important;
         }
         div.btn-confirm-cancel > div.stButton > button:hover {
-            background: #ff4d6d !important;
-            color: #2b0008 !important;
-            box-shadow: 0px 0px 10px rgba(255, 77, 109, 0.6);
+            background: #dda3a3 !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 10px rgba(221, 163, 163, 0.3);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -277,7 +291,7 @@ PROFILE_PRESETS = {
     txt["p11"]: (True,  35.0,  12.00, 1500.0, 8.50, 0.8),
     txt["p12"]: (False, 5.0,  -1.80,  320.0, -2.10, 1.2),
     txt["p13"]: (True,  5.0,  -1.20,  12.0,  -0.80, 0.9),
-    txt["p14"]: (True,  15.0,  2.80,  75.0,  0.90, 1.1),
+    txt["p14"]: (True,  15.0,  2.80,  75.0,   0.90, 1.1),
     txt["p15"]: (False, 6.0,  -2.50,  1100.0,-4.20, 2.5),
     txt["p16"]: (True,  45.0,  15.00, 2000.0, 12.00, 0.2),
     txt["p17"]: (True,  0.2,   0.04,  0.8,   0.05, 0.1),
@@ -380,19 +394,20 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO PRINCIPAL ---
+# --- ENCABEZADO PRINCIPAL (ESTILO MONOCROMÁTICO) ---
 st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #12132c 0%, #1d1e3d 100%);
+    <div style="background: linear-gradient(90deg, #121212 0%, #1a1a1a 100%);
                 padding: 10px 25px;
                 border-radius: 10px;
-                border-left: 5px solid #00d2ff;
+                border-left: 5px solid #ffffff;
+                border: 1px solid #262626;
                 margin-bottom: 20px;
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.3);">
-        <h2 style="color: white; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;">
+                box-shadow: 0px 4px 15px rgba(0,0,0,0.5);">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;">
             {txt['title']}
         </h2>
-        <p style="color: #a0a5c0; margin: 0; font-size: 13px; opacity: 0.85;">
-            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b>{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
+        <p style="color: #888888; margin: 0; font-size: 13px; opacity: 0.85;">
+            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #ffffff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -471,7 +486,7 @@ with col_3d:
 
     fig3d = go.Figure()
 
-    # Plano de suelo Sci-Fi
+    # Plano de suelo Monocromático
     grid_x = np.linspace(0, max(D_cm, 10), 10)
     grid_y = np.linspace(-max(abs(H_extra_cm)*1.5, 20), max(abs(H_extra_cm)*1.5, 20), 10)
     gx, gy = np.meshgrid(grid_x, grid_y)
@@ -479,7 +494,7 @@ with col_3d:
 
     fig3d.add_trace(go.Surface(
         x=gx, y=gy, z=gz,
-        colorscale=[[0, '#0a0c1b'], [1, '#161936']],
+        colorscale=[[0, '#000000'], [1, '#111111']],
         showscale=False, opacity=0.5, hoverinfo='none'
     ))
 
@@ -517,23 +532,23 @@ with col_3d:
     fig3d.update_layout(
         title=dict(
             text=f"📐 <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
-            font=dict(color="#00F0FF", size=14)
+            font=dict(color="#ffffff", size=14)
         ),
-        paper_bgcolor='#070814', plot_bgcolor='#070814',
+        paper_bgcolor='#000000', plot_bgcolor='#000000',
         height=460, margin=dict(l=5, r=5, t=35, b=5),
         scene=dict(
             aspectmode='manual', aspectratio=dict(x=2.0, y=1, z=1.1),
-            xaxis=dict(title='Distancia (cm)', backgroundcolor="#070814", gridcolor="#1f244d", tickfont=dict(color="#a0a5c0")),
-            yaxis=dict(title='Eje Lateral', backgroundcolor="#070814", gridcolor="#1f244d", tickfont=dict(color="#a0a5c0")),
-            zaxis=dict(title='Elevación (cm)', backgroundcolor="#070814", gridcolor="#1f244d", tickfont=dict(color="#a0a5c0")),
+            xaxis=dict(title='Distancia (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            yaxis=dict(title='Eje Lateral', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            zaxis=dict(title='Elevación (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
             camera=dict(eye=dict(x=1.6, y=-1.4, z=0.6))
         ),
-        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(14, 15, 29, 0.8)")
+        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(18, 18, 18, 0.8)")
     )
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
 with col_2d:
-    # --- VISTA 2D DE LA DIANA / RETÍCULA (MÓDULO 5) ---
+    # --- VISTA 2D DE LA DIANA / RETÍCULA ---
     fig2d = go.Figure()
 
     # Anillos concéntricos de la diana
@@ -544,13 +559,13 @@ with col_2d:
         fig2d.add_shape(
             type="circle", xref="x", yref="y",
             x0=-r, y0=-r, x1=r, y1=r,
-            line=dict(color="#23264d", width=1.5),
-            fillcolor="rgba(20, 25, 55, 0.3)"
+            line=dict(color="#333333", width=1.5),
+            fillcolor="rgba(30, 30, 30, 0.3)"
         )
 
     # Ejes de la retícula
-    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#00d2ff", width=1, dash="dot"))
-    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#00d2ff", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#666666", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#666666", width=1, dash="dot"))
 
     # Haz Láser Real con Spot Size (Circulo neón traslúcido)
     fig2d.add_shape(
@@ -576,21 +591,21 @@ with col_2d:
     ))
 
     fig2d.update_layout(
-        title=dict(text=txt["target_2d_title"], font=dict(color="#00F0FF", size=14)),
-        paper_bgcolor='#070814', plot_bgcolor='#070814',
+        title=dict(text=txt["target_2d_title"], font=dict(color="#ffffff", size=14)),
+        paper_bgcolor='#000000', plot_bgcolor='#000000',
         height=460, margin=dict(l=10, r=10, t=35, b=10),
         xaxis=dict(
             range=[-max_radius*1.2, max_radius*1.2], 
             showgrid=False, 
             zeroline=False, 
-            tickfont=dict(color="#a0a5c0"), 
+            tickfont=dict(color="#888888"), 
             title=f"X ({h_unit})"
         ),
         yaxis=dict(
             range=[-max_radius*1.2, max_radius*1.2], 
             showgrid=False, 
             zeroline=False, 
-            tickfont=dict(color="#a0a5c0"), 
+            tickfont=dict(color="#888888"), 
             title=f"Y ({h_unit})",
             scaleanchor="x",
             scaleratio=1
@@ -601,38 +616,38 @@ with col_2d:
             x=0.5, 
             xanchor="center", 
             font=dict(color="white", size=9), 
-            bgcolor="rgba(14, 15, 29, 0.8)"
+            bgcolor="rgba(18, 18, 18, 0.8)"
         )
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS EXPANDIDAS CON FÍSICA Y DIVERGENCIA ---
+# --- MÉTRICAS EXPANDIDAS (ESTILO NEGRO MONOCROMÁTICO) ---
 st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #12132c; border: 1px solid #333566; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #121212; border: 1px solid #262626; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
         <div style="text-align: center; flex: 1;">
-            <span style="color: #a0a5c0; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #333566; padding-left: 10px; flex: 1;">
-            <span style="color: #a0a5c0; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
-            <span style="color: #00d2ff; font-size: 16px; font-weight: bold;">{angulo_deg:.4f}°</span>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
+            <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{angulo_deg:.4f}°</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #333566; padding-left: 10px; flex: 1.2;">
-            <span style="color: #a0a5c0; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
-            <span style="color: #33ff77; font-size: 16px; font-weight: bold;">{moa:.2f} MOA | {mrad:.2f} mrad</span>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
+            <span style="color: #e0e0e0; font-size: 16px; font-weight: bold;">{moa:.2f} MOA | {mrad:.2f} mrad</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #333566; padding-left: 10px; flex: 1.2;">
-            <span style="color: #a0a5c0; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
-            <span style="color: #FFE600; font-size: 16px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
+            <span style="color: #ffffff; font-size: 16px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #333566; padding-left: 10px; flex: 1;">
-            <span style="color: #a0a5c0; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['curv_drop_lbl']}</span><br>
-            <span style="color: #ff77ff; font-size: 16px; font-weight: bold;">{curv_drop_display:.3f} {h_unit}</span>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['curv_drop_lbl']}</span><br>
+            <span style="color: #cccccc; font-size: 16px; font-weight: bold;">{curv_drop_display:.3f} {h_unit}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# --- TABLA DE HISTORIAL CON CONFIRMACIÓN VERDE / ROJA ---
+# --- TABLA DE HISTORIAL ---
 st.markdown("---")
 col_hist_head, col_hist_btn = st.columns([2.2, 1.8])
 
@@ -676,5 +691,3 @@ if st.session_state["history"]:
             "mrad": st.column_config.NumberColumn("mrad", format="%.2f"),
         }
     )
-else:
-    st.info(txt["empty_history"])
