@@ -12,10 +12,9 @@ st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
 
 # =========================================================================
-# 🔒 NUEVO MÓDULO DE SEGURIDAD CON ANIMACIÓN SIMÉTRICA DE ENFOQUE ÓPTICO
+# 🔒 MÓDULO DE SEGURIDAD CON ANIMACIÓN ÓPTICA MULTICAPA (HUD AVANZADO)
 # =========================================================================
 
-# Lista de correos autorizados y contraseña
 USUARIOS_PERMITIDOS = [
     "j3remyx1010@gmail.com",
     "correo2@ejemplo.com"
@@ -24,146 +23,204 @@ USUARIOS_PERMITIDOS = [
 CONTRASEÑA_CORRECTA = "Jggg101031"
 MAX_INTENTOS = 3
 
-# Inicializar variables de estado seguro en la sesión
+# Inicializar variables de estado seguro
 if "intentos" not in st.session_state:
     st.session_state.intentos = 0
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
-# Bloqueo total si superó los intentos permitidos
+# Bloqueo total por seguridad
 if st.session_state.intentos >= MAX_INTENTOS:
     st.error("❌ Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
     st.stop()
 
-# Si el usuario aún no se ha validado, mostramos el formulario de acceso con animación
+# Interfaz de Inicio de Sesión
 if not st.session_state.autenticado:
-    # Estilos CSS con la animación simétrica de 4 esquinas (HUD Optoelectrónico)
     st.markdown("""
         <style>
             .stApp {
                 background-color: #050505 !important;
             }
             
-            /* Contenedor principal del HUD Animado */
+            /* Tarjeta Principal de Login */
+            .login-card {
+                background: linear-gradient(145deg, #0b0d0e 0%, #15181a 100%);
+                border: 1px solid #1f292e;
+                border-radius: 16px;
+                padding: 30px 25px 20px 25px;
+                box-shadow: 0px 12px 35px rgba(0, 0, 0, 0.95), 0px 0px 15px rgba(0, 255, 204, 0.05);
+                margin-top: 2vh;
+            }
+
+            /* Contenedor HUD Animado */
             .hud-box {
                 position: relative;
-                width: 140px;
-                height: 140px;
-                margin: 0 auto 20px auto;
+                width: 150px;
+                height: 150px;
+                margin: 0 auto 15px auto;
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                overflow: hidden;
             }
 
-            /* 4 Esquinas Simétricas (Similares a la imagen) */
+            /* 4 Esquinas Simétricas */
             .corner {
                 position: absolute;
-                width: 25px;
-                height: 25px;
+                width: 24px;
+                height: 24px;
                 border-color: #00ffcc;
                 border-style: solid;
-                animation: cornerPulse 2s infinite alternate ease-in-out;
+                animation: cornerPulse 2.5s infinite alternate ease-in-out;
+                z-index: 2;
             }
-
             .top-left {
-                top: 0;
-                left: 0;
+                top: 2px;
+                left: 2px;
                 border-width: 3px 0 0 3px;
                 border-top-left-radius: 4px;
             }
-
             .top-right {
-                top: 0;
-                right: 0;
+                top: 2px;
+                right: 2px;
                 border-width: 3px 3px 0 0;
                 border-top-right-radius: 4px;
             }
-
             .bottom-left {
-                bottom: 0;
-                left: 0;
+                bottom: 2px;
+                left: 2px;
                 border-width: 0 0 3px 3px;
                 border-bottom-left-radius: 4px;
             }
-
             .bottom-right {
-                bottom: 0;
-                right: 0;
+                bottom: 2px;
+                right: 2px;
                 border-width: 0 3px 3px 0;
                 border-bottom-right-radius: 4px;
             }
 
-            /* Anillo Giratorio Central */
-            .hud-ring {
-                width: 80px;
-                height: 80px;
-                border: 2px dashed rgba(0, 255, 204, 0.4);
+            /* Anillo Exterior Giratorio (Sentido horario) */
+            .hud-ring-outer {
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                border: 2px dashed rgba(0, 255, 204, 0.35);
                 border-radius: 50%;
-                animation: rotateRing 8s linear infinite;
+                animation: rotateRight 10s linear infinite;
             }
 
-            /* Punto Láser Central */
+            /* Anillo Interior Giratorio (Sentido antihorario) */
+            .hud-ring-inner {
+                position: absolute;
+                width: 70px;
+                height: 70px;
+                border: 2px dotted rgba(0, 200, 255, 0.5);
+                border-radius: 50%;
+                animation: rotateLeft 6s linear infinite;
+            }
+
+            /* Ejes de Cruz de Retícula (Crosshair) */
+            .hud-cross-h {
+                position: absolute;
+                width: 100px;
+                height: 1px;
+                background: rgba(0, 255, 204, 0.25);
+            }
+            .hud-cross-v {
+                position: absolute;
+                width: 1px;
+                height: 100px;
+                background: rgba(0, 255, 204, 0.25);
+            }
+
+            /* Punto Láser Central Pulsante */
             .hud-dot {
                 position: absolute;
-                width: 10px;
-                height: 10px;
+                width: 8px;
+                height: 8px;
                 background-color: #00ffcc;
                 border-radius: 50%;
-                box-shadow: 0 0 12px #00ffcc, 0 0 24px #00ffcc;
-                animation: laserPulse 1.5s infinite ease-in-out;
+                box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+                animation: laserPulse 1.2s infinite ease-in-out;
+                z-index: 3;
             }
 
-            /* Animaciones CSS */
-            @keyframes rotateRing {
+            /* NUEVA ANIMACIÓN: Barra/Línea de Escaneo Laser Vertical (Scanline) */
+            .hud-scanline {
+                position: absolute;
+                top: -100%;
+                left: 0;
+                width: 100%;
+                height: 35%;
+                background: linear-gradient(180deg, rgba(0, 255, 204, 0) 0%, rgba(0, 255, 204, 0.25) 100%);
+                border-bottom: 2px solid #00ffcc;
+                animation: scanMove 3s infinite ease-in-out;
+                z-index: 1;
+            }
+
+            /* Títulos del Formulario */
+            .login-title {
+                color: #ffffff;
+                font-size: 19px;
+                font-weight: 700;
+                text-align: center;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+                margin: 0;
+            }
+            .login-subtitle {
+                color: #00ffcc;
+                font-size: 11px;
+                text-align: center;
+                letter-spacing: 0.5px;
+                opacity: 0.8;
+                margin-top: 4px;
+                margin-bottom: 18px;
+            }
+
+            /* Efecto de resplandor láser al enfocar los inputs */
+            div[data-baseweb="input"] input:focus {
+                border-color: #00ffcc !important;
+                box-shadow: 0 0 10px rgba(0, 255, 204, 0.3) !important;
+            }
+
+            /* Keyframes de Animaciones */
+            @keyframes rotateRight {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
+            }
+
+            @keyframes rotateLeft {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(-360deg); }
             }
 
             @keyframes cornerPulse {
                 0% {
                     border-color: #00ffcc;
-                    filter: drop-shadow(0 0 2px #00ffcc);
+                    filter: drop-shadow(0 0 3px #00ffcc);
                 }
                 100% {
-                    border-color: #0088cc;
-                    filter: drop-shadow(0 0 8px #0088cc);
+                    border-color: #0099ff;
+                    filter: drop-shadow(0 0 9px #0099ff);
                 }
             }
 
             @keyframes laserPulse {
                 0%, 100% {
-                    transform: scale(0.8);
-                    opacity: 0.6;
+                    transform: scale(0.85);
+                    opacity: 0.7;
                 }
                 50% {
-                    transform: scale(1.3);
+                    transform: scale(1.4);
                     opacity: 1;
                 }
             }
 
-            /* Tarjeta de Formulario */
-            .login-card {
-                background: linear-gradient(145deg, #0e0e0e 0%, #161616 100%);
-                border: 1px solid #222222;
-                border-radius: 14px;
-                padding: 30px 25px 20px 25px;
-                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.9);
-                margin-top: 3vh;
-            }
-            .login-title {
-                color: #ffffff;
-                font-size: 20px;
-                font-weight: 700;
-                text-align: center;
-                letter-spacing: 1px;
-                margin: 0;
-            }
-            .login-subtitle {
-                color: #888888;
-                font-size: 12px;
-                text-align: center;
-                margin-top: 5px;
-                margin-bottom: 20px;
+            @keyframes scanMove {
+                0% { top: -40%; }
+                50% { top: 100%; }
+                100% { top: -40%; }
             }
         </style>
     """, unsafe_allow_html=True)
@@ -171,7 +228,6 @@ if not st.session_state.autenticado:
     col_left, col_center, col_right = st.columns([1, 1.2, 1])
     
     with col_center:
-        # Renderizado de la animación HUD de 4 esquinas simétricas
         st.markdown("""
             <div class="login-card">
                 <div class="hud-box">
@@ -179,18 +235,22 @@ if not st.session_state.autenticado:
                     <div class="corner top-right"></div>
                     <div class="corner bottom-left"></div>
                     <div class="corner bottom-right"></div>
-                    <div class="hud-ring"></div>
+                    <div class="hud-cross-h"></div>
+                    <div class="hud-cross-v"></div>
+                    <div class="hud-ring-outer"></div>
+                    <div class="hud-ring-inner"></div>
                     <div class="hud-dot"></div>
+                    <div class="hud-scanline"></div>
                 </div>
-                <div class="login-title">Control de Acceso Óptico</div>
-                <div class="login-subtitle">Sistema de Colimación & Alineación Láser</div>
+                <div class="login-title">Autenticación Óptica</div>
+                <div class="login-subtitle">● SISTEMA DE AVALÚO Y COLIMACIÓN LÁSER</div>
             </div>
         """, unsafe_allow_html=True)
         
         with st.form("formulario_login"):
-            correo = st.text_input("✉️ Correo electrónico:", placeholder="usuario@correo.com")
+            correo = st.text_input("✉️ Correo electrónico autorizado:", placeholder="ejemplo@correo.com")
             password = st.text_input("🔑 Contraseña:", type="password", placeholder="••••••••") 
-            boton_ingresar = st.form_submit_button("Iniciar Sesión", use_container_width=True)
+            boton_ingresar = st.form_submit_button("Acceder al Sistema", use_container_width=True)
             
             if boton_ingresar:
                 correo_ingresado = correo.strip().lower()
@@ -200,23 +260,21 @@ if not st.session_state.autenticado:
                     st.session_state.autenticado = True
                     st.session_state.intentos = 0
                     
-                    # Efecto de carga / Escaneo al ingresar exitosamente
-                    with st.spinner("Iniciando calibración del sistema..."):
+                    with st.spinner("🔍 Escaneando parámetros y calibrando sensores..."):
                         time.sleep(1.2)
                     st.rerun()
                 else:
                     st.session_state.intentos += 1
                     intentos_restantes = MAX_INTENTOS - st.session_state.intentos
-                    st.error(f"Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
+                    st.error(f"Credenciales incorrectas. Intentos restantes: {intentos_restantes}")
                     st.stop()
 
-# Detener la ejecución del script si no está autenticado
 if not st.session_state.autenticado:
     st.stop()
 
 
 # =========================================================================
-# 👇 ABAJO DE ESTO QUEDA TODO TU CÓDIGO ORIGINAL SIN TOCAR
+# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (MANTENIDO INTACTO)
 # =========================================================================
 
 # --- BASE DE DATOS SQLITE ---
@@ -695,12 +753,11 @@ diff_height_display = diferencia_altura_cm if is_metric else diferencia_altura_c
 spot_size_display = spot_diameter_cm if is_metric else spot_diameter_cm / 2.54
 curv_drop_display = curv_drop_cm if is_metric else curv_drop_cm / 2.54
 
-# CÁLCULO DE INCERTIDUMBRE ANGULAR (PROPAGACIÓN CON SCIPY/NUMPY)
 delta_h_cm = 0.05
 delta_d_cm = 50.0 if D_m > 0 else 0.1
 if D_cm > 0:
     sigma_angle_rad = math.sqrt((delta_h_cm / D_cm)**2 + (diferencia_altura_cm * delta_d_cm / (D_cm**2 + diferencia_altura_cm**2))**2)
-    confidence_factor = stats.norm.ppf(0.975) # ~1.96
+    confidence_factor = stats.norm.ppf(0.975)
     uncertainty_mrad = sigma_angle_rad * 1000.0 * confidence_factor
     uncertainty_moa = math.degrees(sigma_angle_rad) * 60.0 * confidence_factor
 else:
