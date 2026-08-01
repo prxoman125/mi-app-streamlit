@@ -42,48 +42,104 @@ if st.session_state.intentos >= MAX_INTENTOS:
 if not st.session_state.autenticado:
     st.markdown("""
         <style>
-            /* Ocultar barra superior de Streamlit */
+            /* Ocultar barra superior e interfaz de fondo Streamlit */
             header, [data-testid="stHeader"] {
                 visibility: hidden;
                 height: 0px;
             }
             .stApp {
-                background-color: #030507 !important;
+                background-color: #020408 !important;
+                overflow-x: hidden;
             }
 
-            /* Fondo de Malla Grid Sci-Fi */
+            /* Fondo Avanzado con Malla Sci-Fi y Luz Radial */
             .grid-bg {
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
-                background-image: 
+                background: 
+                    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.08) 0%, rgba(2, 4, 8, 0.95) 75%),
                     linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
                     linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-                background-size: 30px 30px;
-                animation: gridMove 20s linear infinite;
+                background-size: 100% 100%, 35px 35px, 35px 35px;
+                animation: gridMove 25s linear infinite;
                 z-index: 0;
                 pointer-events: none;
+            }
+
+            /* Indicadores Globales de la Interfaz en Esquinas Superiores */
+            .top-global-hud {
+                position: fixed;
+                top: 15px; left: 25px; right: 25px;
+                display: flex;
+                justify-content: space-between;
+                font-family: monospace;
+                font-size: 11px;
+                color: #00f0ff;
+                letter-spacing: 1.5px;
+                z-index: 10;
+                opacity: 0.75;
+                pointer-events: none;
+                text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+            }
+
+            /* Módulos Flotantes Periféricos (Laterales Izquierda y Derecha) */
+            .hud-panel-left, .hud-panel-right {
+                position: fixed;
+                top: 18vh;
+                width: 220px;
+                padding: 16px;
+                background: rgba(8, 14, 22, 0.4);
+                border: 1px solid rgba(0, 240, 255, 0.18);
+                backdrop-filter: blur(10px);
+                border-radius: 12px;
+                font-family: monospace;
+                font-size: 10px;
+                color: #93c5fd;
+                z-index: 1;
+                pointer-events: none;
+                box-shadow: 0 0 15px rgba(0, 240, 255, 0.05);
+                animation: sidePanelEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            .hud-panel-left { left: 4vw; }
+            .hud-panel-right { right: 4vw; }
+
+            .panel-header {
+                color: #00f0ff;
+                font-weight: bold;
+                border-bottom: 1px dashed rgba(0, 240, 255, 0.3);
+                padding-bottom: 4px;
+                margin-bottom: 10px;
+                letter-spacing: 1px;
+            }
+
+            .hud-data-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 6px;
             }
 
             /* Contenedor Exterior con Borde Neon Giratorio */
             .login-wrapper {
                 position: relative;
                 max-width: 460px;
-                margin: 5vh auto 0 auto;
-                padding: 3px;
+                margin: 4vh auto 0 auto;
+                padding: 2px;
                 border-radius: 20px;
-                background: linear-gradient(90deg, #00f0ff, #0077ff, #00f0ff, #0077ff);
+                background: linear-gradient(135deg, #00f0ff, #0044ff, #00f0ff, #0077ff);
                 background-size: 300% 300%;
-                animation: borderGlow 4s linear infinite, fadeIn 0.8s ease-out;
-                box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
+                animation: borderGlow 6s ease infinite, entranceZoom 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
             }
 
-            /* Tarjeta Interior de Login */
+            /* Tarjeta Interior de Login con Glassmorphism */
             .login-card {
                 position: relative;
-                background: #080b0e;
-                border-radius: 17px;
+                background: rgba(8, 11, 16, 0.85);
+                backdrop-filter: blur(16px);
+                border-radius: 18px;
                 padding: 25px 25px 15px 25px;
-                z-index: 1;
+                z-index: 2;
             }
 
             /* Barra de Telemetría Superior */
@@ -128,7 +184,7 @@ if not st.session_state.autenticado:
                 overflow: hidden;
             }
 
-            /* 4 Esquinas Simétricas */
+            /* Esquinas HUD */
             .corner {
                 position: absolute;
                 width: 20px;
@@ -200,6 +256,7 @@ if not st.session_state.autenticado:
                 letter-spacing: 1px;
                 text-transform: uppercase;
                 margin: 0;
+                text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
             }
             .login-subtitle {
                 color: #00f0ff;
@@ -215,12 +272,18 @@ if not st.session_state.autenticado:
             /* Resplandor Láser en Inputs */
             div[data-baseweb="input"] input:focus {
                 border-color: #00f0ff !important;
-                box-shadow: 0 0 12px rgba(0, 240, 255, 0.5) !important;
+                box-shadow: 0 0 14px rgba(0, 240, 255, 0.6) !important;
             }
 
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-15px); }
-                to { opacity: 1; transform: translateY(0); }
+            /* Keyframes de Animaciones */
+            @keyframes entranceZoom {
+                0% { opacity: 0; transform: scale(0.92) translateY(-20px); }
+                100% { opacity: 1; transform: scale(1) translateY(0); }
+            }
+
+            @keyframes sidePanelEntrance {
+                0% { opacity: 0; transform: translateY(30px); }
+                100% { opacity: 1; transform: translateY(0); }
             }
 
             @keyframes borderGlow {
@@ -235,8 +298,8 @@ if not st.session_state.autenticado:
             }
 
             @keyframes gridMove {
-                0% { background-position: 0 0; }
-                100% { background-position: 30px 30px; }
+                0% { background-position: 0 0, 0 0, 0 0; }
+                100% { background-position: 0 0, 35px 35px, 35px 35px; }
             }
 
             @keyframes rotateRight {
@@ -264,8 +327,36 @@ if not st.session_state.autenticado:
                 50% { top: 100%; }
                 100% { top: -40%; }
             }
+
+            /* Ocultar elementos decorativos en dispositivos móviles */
+            @media (max-width: 1024px) {
+                .hud-panel-left, .hud-panel-right { display: none; }
+            }
         </style>
+
         <div class="grid-bg"></div>
+
+        <div class="top-global-hud">
+            <span>● SYSTEM: ONLINE</span>
+            <span>ENCRYPTION: AES-256</span>
+            <span>NODE: OPTIC-CORE-01</span>
+        </div>
+
+        <div class="hud-panel-left">
+            <div class="panel-header">DIAGNOSTICO_RED</div>
+            <div class="hud-data-row"><span>LATENCIA:</span><span style="color:#00f0ff">12 ms</span></div>
+            <div class="hud-data-row"><span>SENSORES:</span><span style="color:#38ef7d">CALIBRADOS</span></div>
+            <div class="hud-data-row"><span>OPTICAL LASER:</span><span style="color:#00f0ff">READY</span></div>
+            <div class="hud-data-row"><span>SEGURIDAD:</span><span style="color:#38ef7d">ACTIVA</span></div>
+        </div>
+
+        <div class="hud-panel-right">
+            <div class="panel-header">MODULO_TELEMETRIA</div>
+            <div class="hud-data-row"><span>CPU CORE:</span><span style="color:#00f0ff">1.4 GHz</span></div>
+            <div class="hud-data-row"><span>MEMORIA:</span><span style="color:#00f0ff">18% REQ</span></div>
+            <div class="hud-data-row"><span>CANAL:</span><span style="color:#00f0ff">0xFA992</span></div>
+            <div class="hud-data-row"><span>SSL LINK:</span><span style="color:#38ef7d">ESTABLE</span></div>
+        </div>
     """, unsafe_allow_html=True)
     
     col_left, col_center, col_right = st.columns([1, 1.3, 1])
