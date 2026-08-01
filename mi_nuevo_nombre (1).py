@@ -22,7 +22,7 @@ USUARIOS_PERMITIDOS = [
 ]
 
 CONTRASEÑA_CORRECTA = "Jggg101031"
-MAX_INTENTOS = 3
+MAX_INTENTOS = 5
 
 # Inicializar variables de estado seguro en la sesión
 if "intentos" not in st.session_state:
