@@ -1,4 +1,18 @@
 import streamlit as st
+
+# 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
+st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
+
+# 2. Módulo de Autenticación
+from auth import check_password
+
+# 3. Validación de contraseña
+if not check_password("31/10/2010"):
+    st.stop()  # Se detiene si la contraseña no es correcta
+
+# =========================================================
+# 👇 ABAJO DE ESTO QUEDA TODO TU CÓDIGO ORIGINAL SIN TOCAR
+# =========================================================
 import numpy as np
 import math
 import pandas as pd
@@ -6,7 +20,9 @@ import plotly.graph_objects as go
 import sqlite3
 from scipy import stats
 
-st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
+# --- BASE DE DATOS SQLITE ---
+DB_NAME = "colimacion_historial.db"
+# ... resto de tu código ...
 
 # --- BASE DE DATOS SQLITE ---
 DB_NAME = "colimacion_historial.db"
