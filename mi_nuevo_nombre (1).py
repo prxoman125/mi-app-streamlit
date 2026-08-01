@@ -14,8 +14,13 @@ st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 # 🔒 NUEVO MÓDULO DE SEGURIDAD INTEGRADO (Reemplaza al antiguo 'from auth')
 # =========================================================================
 
-# Configura aquí tus correos autorizados y la contraseña
-USUARIOS_PERMITIDOS = ["j3remyx1010@gmail.com"]
+# Agrega aquí todos los correos autorizados separados por comas:
+USUARIOS_PERMITIDOS = [
+    "j3remyx1010@gmail.com",
+    "correo2@ejemplo.com",
+    "correo3@ejemplo.com"
+]
+
 CONTRASEÑA_CORRECTA = "Jggg101031"
 MAX_INTENTOS = 3
 
@@ -89,7 +94,13 @@ if not st.session_state.autenticado:
             boton_ingresar = st.form_submit_button("Iniciar Sesión", use_container_width=True)
             
             if boton_ingresar:
-                if correo in USUARIOS_PERMITIDOS and password == CONTRASEÑA_CORRECTA:
+                # Limpiamos el texto ingresado (quita espacios y convierte a minúsculas)
+                correo_ingresado = correo.strip().lower()
+                
+                # Normalizamos la lista de permitidos a minúsculas para comparar fácilmente
+                lista_permitidos = [u.strip().lower() for u in USUARIOS_PERMITIDOS]
+                
+                if correo_ingresado in lista_permitidos and password == CONTRASEÑA_CORRECTA:
                     st.session_state.autenticado = True
                     st.session_state.intentos = 0  # Reiniciamos contador al tener éxito
                     st.rerun()
@@ -110,8 +121,6 @@ if not st.session_state.autenticado:
 
 # --- BASE DE DATOS SQLITE ---
 DB_NAME = "colimacion_historial.db"
-# ... aquí continúa el resto de tu simulación ...
-
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
@@ -587,13 +596,10 @@ spot_size_display = spot_diameter_cm if is_metric else spot_diameter_cm / 2.54
 curv_drop_display = curv_drop_cm if is_metric else curv_drop_cm / 2.54
 
 # CÁLCULO DE INCERTIDUMBRE ANGULAR (PROPAGACIÓN CON SCIPY/NUMPY)
-# Delta H_mira: ±0.05 cm, Delta Distancia: ±0.5 m, Delta Divergencia
 delta_h_cm = 0.05
 delta_d_cm = 50.0 if D_m > 0 else 0.1
 if D_cm > 0:
-    # Propagación del error: d(atan(y/x))
     sigma_angle_rad = math.sqrt((delta_h_cm / D_cm)**2 + (diferencia_altura_cm * delta_d_cm / (D_cm**2 + diferencia_altura_cm**2))**2)
-    # Factor de confianza 95% usando SciPy norm.ppf
     confidence_factor = stats.norm.ppf(0.975) # ~1.96
     uncertainty_mrad = sigma_angle_rad * 1000.0 * confidence_factor
     uncertainty_moa = math.degrees(sigma_angle_rad) * 60.0 * confidence_factor
