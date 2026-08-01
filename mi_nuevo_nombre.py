@@ -8,61 +8,65 @@ from scipy import stats
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
-# --- BASE DE DATOS SQLITE ---
+# --- BASE DE DATOS SQLITE (CON GESTORES DE CONTEXTO) ---
 DB_NAME = "colimacion_historial.db"
 
 def init_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS historial (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            perfil TEXT,
-            distancia TEXT,
-            h_mira TEXT,
-            h_extra TEXT,
-            spot_size TEXT,
-            angulo TEXT,
-            moa REAL,
-            mrad REAL,
-            direccion TEXT,
-            clics_moa INTEGER,
-            pulsos_mrad INTEGER,
-            incertidumbre TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS historial (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                perfil TEXT,
+                distancia TEXT,
+                h_mira TEXT,
+                h_extra TEXT,
+                viento_x TEXT,
+                spot_size TEXT,
+                angulo TEXT,
+                moa REAL,
+                mrad REAL,
+                direccion TEXT,
+                clics_moa INTEGER,
+                pulsos_mrad INTEGER,
+                incertidumbre TEXT
+            )
+        ''')
+        conn.commit()
 
 def save_record_to_db(rec):
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute('''
-        INSERT INTO historial 
-        (perfil, distancia, h_mira, h_extra, spot_size, angulo, moa, mrad, direccion, clics_moa, pulsos_mrad, incertidumbre)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        rec["Perfil / Carrera"], rec["Distancia"], rec["Línea Colimación"], 
-        rec["Desviación Impacto"], rec["Spot Size"], rec["Ángulo (α)"], 
-        rec["MOA"], rec["mrad"], rec["Dirección"], rec["Clics (1/4 MOA)"], 
-        rec["Pulsos (0.1 mrad)"], rec["Incertidumbre (±)"]
-    ))
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO historial 
+            (perfil, distancia, h_mira, h_extra, viento_x, spot_size, angulo, moa, mrad, direccion, clics_moa, pulsos_mrad, incertidumbre)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            rec["Perfil / Carrera"], rec["Distancia"], rec["Línea Colimación"], 
+            rec["Desviación Impacto (Y)"], rec["Deriva Lateral (X)"], rec["Spot Size"], 
+            rec["Ángulo (α)"], rec["MOA"], rec["mrad"], rec["Dirección"], 
+            rec["Clics (1/4 MOA)"], rec["Pulsos (0.1 mrad)"], rec["Incertidumbre (±)"]
+        ))
+        conn.commit()
 
 def load_history_from_db():
-    conn = sqlite3.connect(DB_NAME)
-    df = pd.read_sql_query("SELECT id, fecha AS 'Fecha/Hora', perfil AS 'Perfil / Carrera', distancia AS 'Distancia', h_mira AS 'Línea Colimación', h_extra AS 'Desviación Impacto', spot_size AS 'Spot Size', angulo AS 'Ángulo (α)', moa AS 'MOA', mrad AS 'mrad', direccion AS 'Dirección', clics_moa AS 'Clics (1/4 MOA)', pulsos_mrad AS 'Pulsos (0.1 mrad)', incertidumbre AS 'Incertidumbre (±)' FROM historial ORDER BY id DESC", conn)
-    conn.close()
+    with sqlite3.connect(DB_NAME) as conn:
+        df = pd.read_sql_query("""
+            SELECT id, fecha AS 'Fecha/Hora', perfil AS 'Perfil / Carrera', distancia AS 'Distancia', 
+                   h_mira AS 'Línea Colimación', h_extra AS 'Desviación Impacto (Y)', viento_x AS 'Deriva Lateral (X)',
+                   spot_size AS 'Spot Size', angulo AS 'Ángulo (α)', moa AS 'MOA', mrad AS 'mrad', 
+                   direccion AS 'Dirección', clics_moa AS 'Clics (1/4 MOA)', pulsos_mrad AS 'Pulsos (0.1 mrad)', 
+                   incertidumbre AS 'Incertidumbre (±)' 
+            FROM historial ORDER BY id DESC
+        """, conn)
     return df
 
 def clear_db():
-    conn = sqlite3.connect(DB_NAME)
-    c = conn.cursor()
-    c.execute("DELETE FROM historial")
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DB_NAME) as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM historial")
+        conn.commit()
 
 # Inicializar Base de Datos
 init_db()
@@ -200,7 +204,8 @@ TEXTS = {
         "save_btn": "💾 Registrar Medición (DB)",
         "export_csv": "📥 Exportar Historial (CSV)",
         "h_mira": "Línea de colimación",
-        "h_extra": "Desviación del punto de impacto / Objetivo",
+        "h_extra": "Desviación Vertical (Y)",
+        "viento_x": "Deriva Lateral / Viento (X)",
         "dist_input": "Distancia al receptor / Destino",
         "ref_angle_input": "Inclinación eje referencia (°)",
         "laser_div": "Divergencia Láser (mrad)",
@@ -276,7 +281,8 @@ TEXTS = {
         "save_btn": "💾 Save Measurement (DB)",
         "export_csv": "📥 Export History (CSV)",
         "h_mira": "Collimation Line",
-        "h_extra": "Impact Point Deviation / Target Offset",
+        "h_extra": "Vertical Offset (Y)",
+        "viento_x": "Lateral Drift / Wind (X)",
         "dist_input": "Distance to Receiver / Destination",
         "ref_angle_input": "Ref. Axis Inclination (°)",
         "laser_div": "Laser Divergence (mrad)",
@@ -332,31 +338,31 @@ profiles_options = [txt["profile_placeholder"]] + [
 profile = st.sidebar.selectbox(txt["profile_select"], profiles_options, index=0)
 
 PROFILE_PRESETS = {
-    txt["p1"]:  (True,  1.2,   0.15,  1.5,   0.05, 0.5),
-    txt["p2"]:  (True,  2.5,   0.50,  6.0,   0.20, 0.8),
-    txt["p3"]:  (False, 4.0,   1.50,  120.0, 1.20, 1.2),
-    txt["p4"]:  (True,  12.0,  4.50,  350.0, 2.80, 1.5),
-    txt["p5"]:  (True,  8.0,  -2.10,  650.0, -1.50, 1.0),
-    txt["p6"]:  (True,  25.0, -8.00,  1200.0, 3.50, 2.0),
-    txt["p7"]:  (False, 10.0,  3.20,  850.0, 2.10, 1.4),
-    txt["p8"]:  (True,  4.5,   0.80,  180.0, 0.45, 1.0),
-    txt["p9"]:  (True,  3.0,   1.20,  18.0,  2.50, 0.6),
-    txt["p10"]: (True,  0.5,   0.05,  2.5,   0.10, 0.3),
-    txt["p11"]: (True,  35.0,  12.00, 1500.0, 8.50, 0.8),
-    txt["p12"]: (False, 5.0,  -1.80,  320.0, -2.10, 1.2),
-    txt["p13"]: (True,  5.0,  -1.20,  12.0,  -0.80, 0.9),
-    txt["p14"]: (True,  15.0,  2.80,  75.0,   0.90, 1.1),
-    txt["p15"]: (False, 6.0,  -2.50,  1100.0,-4.20, 2.5),
-    txt["p16"]: (True,  45.0,  15.00, 2000.0, 12.00, 0.2),
-    txt["p17"]: (True,  0.2,   0.04,  0.8,   0.05, 0.1),
-    txt["p18"]: (True,  50.0, -10.00, 1800.0,-14.00, 0.5),
-    txt["p19"]: (True,  6.5,   1.10,  80.0,  1.50, 1.8),
-    txt["p20"]: (True,  1.8,  -0.30,  12.0,  -0.40, 0.4),
-    txt["p21"]: (True,  0.9,   0.12,  4.5,   0.25, 0.5),
-    txt["p22"]: (False, 14.0,  4.50,  650.0, 3.80, 1.3),
-    txt["p23"]: (True,  2.8,  -0.50,  45.0,  -1.20, 1.5),
-    txt["p24"]: (True,  0.1,   0.01,  0.3,   0.02, 0.05),
-    txt["p25"]: (True,  20.0,  4.20,  220.0, 2.90, 1.0),
+    txt["p1"]:  (True,  1.2,   0.15,  0.0,   1.5,   0.05, 0.5),
+    txt["p2"]:  (True,  2.5,   0.50,  0.1,   6.0,   0.20, 0.8),
+    txt["p3"]:  (False, 4.0,   1.50,  0.5,   120.0, 1.20, 1.2),
+    txt["p4"]:  (True,  12.0,  4.50,  1.2,   350.0, 2.80, 1.5),
+    txt["p5"]:  (True,  8.0,  -2.10, -0.8,   650.0, -1.50, 1.0),
+    txt["p6"]:  (True,  25.0, -8.00,  2.0,   1200.0, 3.50, 2.0),
+    txt["p7"]:  (False, 10.0,  3.20,  1.5,   850.0, 2.10, 1.4),
+    txt["p8"]:  (True,  4.5,   0.80,  0.2,   180.0, 0.45, 1.0),
+    txt["p9"]:  (True,  3.0,   1.20, -0.3,   18.0,  2.50, 0.6),
+    txt["p10"]: (True,  0.5,   0.05,  0.0,   2.5,   0.10, 0.3),
+    txt["p11"]: (True,  35.0,  12.00, 4.5,   1500.0, 8.50, 0.8),
+    txt["p12"]: (False, 5.0,  -1.80, -1.0,   320.0, -2.10, 1.2),
+    txt["p13"]: (True,  5.0,  -1.20,  0.8,   12.0,  -0.80, 0.9),
+    txt["p14"]: (True,  15.0,  2.80, -0.5,   75.0,   0.90, 1.1),
+    txt["p15"]: (False, 6.0,  -2.50,  3.0,   1100.0,-4.20, 2.5),
+    txt["p16"]: (True,  45.0,  15.00, 1.0,   2000.0, 12.00, 0.2),
+    txt["p17"]: (True,  0.2,   0.04,  0.0,   0.8,   0.05, 0.1),
+    txt["p18"]: (True,  50.0, -10.00,-5.0,   1800.0,-14.00, 0.5),
+    txt["p19"]: (True,  6.5,   1.10,  0.4,   80.0,  1.50, 1.8),
+    txt["p20"]: (True,  1.8,  -0.30,  0.0,   12.0,  -0.40, 0.4),
+    txt["p21"]: (True,  0.9,   0.12,  0.0,   4.5,   0.25, 0.5),
+    txt["p22"]: (False, 14.0,  4.50,  2.5,   650.0, 3.80, 1.3),
+    txt["p23"]: (True,  2.8,  -0.50, -1.8,   45.0,  -1.20, 1.5),
+    txt["p24"]: (True,  0.1,   0.01,  0.0,   0.3,   0.02, 0.05),
+    txt["p25"]: (True,  20.0,  4.20,  1.0,   220.0, 2.90, 1.0),
 }
 
 if "current_profile" not in st.session_state:
@@ -365,16 +371,18 @@ if "current_profile" not in st.session_state:
 if profile != st.session_state["current_profile"]:
     st.session_state["current_profile"] = profile
     if profile in PROFILE_PRESETS:
-        pref_metric, h_m, h_e, dist, angle, div_mrad = PROFILE_PRESETS[profile]
+        pref_metric, h_m, h_e, v_x, dist, angle, div_mrad = PROFILE_PRESETS[profile]
         st.session_state["unit_choice"] = txt["metric"] if pref_metric else txt["imperial"]
         st.session_state["h_mira_val"] = h_m
         st.session_state["h_extra_val"] = h_e
+        st.session_state["viento_x_val"] = v_x
         st.session_state["dist_val"] = dist
         st.session_state["ref_angle_val"] = angle
         st.session_state["laser_div_val"] = div_mrad
     else:
         st.session_state["h_mira_val"] = 0.0
         st.session_state["h_extra_val"] = 0.0
+        st.session_state["viento_x_val"] = 0.0
         st.session_state["dist_val"] = 0.0
         st.session_state["ref_angle_val"] = 0.0
         st.session_state["laser_div_val"] = 1.0
@@ -387,6 +395,7 @@ is_metric = (unit_sys == txt["metric"])
 
 if "h_mira_val" not in st.session_state: st.session_state["h_mira_val"] = 0.0
 if "h_extra_val" not in st.session_state: st.session_state["h_extra_val"] = 0.0
+if "viento_x_val" not in st.session_state: st.session_state["viento_x_val"] = 0.0
 if "dist_val" not in st.session_state: st.session_state["dist_val"] = 0.0
 if "ref_angle_val" not in st.session_state: st.session_state["ref_angle_val"] = 0.0
 if "laser_div_val" not in st.session_state: st.session_state["laser_div_val"] = 1.0
@@ -398,6 +407,7 @@ if "confirm_clear" not in st.session_state: st.session_state["confirm_clear"] = 
 def reset_inputs_to_zero():
     st.session_state["h_mira_val"] = 0.0
     st.session_state["h_extra_val"] = 0.0
+    st.session_state["viento_x_val"] = 0.0
     st.session_state["dist_val"] = 0.0
     st.session_state["ref_angle_val"] = 0.0
     st.session_state["laser_div_val"] = 1.0
@@ -411,6 +421,7 @@ else:
 
 H_mira = st.sidebar.number_input(f"{txt['h_mira']} ({h_unit})", min_value=-500.0, max_value=500.0, value=st.session_state["h_mira_val"], step=0.1, key="h_mira_val")
 H_extra = st.sidebar.number_input(f"{txt['h_extra']} ({h_unit})", min_value=-500.0, max_value=500.0, value=st.session_state["h_extra_val"], step=0.1, key="h_extra_val")
+Viento_x = st.sidebar.number_input(f"{txt['viento_x']} ({h_unit})", min_value=-500.0, max_value=500.0, value=st.session_state["viento_x_val"], step=0.1, key="viento_x_val")
 D_val = st.sidebar.number_input(f"{txt['dist_input']} ({d_unit})", min_value=0.0, max_value=2000.0, value=st.session_state["dist_val"], step=1.0, key="dist_val")
 ref_angle_deg = st.sidebar.number_input(txt['ref_angle_input'], min_value=-30.00, max_value=30.00, value=st.session_state["ref_angle_val"], step=0.10, format="%.2f", key="ref_angle_val")
 
@@ -425,10 +436,10 @@ st.sidebar.button(txt["reset_btn"], on_click=reset_inputs_to_zero, use_container
 
 if is_metric:
     D_m = D_val
-    D_cm, H_mira_cm, H_extra_cm = D_val * 100, H_mira, H_extra
+    D_cm, H_mira_cm, H_extra_cm, Viento_x_cm = D_val * 100, H_mira, H_extra, Viento_x
 else:
     D_m = D_val * 0.9144
-    D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
+    D_cm, H_mira_cm, H_extra_cm, Viento_x_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54, Viento_x * 2.54
 
 # --- ENCABEZADO PRINCIPAL ---
 st.markdown(f"""
@@ -485,14 +496,11 @@ spot_size_display = spot_diameter_cm if is_metric else spot_diameter_cm / 2.54
 curv_drop_display = curv_drop_cm if is_metric else curv_drop_cm / 2.54
 
 # CÁLCULO DE INCERTIDUMBRE ANGULAR (PROPAGACIÓN CON SCIPY/NUMPY)
-# Delta H_mira: ±0.05 cm, Delta Distancia: ±0.5 m, Delta Divergencia
 delta_h_cm = 0.05
 delta_d_cm = 50.0 if D_m > 0 else 0.1
 if D_cm > 0:
-    # Propagación del error: d(atan(y/x))
     sigma_angle_rad = math.sqrt((delta_h_cm / D_cm)**2 + (diferencia_altura_cm * delta_d_cm / (D_cm**2 + diferencia_altura_cm**2))**2)
-    # Factor de confianza 95% usando SciPy norm.ppf
-    confidence_factor = stats.norm.ppf(0.975) # ~1.96
+    confidence_factor = stats.norm.ppf(0.975)
     uncertainty_mrad = sigma_angle_rad * 1000.0 * confidence_factor
     uncertainty_moa = math.degrees(sigma_angle_rad) * 60.0 * confidence_factor
 else:
@@ -513,7 +521,8 @@ if save_clicked:
         "Perfil / Carrera": profile,
         "Distancia": f"{D_val:.1f} {d_unit}",
         "Línea Colimación": f"{H_mira:.2f} {h_unit}",
-        "Desviación Impacto": f"{H_extra:.2f} {h_unit}",
+        "Desviación Impacto (Y)": f"{H_extra:.2f} {h_unit}",
+        "Deriva Lateral (X)": f"{Viento_x:.2f} {h_unit}",
         "Spot Size": f"{spot_size_display:.2f} {h_unit}",
         "Ángulo (α)": f"{angulo_deg:.4f}°",
         "MOA": moa,
@@ -536,7 +545,7 @@ with col_3d:
     fig3d = go.Figure()
 
     grid_x = np.linspace(0, max(D_cm, 10), 10)
-    grid_y = np.linspace(-max(abs(H_extra_cm)*1.5, 20), max(abs(H_extra_cm)*1.5, 20), 10)
+    grid_y = np.linspace(-max(abs(Viento_x_cm)*1.5, 20), max(abs(Viento_x_cm)*1.5, 20), 10)
     gx, gy = np.meshgrid(grid_x, grid_y)
     gz = np.zeros_like(gx)
 
@@ -555,7 +564,7 @@ with col_3d:
     ))
 
     fig3d.add_trace(go.Scatter3d(
-        x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
+        x=[0, D_cm], y=[0, Viento_x_cm], z=[pos_mira[1], pos_impacto_mira[1]],
         mode='lines+markers',
         name=f"{txt['sight_label']} (α = {angulo_deg:.2f}°)",
         line=dict(color='#00F0FF', width=9),
@@ -569,7 +578,7 @@ with col_3d:
     ))
 
     fig3d.add_trace(go.Scatter3d(
-        x=[D_cm], y=[0], z=[y_target_point],
+        x=[D_cm], y=[Viento_x_cm], z=[y_target_point],
         mode='markers', name=txt["target_point"],
         marker=dict(size=10, color='#00FF66', symbol='diamond')
     ))
@@ -584,8 +593,8 @@ with col_3d:
         scene=dict(
             aspectmode='manual', aspectratio=dict(x=2.0, y=1, z=1.1),
             xaxis=dict(title='Distancia (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
-            yaxis=dict(title='Eje Lateral', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
-            zaxis=dict(title='Elevación (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            yaxis=dict(title='Eje Lateral X (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            zaxis=dict(title='Elevación Z (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
             camera=dict(eye=dict(x=1.6, y=-1.4, z=0.6))
         ),
         legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(18, 18, 18, 0.8)")
@@ -595,7 +604,7 @@ with col_3d:
 with col_2d:
     fig2d = go.Figure()
 
-    max_radius = max(abs(diferencia_altura_cm) * 1.4, spot_radius_cm * 2.5, 5.0)
+    max_radius = max(abs(diferencia_altura_cm) * 1.4, abs(Viento_x_cm) * 1.4, spot_radius_cm * 2.5, 5.0)
     rings = np.linspace(max_radius * 0.2, max_radius, 4)
 
     for r in reversed(rings):
@@ -611,14 +620,14 @@ with col_2d:
 
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
-        x0=-spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
-        x1=spot_radius_cm, y1=diferencia_altura_cm + spot_radius_cm,
+        x0=Viento_x_cm - spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
+        x1=Viento_x_cm + spot_radius_cm, y1=diferencia_altura_cm + spot_radius_cm,
         line=dict(color="#00F0FF", width=2),
         fillcolor="rgba(0, 240, 255, 0.35)"
     )
 
     fig2d.add_trace(go.Scatter(
-        x=[0], y=[diferencia_altura_cm],
+        x=[Viento_x_cm], y=[diferencia_altura_cm],
         mode='markers', name=txt["target_point"],
         marker=dict(size=8, color='#00FF66', symbol='cross')
     ))
