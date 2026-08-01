@@ -4,6 +4,7 @@ import math
 import pandas as pd
 import plotly.graph_objects as go
 import sqlite3
+import time
 from scipy import stats
 
 # 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
@@ -11,18 +12,17 @@ st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
 
 # =========================================================================
-# 🔒 NUEVO MÓDULO DE SEGURIDAD INTEGRADO (Reemplaza al antiguo 'from auth')
+# 🔒 NUEVO MÓDULO DE SEGURIDAD CON ANIMACIÓN SIMÉTRICA DE ENFOQUE ÓPTICO
 # =========================================================================
 
-# Agrega aquí todos los correos autorizados separados por comas:
+# Lista de correos autorizados y contraseña
 USUARIOS_PERMITIDOS = [
     "j3remyx1010@gmail.com",
-    "correo2@ejemplo.com",
-    "correo3@ejemplo.com"
+    "correo2@ejemplo.com"
 ]
 
 CONTRASEÑA_CORRECTA = "Jggg101031"
-MAX_INTENTOS = 5
+MAX_INTENTOS = 3
 
 # Inicializar variables de estado seguro en la sesión
 if "intentos" not in st.session_state:
@@ -35,56 +35,155 @@ if st.session_state.intentos >= MAX_INTENTOS:
     st.error("❌ Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
     st.stop()
 
-# Si el usuario aún no se ha validado, mostramos el formulario de acceso
+# Si el usuario aún no se ha validado, mostramos el formulario de acceso con animación
 if not st.session_state.autenticado:
-    # Estilos CSS específicos para la pantalla de acceso rediseñada
+    # Estilos CSS con la animación simétrica de 4 esquinas (HUD Optoelectrónico)
     st.markdown("""
         <style>
             .stApp {
-                background-color: #000000 !important;
+                background-color: #050505 !important;
             }
+            
+            /* Contenedor principal del HUD Animado */
+            .hud-box {
+                position: relative;
+                width: 140px;
+                height: 140px;
+                margin: 0 auto 20px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* 4 Esquinas Simétricas (Similares a la imagen) */
+            .corner {
+                position: absolute;
+                width: 25px;
+                height: 25px;
+                border-color: #00ffcc;
+                border-style: solid;
+                animation: cornerPulse 2s infinite alternate ease-in-out;
+            }
+
+            .top-left {
+                top: 0;
+                left: 0;
+                border-width: 3px 0 0 3px;
+                border-top-left-radius: 4px;
+            }
+
+            .top-right {
+                top: 0;
+                right: 0;
+                border-width: 3px 3px 0 0;
+                border-top-right-radius: 4px;
+            }
+
+            .bottom-left {
+                bottom: 0;
+                left: 0;
+                border-width: 0 0 3px 3px;
+                border-bottom-left-radius: 4px;
+            }
+
+            .bottom-right {
+                bottom: 0;
+                right: 0;
+                border-width: 0 3px 3px 0;
+                border-bottom-right-radius: 4px;
+            }
+
+            /* Anillo Giratorio Central */
+            .hud-ring {
+                width: 80px;
+                height: 80px;
+                border: 2px dashed rgba(0, 255, 204, 0.4);
+                border-radius: 50%;
+                animation: rotateRing 8s linear infinite;
+            }
+
+            /* Punto Láser Central */
+            .hud-dot {
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                background-color: #00ffcc;
+                border-radius: 50%;
+                box-shadow: 0 0 12px #00ffcc, 0 0 24px #00ffcc;
+                animation: laserPulse 1.5s infinite ease-in-out;
+            }
+
+            /* Animaciones CSS */
+            @keyframes rotateRing {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
+            @keyframes cornerPulse {
+                0% {
+                    border-color: #00ffcc;
+                    filter: drop-shadow(0 0 2px #00ffcc);
+                }
+                100% {
+                    border-color: #0088cc;
+                    filter: drop-shadow(0 0 8px #0088cc);
+                }
+            }
+
+            @keyframes laserPulse {
+                0%, 100% {
+                    transform: scale(0.8);
+                    opacity: 0.6;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            /* Tarjeta de Formulario */
             .login-card {
                 background: linear-gradient(145deg, #0e0e0e 0%, #161616 100%);
-                border: 1px solid #282828;
-                border-radius: 12px;
+                border: 1px solid #222222;
+                border-radius: 14px;
                 padding: 30px 25px 20px 25px;
-                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.8);
-                margin-top: 5vh;
-            }
-            .login-header {
-                text-align: center;
-                margin-bottom: 25px;
-            }
-            .login-icon {
-                font-size: 38px;
-                margin-bottom: 5px;
+                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.9);
+                margin-top: 3vh;
             }
             .login-title {
                 color: #ffffff;
                 font-size: 20px;
                 font-weight: 700;
-                letter-spacing: 0.5px;
+                text-align: center;
+                letter-spacing: 1px;
                 margin: 0;
             }
             .login-subtitle {
                 color: #888888;
                 font-size: 12px;
-                margin-top: 4px;
+                text-align: center;
+                margin-top: 5px;
+                margin-bottom: 20px;
             }
         </style>
     """, unsafe_allow_html=True)
     
-    # Diseño centrado con columnas
     col_left, col_center, col_right = st.columns([1, 1.2, 1])
     
     with col_center:
+        # Renderizado de la animación HUD de 4 esquinas simétricas
         st.markdown("""
             <div class="login-card">
-                <div class="login-header">
-                    <div class="login-icon">🔒</div>
-                    <div class="login-title">Control de Acceso</div>
-                    <div class="login-subtitle">Simulador de Colimación Óptica Avanzado</div>
+                <div class="hud-box">
+                    <div class="corner top-left"></div>
+                    <div class="corner top-right"></div>
+                    <div class="corner bottom-left"></div>
+                    <div class="corner bottom-right"></div>
+                    <div class="hud-ring"></div>
+                    <div class="hud-dot"></div>
                 </div>
+                <div class="login-title">Control de Acceso Óptico</div>
+                <div class="login-subtitle">Sistema de Colimación & Alineación Láser</div>
             </div>
         """, unsafe_allow_html=True)
         
@@ -94,15 +193,16 @@ if not st.session_state.autenticado:
             boton_ingresar = st.form_submit_button("Iniciar Sesión", use_container_width=True)
             
             if boton_ingresar:
-                # Limpiamos el texto ingresado (quita espacios y convierte a minúsculas)
                 correo_ingresado = correo.strip().lower()
-                
-                # Normalizamos la lista de permitidos a minúsculas para comparar fácilmente
                 lista_permitidos = [u.strip().lower() for u in USUARIOS_PERMITIDOS]
                 
                 if correo_ingresado in lista_permitidos and password == CONTRASEÑA_CORRECTA:
                     st.session_state.autenticado = True
-                    st.session_state.intentos = 0  # Reiniciamos contador al tener éxito
+                    st.session_state.intentos = 0
+                    
+                    # Efecto de carga / Escaneo al ingresar exitosamente
+                    with st.spinner("Iniciando calibración del sistema..."):
+                        time.sleep(1.2)
                     st.rerun()
                 else:
                     st.session_state.intentos += 1
@@ -110,7 +210,7 @@ if not st.session_state.autenticado:
                     st.error(f"Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
                     st.stop()
 
-# Detener por completo la ejecución del script si no está autenticado
+# Detener la ejecución del script si no está autenticado
 if not st.session_state.autenticado:
     st.stop()
 
