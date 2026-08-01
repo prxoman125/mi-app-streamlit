@@ -12,7 +12,7 @@ st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
 
 # =========================================================================
-# 🔒 MÓDULO DE SEGURIDAD CON ANIMACIÓN ÓPTICA MULTICAPA (HUD AVANZADO)
+# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO DE CARGA Y ESCANEO
 # =========================================================================
 
 USUARIOS_PERMITIDOS = [
@@ -39,25 +39,80 @@ if not st.session_state.autenticado:
     st.markdown("""
         <style>
             .stApp {
-                background-color: #050505 !important;
-            }
-            
-            /* Tarjeta Principal de Login */
-            .login-card {
-                background: linear-gradient(145deg, #0b0d0e 0%, #15181a 100%);
-                border: 1px solid #1f292e;
-                border-radius: 16px;
-                padding: 30px 25px 20px 25px;
-                box-shadow: 0px 12px 35px rgba(0, 0, 0, 0.95), 0px 0px 15px rgba(0, 255, 204, 0.05);
-                margin-top: 2vh;
+                background-color: #030507 !important;
             }
 
-            /* Contenedor HUD Animado */
+            /* Fondo de Malla Grid Sci-Fi */
+            .grid-bg {
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background-image: 
+                    linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+                background-size: 30px 30px;
+                animation: gridMove 20s linear infinite;
+                z-index: 0;
+                pointer-events: none;
+            }
+
+            /* Contenedor Exterior con Borde Neon Giratorio */
+            .login-wrapper {
+                position: relative;
+                max-width: 460px;
+                margin: 2vh auto 0 auto;
+                padding: 3px;
+                border-radius: 20px;
+                background: linear-gradient(90deg, #00ffcc, #0077ff, #00ffcc, #0077ff);
+                background-size: 300% 300%;
+                animation: borderGlow 4s linear infinite;
+                box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
+            }
+
+            /* Tarjeta Interior de Login */
+            .login-card {
+                position: relative;
+                background: #080b0e;
+                border-radius: 17px;
+                padding: 25px 25px 15px 25px;
+                z-index: 1;
+            }
+
+            /* Barra de Telemetría Superior */
+            .status-bar-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-family: monospace;
+                font-size: 10px;
+                color: #00ffcc;
+                letter-spacing: 1px;
+                margin-bottom: 12px;
+                border-bottom: 1px solid rgba(0, 255, 204, 0.15);
+                padding-bottom: 6px;
+            }
+
+            .loading-bar-container {
+                width: 100%;
+                height: 3px;
+                background: rgba(0, 255, 204, 0.1);
+                border-radius: 2px;
+                overflow: hidden;
+                margin-bottom: 15px;
+            }
+
+            .loading-bar-fill {
+                width: 40%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, #00ffcc, transparent);
+                animation: loadingSweep 2s ease-in-out infinite;
+            }
+
+            /* Contenedor HUD Animado Central */
             .hud-box {
                 position: relative;
-                width: 150px;
-                height: 150px;
-                margin: 0 auto 15px auto;
+                width: 130px;
+                height: 130px;
+                margin: 0 auto 12px auto;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -67,92 +122,61 @@ if not st.session_state.autenticado:
             /* 4 Esquinas Simétricas */
             .corner {
                 position: absolute;
-                width: 24px;
-                height: 24px;
+                width: 20px;
+                height: 20px;
                 border-color: #00ffcc;
                 border-style: solid;
                 animation: cornerPulse 2.5s infinite alternate ease-in-out;
                 z-index: 2;
             }
-            .top-left {
-                top: 2px;
-                left: 2px;
-                border-width: 3px 0 0 3px;
-                border-top-left-radius: 4px;
-            }
-            .top-right {
-                top: 2px;
-                right: 2px;
-                border-width: 3px 3px 0 0;
-                border-top-right-radius: 4px;
-            }
-            .bottom-left {
-                bottom: 2px;
-                left: 2px;
-                border-width: 0 0 3px 3px;
-                border-bottom-left-radius: 4px;
-            }
-            .bottom-right {
-                bottom: 2px;
-                right: 2px;
-                border-width: 0 3px 3px 0;
-                border-bottom-right-radius: 4px;
-            }
+            .top-left { top: 2px; left: 2px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
+            .top-right { top: 2px; right: 2px; border-width: 3px 3px 0 0; border-top-right-radius: 4px; }
+            .bottom-left { bottom: 2px; left: 2px; border-width: 0 0 3px 3px; border-bottom-left-radius: 4px; }
+            .bottom-right { bottom: 2px; right: 2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
 
-            /* Anillo Exterior Giratorio (Sentido horario) */
+            /* Anillos Giratorios */
             .hud-ring-outer {
                 position: absolute;
-                width: 110px;
-                height: 110px;
-                border: 2px dashed rgba(0, 255, 204, 0.35);
+                width: 95px;
+                height: 95px;
+                border: 2px dashed rgba(0, 255, 204, 0.4);
                 border-radius: 50%;
                 animation: rotateRight 10s linear infinite;
             }
 
-            /* Anillo Interior Giratorio (Sentido antihorario) */
             .hud-ring-inner {
                 position: absolute;
-                width: 70px;
-                height: 70px;
-                border: 2px dotted rgba(0, 200, 255, 0.5);
+                width: 60px;
+                height: 60px;
+                border: 2px dotted rgba(0, 180, 255, 0.6);
                 border-radius: 50%;
                 animation: rotateLeft 6s linear infinite;
             }
 
-            /* Ejes de Cruz de Retícula (Crosshair) */
-            .hud-cross-h {
-                position: absolute;
-                width: 100px;
-                height: 1px;
-                background: rgba(0, 255, 204, 0.25);
-            }
-            .hud-cross-v {
-                position: absolute;
-                width: 1px;
-                height: 100px;
-                background: rgba(0, 255, 204, 0.25);
-            }
+            /* Retícula Crosshair */
+            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(0, 255, 204, 0.3); }
+            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(0, 255, 204, 0.3); }
 
-            /* Punto Láser Central Pulsante */
+            /* Punto Láser Central */
             .hud-dot {
                 position: absolute;
-                width: 8px;
-                height: 8px;
+                width: 7px;
+                height: 7px;
                 background-color: #00ffcc;
                 border-radius: 50%;
-                box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+                box-shadow: 0 0 10px #00ffcc, 0 0 18px #00ffcc;
                 animation: laserPulse 1.2s infinite ease-in-out;
                 z-index: 3;
             }
 
-            /* NUEVA ANIMACIÓN: Barra/Línea de Escaneo Laser Vertical (Scanline) */
+            /* Scanline Vertical */
             .hud-scanline {
                 position: absolute;
                 top: -100%;
                 left: 0;
                 width: 100%;
                 height: 35%;
-                background: linear-gradient(180deg, rgba(0, 255, 204, 0) 0%, rgba(0, 255, 204, 0.25) 100%);
+                background: linear-gradient(180deg, rgba(0, 255, 204, 0) 0%, rgba(0, 255, 204, 0.3) 100%);
                 border-bottom: 2px solid #00ffcc;
                 animation: scanMove 3s infinite ease-in-out;
                 z-index: 1;
@@ -161,30 +185,47 @@ if not st.session_state.autenticado:
             /* Títulos del Formulario */
             .login-title {
                 color: #ffffff;
-                font-size: 19px;
+                font-size: 18px;
                 font-weight: 700;
                 text-align: center;
-                letter-spacing: 1.2px;
+                letter-spacing: 1px;
                 text-transform: uppercase;
                 margin: 0;
             }
             .login-subtitle {
                 color: #00ffcc;
-                font-size: 11px;
+                font-size: 10px;
                 text-align: center;
                 letter-spacing: 0.5px;
-                opacity: 0.8;
+                opacity: 0.85;
                 margin-top: 4px;
-                margin-bottom: 18px;
+                margin-bottom: 12px;
+                font-family: monospace;
             }
 
-            /* Efecto de resplandor láser al enfocar los inputs */
+            /* Resplandor Láser en Inputs */
             div[data-baseweb="input"] input:focus {
                 border-color: #00ffcc !important;
-                box-shadow: 0 0 10px rgba(0, 255, 204, 0.3) !important;
+                box-shadow: 0 0 12px rgba(0, 255, 204, 0.4) !important;
             }
 
             /* Keyframes de Animaciones */
+            @keyframes borderGlow {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+
+            @keyframes loadingSweep {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(250%); }
+            }
+
+            @keyframes gridMove {
+                0% { background-position: 0 0; }
+                100% { background-position: 30px 30px; }
+            }
+
             @keyframes rotateRight {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
@@ -196,25 +237,13 @@ if not st.session_state.autenticado:
             }
 
             @keyframes cornerPulse {
-                0% {
-                    border-color: #00ffcc;
-                    filter: drop-shadow(0 0 3px #00ffcc);
-                }
-                100% {
-                    border-color: #0099ff;
-                    filter: drop-shadow(0 0 9px #0099ff);
-                }
+                0% { border-color: #00ffcc; filter: drop-shadow(0 0 3px #00ffcc); }
+                100% { border-color: #0088ff; filter: drop-shadow(0 0 8px #0088ff); }
             }
 
             @keyframes laserPulse {
-                0%, 100% {
-                    transform: scale(0.85);
-                    opacity: 0.7;
-                }
-                50% {
-                    transform: scale(1.4);
-                    opacity: 1;
-                }
+                0%, 100% { transform: scale(0.85); opacity: 0.7; }
+                50% { transform: scale(1.35); opacity: 1; }
             }
 
             @keyframes scanMove {
@@ -223,27 +252,37 @@ if not st.session_state.autenticado:
                 100% { top: -40%; }
             }
         </style>
+        <div class="grid-bg"></div>
     """, unsafe_allow_html=True)
     
-    col_left, col_center, col_right = st.columns([1, 1.2, 1])
+    col_left, col_center, col_right = st.columns([1, 1.3, 1])
     
     with col_center:
         st.markdown("""
-            <div class="login-card">
-                <div class="hud-box">
-                    <div class="corner top-left"></div>
-                    <div class="corner top-right"></div>
-                    <div class="corner bottom-left"></div>
-                    <div class="corner bottom-right"></div>
-                    <div class="hud-cross-h"></div>
-                    <div class="hud-cross-v"></div>
-                    <div class="hud-ring-outer"></div>
-                    <div class="hud-ring-inner"></div>
-                    <div class="hud-dot"></div>
-                    <div class="hud-scanline"></div>
+            <div class="login-wrapper">
+                <div class="login-card">
+                    <div class="status-bar-top">
+                        <span>SYS.STATUS: ONLINE</span>
+                        <span>LINK: 100% SECURE</span>
+                    </div>
+                    <div class="loading-bar-container">
+                        <div class="loading-bar-fill"></div>
+                    </div>
+                    <div class="hud-box">
+                        <div class="corner top-left"></div>
+                        <div class="corner top-right"></div>
+                        <div class="corner bottom-left"></div>
+                        <div class="corner bottom-right"></div>
+                        <div class="hud-cross-h"></div>
+                        <div class="hud-cross-v"></div>
+                        <div class="hud-ring-outer"></div>
+                        <div class="hud-ring-inner"></div>
+                        <div class="hud-dot"></div>
+                        <div class="hud-scanline"></div>
+                    </div>
+                    <div class="login-title">Autenticación Óptica</div>
+                    <div class="login-subtitle">● SISTEMA DE AVALÚO Y COLIMACIÓN LÁSER</div>
                 </div>
-                <div class="login-title">Autenticación Óptica</div>
-                <div class="login-subtitle">● SISTEMA DE AVALÚO Y COLIMACIÓN LÁSER</div>
             </div>
         """, unsafe_allow_html=True)
         
