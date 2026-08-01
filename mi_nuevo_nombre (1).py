@@ -31,7 +31,7 @@ if "autenticado" not in st.session_state:
 
 # Bloqueo total por seguridad
 if st.session_state.intentos >= MAX_INTENTOS:
-    st.error("❌ Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
+    st.error("[!] Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
     st.stop()
 
 # Interfaz de Inicio de Sesión
@@ -42,15 +42,15 @@ if not st.session_state.autenticado:
                 background-color: #030507 !important;
             }
 
-            /* Fondo de Malla Grid Sci-Fi */
+            /* Fondo de Malla Grid Sci-Fi Animado Continuo */
             .grid-bg {
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
                 background-image: 
-                    linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
-                background-size: 30px 30px;
-                animation: gridMove 20s linear infinite;
+                    linear-gradient(rgba(0, 255, 204, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 255, 204, 0.05) 1px, transparent 1px);
+                background-size: 40px 40px;
+                animation: gridMoveDiagonal 12s linear infinite;
                 z-index: 0;
                 pointer-events: none;
             }
@@ -221,9 +221,9 @@ if not st.session_state.autenticado:
                 100% { transform: translateX(250%); }
             }
 
-            @keyframes gridMove {
+            @keyframes gridMoveDiagonal {
                 0% { background-position: 0 0; }
-                100% { background-position: 30px 30px; }
+                100% { background-position: 40px 40px; }
             }
 
             @keyframes rotateRight {
@@ -281,13 +281,13 @@ if not st.session_state.autenticado:
                         <div class="hud-scanline"></div>
                     </div>
                     <div class="login-title">Autenticación Óptica</div>
-                    <div class="login-subtitle">● SISTEMA DE AVALÚO Y COLIMACIÓN LÁSER</div>
+                    <div class="login-subtitle">❖ SISTEMA DE AVALÚO Y COLIMACIÓN LÁSER</div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
         with st.form("formulario_login"):
-            correo = st.text_input("✉️ Correo electrónico autorizado:", placeholder="ejemplo@correo.com")
+            correo = st.text_input("✉ Correo electrónico autorizado:", placeholder="ejemplo@correo.com")
             password = st.text_input("🔑 Contraseña:", type="password", placeholder="••••••••") 
             boton_ingresar = st.form_submit_button("Acceder al Sistema", use_container_width=True)
             
@@ -299,13 +299,13 @@ if not st.session_state.autenticado:
                     st.session_state.autenticado = True
                     st.session_state.intentos = 0
                     
-                    with st.spinner("🔍 Escaneando parámetros y calibrando sensores..."):
+                    with st.spinner("⚡ Escaneando parámetros y calibrando sensores..."):
                         time.sleep(1.2)
                     st.rerun()
                 else:
                     st.session_state.intentos += 1
                     intentos_restantes = MAX_INTENTOS - st.session_state.intentos
-                    st.error(f"Credenciales incorrectas. Intentos restantes: {intentos_restantes}")
+                    st.error(f"[!] Credenciales incorrectas. Intentos restantes: {intentos_restantes}")
                     st.stop()
 
 if not st.session_state.autenticado:
@@ -313,7 +313,7 @@ if not st.session_state.autenticado:
 
 
 # =========================================================================
-# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (MANTENIDO INTACTO)
+# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN
 # =========================================================================
 
 # --- BASE DE DATOS SQLITE ---
@@ -375,7 +375,7 @@ def clear_db():
 # Inicializar Base de Datos
 init_db()
 
-# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO) ---
+# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO CON GRID ANIMADO) ---
 st.markdown("""
     <style>
         .stApp {
@@ -383,9 +383,29 @@ st.markdown("""
             color: #e0e0e0 !important;
         }
 
+        /* Malla grid de fondo animada continua */
+        .stApp::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 35px 35px;
+            animation: appGridMove 15s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes appGridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 35px 35px; }
+        }
+
         [data-testid="stSidebar"] {
             background-color: #0a0a0a !important;
             border-right: 1px solid #262626 !important;
+            z-index: 10;
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
@@ -504,9 +524,9 @@ TEXTS = {
 
         "params": "Parámetros Geométricos",
         "phys_params": "Óptica & Entorno Físico",
-        "reset_btn": "Reiniciar Valores a 0",
-        "save_btn": "💾 Registrar Medición (DB)",
-        "export_csv": "📥 Exportar Historial (CSV)",
+        "reset_btn": "[x] Reiniciar Valores a 0",
+        "save_btn": "[+] Registrar Medición (DB)",
+        "export_csv": "[v] Exportar Historial (CSV)",
         "h_mira": "Línea de colimación",
         "h_extra": "Desviación del punto de impacto / Objetivo",
         "dist_input": "Distancia al receptor / Destino",
@@ -537,12 +557,12 @@ TEXTS = {
         "history_title": "Historial en Base de Datos (SQLite)",
         "clear_history": "Borrar Base de Datos",
         "confirm_clear_msg": "¿Estás seguro de que deseas borrar toda la base de datos?",
-        "confirm_yes": "✔ Sí, Borrar",
-        "confirm_cancel": "✖ Cancelar",
+        "confirm_yes": "[+] Sí, Borrar",
+        "confirm_cancel": "[x] Cancelar",
         "empty_history": "No hay registros guardados en la base de datos.",
-        "select_prompt": "⚠️ Por favor, seleccione un Perfil de Aplicación / Profesión en la barra lateral para iniciar la simulación.",
-        "record_saved": "✅ Medición guardada permanentemente en SQLite.",
-        "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
+        "select_prompt": "[!] Por favor, seleccione un Perfil de Aplicación / Profesión en la barra lateral para iniciar la simulación.",
+        "record_saved": "[+] Medición guardada permanentemente en SQLite.",
+        "target_2d_title": "❖ Vista Frontal 2D (Retícula / Diana)"
     },
     "EN": {
         "title": "Advanced Optical Alignment & Collimation Simulator",
@@ -580,9 +600,9 @@ TEXTS = {
 
         "params": "Geometric Parameters",
         "phys_params": "Optics & Physical Environment",
-        "reset_btn": "Reset Values to 0",
-        "save_btn": "💾 Save Measurement (DB)",
-        "export_csv": "📥 Export History (CSV)",
+        "reset_btn": "[x] Reset Values to 0",
+        "save_btn": "[+] Save Measurement (DB)",
+        "export_csv": "[v] Export History (CSV)",
         "h_mira": "Collimation Line",
         "h_extra": "Impact Point Deviation / Target Offset",
         "dist_input": "Distance to Receiver / Destination",
@@ -613,12 +633,12 @@ TEXTS = {
         "history_title": "Database Records (SQLite)",
         "clear_history": "Clear Database",
         "confirm_clear_msg": "Are you sure you want to clear the entire database?",
-        "confirm_yes": "✔ Yes, Clear",
-        "confirm_cancel": "✖ Cancel",
+        "confirm_yes": "[+] Yes, Clear",
+        "confirm_cancel": "[x] Cancel",
         "empty_history": "No records saved in database yet.",
-        "select_prompt": "⚠️ Please select an Application Profile / Profession in the sidebar to start the simulation.",
-        "record_saved": "✅ Measurement saved permanently into SQLite.",
-        "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
+        "select_prompt": "[!] Please select an Application Profile / Profession in the sidebar to start the simulation.",
+        "record_saved": "[+] Measurement saved permanently into SQLite.",
+        "target_2d_title": "❖ Vista Frontal 2D (Retícula / Diana)"
     }
 }
 
@@ -743,15 +763,16 @@ st.markdown(f"""
     <div style="background: linear-gradient(90deg, #121212 0%, #1a1a1a 100%);
                 padding: 10px 25px;
                 border-radius: 10px;
-                border-left: 5px solid #ffffff;
+                border-left: 5px solid #00ffcc;
                 border: 1px solid #262626;
                 margin-bottom: 20px;
-                box-shadow: 0px 4px 15px rgba(0,0,0,0.5);">
+                box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+                position: relative; z-index: 1;">
         <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;">
-            {txt['title']}
+            [Ξ] {txt['title']}
         </h2>
         <p style="color: #888888; margin: 0; font-size: 13px; opacity: 0.85;">
-            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #ffffff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
+            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #00ffcc;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -880,7 +901,7 @@ with col_3d:
 
     fig3d.update_layout(
         title=dict(
-            text=f"📐 <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
+            text=f"✦ <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
             font=dict(color="#ffffff", size=14)
         ),
         paper_bgcolor='#000000', plot_bgcolor='#000000',
@@ -945,7 +966,7 @@ with col_2d:
 
 # --- MÉTRICAS Y RESULTADOS ---
 st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #121212; border: 1px solid #262626; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #121212; border: 1px solid #262626; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px; position: relative; z-index: 1;">
         <div style="text-align: center; flex: 1;">
             <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
@@ -976,7 +997,7 @@ df_db = load_history_from_db()
 col_hist_head, col_export, col_hist_btn = st.columns([2.0, 1.2, 1.2])
 
 with col_hist_head:
-    st.subheader(txt["history_title"])
+    st.subheader(f"► {txt['history_title']}")
 
 with col_export:
     if not df_db.empty:
