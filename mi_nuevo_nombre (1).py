@@ -1,18 +1,4 @@
 import streamlit as st
-
-# 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
-st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
-
-# 2. Módulo de Autenticación
-from auth import check_password
-
-# 3. Validación de contraseña
-if not check_password("31/10/2010"):
-    st.stop()  # Se detiene si la contraseña no es correcta
-
-# =========================================================
-# 👇 ABAJO DE ESTO QUEDA TODO TU CÓDIGO ORIGINAL SIN TOCAR
-# =========================================================
 import numpy as np
 import math
 import pandas as pd
@@ -20,12 +6,65 @@ import plotly.graph_objects as go
 import sqlite3
 from scipy import stats
 
-# --- BASE DE DATOS SQLITE ---
-DB_NAME = "colimacion_historial.db"
-# ... resto de tu código ...
+# 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
+st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
+
+
+# =========================================================================
+# 🔒 NUEVO MÓDULO DE SEGURIDAD INTEGRADO (Reemplaza al antiguo 'from auth')
+# =========================================================================
+
+# Configura aquí tus correos autorizados y la contraseña
+USUARIOS_PERMITIDOS = ["usuario1@email.com", "cientifico@laboratorio.com"]
+CONTRASEÑA_CORRECTA = "31/10/2010"
+MAX_INTENTOS = 3
+
+# Inicializar variables de estado seguro en la sesión
+if "intentos" not in st.session_state:
+    st.session_state.intentos = 0
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
+# Bloqueo total si superó los intentos permitidos
+if st.session_state.intentos >= MAX_INTENTOS:
+    st.error("❌ Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
+    st.stop()
+
+# Si el usuario aún no se ha validado, mostramos el formulario de acceso
+if not st.session_state.autenticado:
+    st.title("🔒 Acceso Restringido")
+    st.write("Por favor, introduce tus credenciales para acceder al simulador.")
+    
+    with st.form("formulario_login"):
+        correo = st.text_input("Correo electrónico autorizado:")
+        # type="password" oculta la contraseña con puntos en pantalla
+        password = st.text_input("Contraseña:", type="password") 
+        boton_ingresar = st.form_submit_button("Iniciar Sesión")
+        
+        if boton_ingresar:
+            if correo in USUARIOS_PERMITIDOS and password == CONTRASEÑA_CORRECTA:
+                st.session_state.autenticado = True
+                st.session_state.intentos = 0  # Reiniciamos contador al tener éxito
+                st.rerun()
+            else:
+                st.session_state.intentos += 1
+                intentos_restantes = MAX_INTENTOS - st.session_state.intentos
+                st.error(f"Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
+                st.stop()
+
+# Detener por completo la ejecución del script si no está autenticado
+if not st.session_state.autenticado:
+    st.stop()
+
+
+# =========================================================================
+# 👇 ABAJO DE ESTO QUEDA TODO TU CÓDIGO ORIGINAL SIN TOCAR
+# =========================================================================
 
 # --- BASE DE DATOS SQLITE ---
 DB_NAME = "colimacion_historial.db"
+# ... aquí continúa el resto de tu simulación ...
+
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
