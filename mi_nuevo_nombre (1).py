@@ -32,25 +32,72 @@ if st.session_state.intentos >= MAX_INTENTOS:
 
 # Si el usuario aún no se ha validado, mostramos el formulario de acceso
 if not st.session_state.autenticado:
-    st.title("🔒 Acceso Restringido")
-    st.write("Por favor, introduce tus credenciales para acceder al simulador.")
+    # Estilos CSS específicos para la pantalla de acceso rediseñada
+    st.markdown("""
+        <style>
+            .stApp {
+                background-color: #000000 !important;
+            }
+            .login-card {
+                background: linear-gradient(145deg, #0e0e0e 0%, #161616 100%);
+                border: 1px solid #282828;
+                border-radius: 12px;
+                padding: 30px 25px 20px 25px;
+                box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.8);
+                margin-top: 5vh;
+            }
+            .login-header {
+                text-align: center;
+                margin-bottom: 25px;
+            }
+            .login-icon {
+                font-size: 38px;
+                margin-bottom: 5px;
+            }
+            .login-title {
+                color: #ffffff;
+                font-size: 20px;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                margin: 0;
+            }
+            .login-subtitle {
+                color: #888888;
+                font-size: 12px;
+                margin-top: 4px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
     
-    with st.form("formulario_login"):
-        correo = st.text_input("Correo electrónico autorizado:")
-        # type="password" oculta la contraseña con puntos en pantalla
-        password = st.text_input("Contraseña:", type="password") 
-        boton_ingresar = st.form_submit_button("Iniciar Sesión")
+    # Diseño centrado con columnas
+    col_left, col_center, col_right = st.columns([1, 1.2, 1])
+    
+    with col_center:
+        st.markdown("""
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="login-icon">🔒</div>
+                    <div class="login-title">Control de Acceso</div>
+                    <div class="login-subtitle">Simulador de Colimación Óptica Avanzado</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
         
-        if boton_ingresar:
-            if correo in USUARIOS_PERMITIDOS and password == CONTRASEÑA_CORRECTA:
-                st.session_state.autenticado = True
-                st.session_state.intentos = 0  # Reiniciamos contador al tener éxito
-                st.rerun()
-            else:
-                st.session_state.intentos += 1
-                intentos_restantes = MAX_INTENTOS - st.session_state.intentos
-                st.error(f"Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
-                st.stop()
+        with st.form("formulario_login"):
+            correo = st.text_input("✉️ Correo electrónico:", placeholder="usuario@correo.com")
+            password = st.text_input("🔑 Contraseña:", type="password", placeholder="••••••••") 
+            boton_ingresar = st.form_submit_button("Iniciar Sesión", use_container_width=True)
+            
+            if boton_ingresar:
+                if correo in USUARIOS_PERMITIDOS and password == CONTRASEÑA_CORRECTA:
+                    st.session_state.autenticado = True
+                    st.session_state.intentos = 0  # Reiniciamos contador al tener éxito
+                    st.rerun()
+                else:
+                    st.session_state.intentos += 1
+                    intentos_restantes = MAX_INTENTOS - st.session_state.intentos
+                    st.error(f"Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
+                    st.stop()
 
 # Detener por completo la ejecución del script si no está autenticado
 if not st.session_state.autenticado:
