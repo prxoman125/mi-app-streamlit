@@ -15,7 +15,7 @@ st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 # =========================================================================
 
 # Configura aquí tus correos autorizados y la contraseña
-USUARIOS_PERMITIDOS = ["usuario1@email.com", "cientifico@laboratorio.com"]
+USUARIOS_PERMITIDOS = ["jeremy1010@gmail.com"]
 CONTRASEÑA_CORRECTA = "31/10/2010"
 MAX_INTENTOS = 3
 
