@@ -6,67 +6,65 @@ import plotly.graph_objects as go
 import sqlite3
 from scipy import stats
 
-# 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
+# 1. Configuración de la página
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
 
 # =========================================================================
-# ESTILOS CSS PERSONALIZADOS CON ANIMACIONES NEÓN Y CUADRÍCULA DE FONDO
+# ESTILOS CSS CON EFECTO DE ESCÁNER, BRILLOS SUTILES Y CUADRÍCULA ANIMADA
 # =========================================================================
 st.markdown("""
     <style>
-        /* Animación para el cambio de color neón sutil */
+        /* Animación para el cambio de color neón sutil en bordes */
         @keyframes neonGlow {
             0% {
-                color: #00f0ff;
-                border-color: #00f0ff;
-                box-shadow: 0 0 10px rgba(0, 240, 255, 0.4), inset 0 0 5px rgba(0, 240, 255, 0.2);
+                border-color: rgba(0, 240, 255, 0.6);
+                box-shadow: 0 0 12px rgba(0, 240, 255, 0.25), inset 0 0 8px rgba(0, 240, 255, 0.15);
             }
-            33% {
-                color: #7000ff;
-                border-color: #7000ff;
-                box-shadow: 0 0 10px rgba(112, 0, 255, 0.4), inset 0 0 5px rgba(112, 0, 255, 0.2);
-            }
-            66% {
-                color: #ff0055;
-                border-color: #ff0055;
-                box-shadow: 0 0 10px rgba(255, 0, 85, 0.4), inset 0 0 5px rgba(255, 0, 85, 0.2);
+            50% {
+                border-color: rgba(112, 0, 255, 0.6);
+                box-shadow: 0 0 12px rgba(112, 0, 255, 0.25), inset 0 0 8px rgba(112, 0, 255, 0.15);
             }
             100% {
-                color: #00f0ff;
-                border-color: #00f0ff;
-                box-shadow: 0 0 10px rgba(0, 240, 255, 0.4), inset 0 0 5px rgba(0, 240, 255, 0.2);
+                border-color: rgba(0, 240, 255, 0.6);
+                box-shadow: 0 0 12px rgba(0, 240, 255, 0.25), inset 0 0 8px rgba(0, 240, 255, 0.15);
             }
+        }
+
+        /* Animación de barrido tipo Escáner */
+        @keyframes scannerSweep {
+            0% { top: 0%; opacity: 0.15; }
+            50% { opacity: 0.9; }
+            100% { top: 98%; opacity: 0.15; }
         }
 
         @keyframes neonTextGlow {
-            0% { text-shadow: 0 0 8px rgba(0, 240, 255, 0.6); color: #00f0ff; }
-            33% { text-shadow: 0 0 8px rgba(112, 0, 255, 0.6); color: #a855f7; }
-            66% { text-shadow: 0 0 8px rgba(255, 0, 85, 0.6); color: #ff3377; }
-            100% { text-shadow: 0 0 8px rgba(0, 240, 255, 0.6); color: #00f0ff; }
+            0% { text-shadow: 0 0 8px rgba(0, 240, 255, 0.5); color: #00f0ff; }
+            50% { text-shadow: 0 0 8px rgba(112, 0, 255, 0.5); color: #b877ff; }
+            100% { text-shadow: 0 0 8px rgba(0, 240, 255, 0.5); color: #00f0ff; }
         }
 
-        /* Movimiento continuo de la cuadrícula de fondo */
+        /* Movimiento de cuadrícula de fondo */
         @keyframes gridMove {
             0% { background-position: 0 0; }
             100% { background-position: 40px 40px; }
         }
 
-        /* Aplicación general con Fondo de Cuadrícula Animada */
+        /* Aplicación general con Fondo de Cuadrícula */
         .stApp {
-            background-color: #050508 !important;
+            background-color: #040407 !important;
             background-image: 
-                linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px) !important;
+                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px) !important;
             background-size: 40px 40px !important;
-            animation: gridMove 8s linear infinite !important;
+            animation: gridMove 10s linear infinite !important;
             color: #e0e0e0 !important;
         }
 
         /* Sidebar */
         [data-testid="stSidebar"] {
-            background-color: #0a0a10 !important;
-            border-right: 1px solid #1f1f2e !important;
+            background-color: #08080d !important;
+            border-right: 1px solid #1a1a28 !important;
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
@@ -77,15 +75,72 @@ st.markdown("""
             letter-spacing: 0.8px;
             margin-top: 15px !important;
             margin-bottom: 8px !important;
-            border-bottom: 1px solid #262636 !important;
+            border-bottom: 1px solid #222233 !important;
             padding-bottom: 4px;
+        }
+
+        /* Contenedor tipo Escáner con Margen y Brillos Sutiles */
+        .scanner-card {
+            position: relative;
+            overflow: hidden;
+            background: rgba(10, 10, 18, 0.88);
+            border: 1px solid rgba(0, 240, 255, 0.5);
+            border-radius: 12px;
+            padding: 22px;
+            animation: neonGlow 8s infinite ease-in-out;
+            backdrop-filter: blur(6px);
+            margin-bottom: 20px;
+        }
+
+        /* Línea de escaneo animada que cruza el contenedor */
+        .scanner-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
+            box-shadow: 0 0 10px #00f0ff;
+            animation: scannerSweep 4s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        /* Formulario de Login envolvente */
+        [data-testid="stForm"] {
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(8, 8, 14, 0.9) !important;
+            border-radius: 12px !important;
+            padding: 25px !important;
+            border: 1px solid rgba(0, 240, 255, 0.5) !important;
+            animation: neonGlow 8s infinite ease-in-out !important;
+            backdrop-filter: blur(6px);
+        }
+
+        [data-testid="stForm"]::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
+            box-shadow: 0 0 10px #00f0ff;
+            animation: scannerSweep 3.5s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+
+        /* Títulos estilo Neón */
+        .neon-title {
+            animation: neonTextGlow 6s infinite ease-in-out;
+            font-weight: 800;
+            letter-spacing: 1px;
         }
 
         /* Botones estándar */
         div.stButton > button {
-            background: linear-gradient(135deg, #12121c 0%, #1a1a2e 100%) !important;
+            background: linear-gradient(135deg, #10101a 0%, #18182b 100%) !important;
             color: #ffffff !important;
-            border: 1px solid #33334d !important;
+            border: 1px solid #30304a !important;
             border-radius: 6px !important;
             font-weight: 600 !important;
             transition: all 0.3s ease !important;
@@ -97,49 +152,11 @@ st.markdown("""
             border-color: #00f0ff !important;
         }
 
-        /* Botones del Number Input */
-        button[aria-label="Increase value"], 
-        button[aria-label="Decrease value"],
-        div[data-baseweb="spinbutton"] button,
-        [data-testid="stNumberInputStepDown"],
-        [data-testid="stNumberInputStepUp"] {
-            color: #ffffff !important;
-            background-color: #12121a !important;
-            border-color: #262636 !important;
-            transition: all 0.2s ease !important;
-        }
-
-        button[aria-label="Increase value"]:hover, 
-        button[aria-label="Decrease value"]:hover,
-        div[data-baseweb="spinbutton"] button:hover,
-        [data-testid="stNumberInputStepDown"]:hover,
-        [data-testid="stNumberInputStepUp"]:hover {
-            background-color: #00f0ff !important;
-            color: #000000 !important;
-            box-shadow: 0px 0px 8px rgba(0, 240, 255, 0.5) !important;
-        }
-
-        /* Inputs de texto y selectbox */
+        /* Inputs de entrada */
         div[data-baseweb="input"], div[data-baseweb="select"] > div {
-            background-color: #0d0d14 !important;
-            border-color: #26263b !important;
+            background-color: #0b0b12 !important;
+            border-color: #202035 !important;
             color: #ffffff !important;
-        }
-
-        /* Contenedor del Formulario de Login Neón */
-        [data-testid="stForm"] {
-            background-color: rgba(10, 10, 16, 0.85) !important;
-            border-radius: 12px !important;
-            padding: 25px !important;
-            border: 2px solid #00f0ff !important;
-            animation: neonGlow 6s infinite ease-in-out !important;
-            backdrop-filter: blur(5px);
-        }
-
-        .neon-title {
-            animation: neonTextGlow 6s infinite ease-in-out;
-            font-weight: 800;
-            letter-spacing: 1px;
         }
 
         div.btn-confirm-yes > div.stButton > button {
@@ -170,7 +187,6 @@ st.markdown("""
 # =========================================================================
 # MÓDULO DE SEGURIDAD INTEGRADO
 # =========================================================================
-
 USUARIOS_PERMITIDOS = ["j3remyx1010@gmail.com"]
 CONTRASEÑA_CORRECTA = "Jggg101031"
 MAX_INTENTOS = 3
@@ -185,13 +201,13 @@ if st.session_state.intentos >= MAX_INTENTOS:
     st.stop()
 
 if not st.session_state.autenticado:
-    st.markdown("<h2 class='neon-title'>[SEC] Acceso Restringido</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 class='neon-title'>[SEC] Acceso Restringido - Sistema de Escaneo</h2>", unsafe_allow_html=True)
     st.write("Por favor, introduce tus credenciales para acceder al simulador.")
     
     with st.form("formulario_login"):
         correo = st.text_input("Correo electrónico autorizado:")
         password = st.text_input("Contraseña:", type="password") 
-        boton_ingresar = st.form_submit_button("Iniciar Sesión")
+        boton_ingresar = st.form_submit_button("Iniciar Sesión / Escanear Credenciales")
         
         if boton_ingresar:
             if correo in USUARIOS_PERMITIDOS and password == CONTRASEÑA_CORRECTA:
@@ -541,20 +557,14 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO PRINCIPAL CON EFECTO NEÓN ---
+# --- ENCABEZADO CON ESCÁNER CARTA ---
 st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #0a0a14 0%, #121224 100%);
-                padding: 12px 25px;
-                border-radius: 10px;
-                border-left: 5px solid #00f0ff;
-                border: 1px solid #1a1a3a;
-                margin-bottom: 20px;
-                box-shadow: 0px 4px 20px rgba(0, 240, 255, 0.15);">
+    <div class="scanner-card">
         <h2 class="neon-title" style="margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
             {txt['title']}
         </h2>
-        <p style="color: #8888aa; margin: 0; font-size: 13px; opacity: 0.85;">
-            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #00f0ff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
+        <p style="color: #8888aa; margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">
+            [ESCÁNER ÓPTICO ACTIVO] | Perfil Seleccionado: <b style="color: #00f0ff;">{profile if profile != txt['profile_placeholder'] else 'Pendiente'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -614,7 +624,7 @@ direccion_str = txt["direction_up"] if is_up else txt["direction_down"]
 clicks_moa = abs(round(moa * 4))
 pulsos_mrad = abs(round(mrad * 10))
 
-# --- REGISTRO A BASE DE DATOS EN SQLite ---
+# --- REGISTRO EN SQLITE ---
 if save_clicked:
     current_record = {
         "Perfil / Carrera": profile,
@@ -633,7 +643,7 @@ if save_clicked:
     save_record_to_db(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICAS 3D Y 2D ---
+# --- GRÁFICAS ---
 col_3d, col_2d = st.columns([1.75, 1.0])
 
 with col_3d:
@@ -746,9 +756,9 @@ with col_2d:
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS Y RESULTADOS ---
+# --- MÉTRICAS DE RESULTADOS ---
 st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #0c0c16; border: 1px solid #1f1f3a; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; background-color: rgba(10, 10, 18, 0.85); border: 1px solid rgba(0, 240, 255, 0.4); padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);">
         <div style="text-align: center; flex: 1;">
             <span style="color: #8888aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
@@ -772,7 +782,7 @@ st.markdown(f"""
     </div>
     """, unsafe_allow_html=True)
 
-# --- TABLA DE HISTORIAL BASE DE DATOS SQLITE & EXPORTACIÓN CSV ---
+# --- HISTORIAL SQLITE Y EXPORTACIÓN ---
 st.markdown("---")
 df_db = load_history_from_db()
 
