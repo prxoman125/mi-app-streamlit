@@ -4,229 +4,280 @@ import math
 import pandas as pd
 import plotly.graph_objects as go
 import sqlite3
+import time
 from scipy import stats
 
-# 1. Configuración de la página
+# 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
 
 
 # =========================================================================
-# ESTILOS CSS CON EFECTO DE ESCÁNER, BRILLOS SUTILES Y CUADRÍCULA ANIMADA
+# 🔒 MÓDULO DE SEGURIDAD CON ANIMACIÓN ÓPTICA MULTICAPA (HUD AVANZADO)
 # =========================================================================
-st.markdown("""
-    <style>
-        /* Animación para el cambio de color neón sutil en bordes */
-        @keyframes neonGlow {
-            0% {
-                border-color: rgba(0, 240, 255, 0.6);
-                box-shadow: 0 0 12px rgba(0, 240, 255, 0.25), inset 0 0 8px rgba(0, 240, 255, 0.15);
-            }
-            50% {
-                border-color: rgba(112, 0, 255, 0.6);
-                box-shadow: 0 0 12px rgba(112, 0, 255, 0.25), inset 0 0 8px rgba(112, 0, 255, 0.15);
-            }
-            100% {
-                border-color: rgba(0, 240, 255, 0.6);
-                box-shadow: 0 0 12px rgba(0, 240, 255, 0.25), inset 0 0 8px rgba(0, 240, 255, 0.15);
-            }
-        }
 
-        /* Animación de barrido tipo Escáner */
-        @keyframes scannerSweep {
-            0% { top: 0%; opacity: 0.15; }
-            50% { opacity: 0.9; }
-            100% { top: 98%; opacity: 0.15; }
-        }
+USUARIOS_PERMITIDOS = [
+    "j3remyx1010@gmail.com",
+    "correo2@ejemplo.com"
+]
 
-        @keyframes neonTextGlow {
-            0% { text-shadow: 0 0 8px rgba(0, 240, 255, 0.5); color: #00f0ff; }
-            50% { text-shadow: 0 0 8px rgba(112, 0, 255, 0.5); color: #b877ff; }
-            100% { text-shadow: 0 0 8px rgba(0, 240, 255, 0.5); color: #00f0ff; }
-        }
-
-        /* Movimiento de cuadrícula de fondo */
-        @keyframes gridMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 40px 40px; }
-        }
-
-        /* Aplicación general con Fondo de Cuadrícula */
-        .stApp {
-            background-color: #040407 !important;
-            background-image: 
-                linear-gradient(rgba(0, 240, 255, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 240, 255, 0.04) 1px, transparent 1px) !important;
-            background-size: 40px 40px !important;
-            animation: gridMove 10s linear infinite !important;
-            color: #e0e0e0 !important;
-        }
-
-        /* Sidebar */
-        [data-testid="stSidebar"] {
-            background-color: #08080d !important;
-            border-right: 1px solid #1a1a28 !important;
-        }
-
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-            color: #ffffff !important;
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-top: 15px !important;
-            margin-bottom: 8px !important;
-            border-bottom: 1px solid #222233 !important;
-            padding-bottom: 4px;
-        }
-
-        /* Contenedor tipo Escáner con Margen y Brillos Sutiles */
-        .scanner-card {
-            position: relative;
-            overflow: hidden;
-            background: rgba(10, 10, 18, 0.88);
-            border: 1px solid rgba(0, 240, 255, 0.5);
-            border-radius: 12px;
-            padding: 22px;
-            animation: neonGlow 8s infinite ease-in-out;
-            backdrop-filter: blur(6px);
-            margin-bottom: 20px;
-        }
-
-        /* Línea de escaneo animada que cruza el contenedor */
-        .scanner-card::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
-            box-shadow: 0 0 10px #00f0ff;
-            animation: scannerSweep 4s ease-in-out infinite alternate;
-            pointer-events: none;
-        }
-
-        /* Formulario de Login envolvente */
-        [data-testid="stForm"] {
-            position: relative;
-            overflow: hidden;
-            background-color: rgba(8, 8, 14, 0.9) !important;
-            border-radius: 12px !important;
-            padding: 25px !important;
-            border: 1px solid rgba(0, 240, 255, 0.5) !important;
-            animation: neonGlow 8s infinite ease-in-out !important;
-            backdrop-filter: blur(6px);
-        }
-
-        [data-testid="stForm"]::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #00f0ff 50%, transparent 100%);
-            box-shadow: 0 0 10px #00f0ff;
-            animation: scannerSweep 3.5s ease-in-out infinite alternate;
-            pointer-events: none;
-        }
-
-        /* Títulos estilo Neón */
-        .neon-title {
-            animation: neonTextGlow 6s infinite ease-in-out;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-
-        /* Botones estándar */
-        div.stButton > button {
-            background: linear-gradient(135deg, #10101a 0%, #18182b 100%) !important;
-            color: #ffffff !important;
-            border: 1px solid #30304a !important;
-            border-radius: 6px !important;
-            font-weight: 600 !important;
-            transition: all 0.3s ease !important;
-        }
-        div.stButton > button:hover {
-            background: #00f0ff !important;
-            color: #000000 !important;
-            box-shadow: 0px 0px 12px rgba(0, 240, 255, 0.6);
-            border-color: #00f0ff !important;
-        }
-
-        /* Inputs de entrada */
-        div[data-baseweb="input"], div[data-baseweb="select"] > div {
-            background-color: #0b0b12 !important;
-            border-color: #202035 !important;
-            color: #ffffff !important;
-        }
-
-        div.btn-confirm-yes > div.stButton > button {
-            background: linear-gradient(135deg, #1f2a1f 0%, #2a3a2a 100%) !important;
-            color: #a3dda3 !important;
-            border: 1px solid #3d5a3d !important;
-        }
-        div.btn-confirm-yes > div.stButton > button:hover {
-            background: #a3dda3 !important;
-            color: #000000 !important;
-            box-shadow: 0px 0px 10px rgba(163, 221, 163, 0.3);
-        }
-
-        div.btn-confirm-cancel > div.stButton > button {
-            background: linear-gradient(135deg, #2a1f1f 0%, #3a2a2a 100%) !important;
-            color: #dda3a3 !important;
-            border: 1px solid #5a3d3d !important;
-        }
-        div.btn-confirm-cancel > div.stButton > button:hover {
-            background: #dda3a3 !important;
-            color: #000000 !important;
-            box-shadow: 0px 0px 10px rgba(221, 163, 163, 0.3);
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-
-# =========================================================================
-# MÓDULO DE SEGURIDAD INTEGRADO
-# =========================================================================
-USUARIOS_PERMITIDOS = ["j3remyx1010@gmail.com"]
 CONTRASEÑA_CORRECTA = "Jggg101031"
 MAX_INTENTOS = 3
 
+# Inicializar variables de estado seguro
 if "intentos" not in st.session_state:
     st.session_state.intentos = 0
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
 
+# Bloqueo total por seguridad
 if st.session_state.intentos >= MAX_INTENTOS:
-    st.error("[X] Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
+    st.error("❌ Demasiados intentos fallidos. Acceso bloqueado temporalmente.")
     st.stop()
 
+# Interfaz de Inicio de Sesión
 if not st.session_state.autenticado:
-    st.markdown("<h2 class='neon-title'>[SEC] Acceso Restringido - Sistema de Escaneo</h2>", unsafe_allow_html=True)
-    st.write("Por favor, introduce tus credenciales para acceder al simulador.")
+    st.markdown("""
+        <style>
+            .stApp {
+                background-color: #050505 !important;
+            }
+            
+            /* Tarjeta Principal de Login */
+            .login-card {
+                background: linear-gradient(145deg, #0b0d0e 0%, #15181a 100%);
+                border: 1px solid #1f292e;
+                border-radius: 16px;
+                padding: 30px 25px 20px 25px;
+                box-shadow: 0px 12px 35px rgba(0, 0, 0, 0.95), 0px 0px 15px rgba(0, 255, 204, 0.05);
+                margin-top: 2vh;
+            }
+
+            /* Contenedor HUD Animado */
+            .hud-box {
+                position: relative;
+                width: 150px;
+                height: 150px;
+                margin: 0 auto 15px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+            }
+
+            /* 4 Esquinas Simétricas */
+            .corner {
+                position: absolute;
+                width: 24px;
+                height: 24px;
+                border-color: #00ffcc;
+                border-style: solid;
+                animation: cornerPulse 2.5s infinite alternate ease-in-out;
+                z-index: 2;
+            }
+            .top-left {
+                top: 2px;
+                left: 2px;
+                border-width: 3px 0 0 3px;
+                border-top-left-radius: 4px;
+            }
+            .top-right {
+                top: 2px;
+                right: 2px;
+                border-width: 3px 3px 0 0;
+                border-top-right-radius: 4px;
+            }
+            .bottom-left {
+                bottom: 2px;
+                left: 2px;
+                border-width: 0 0 3px 3px;
+                border-bottom-left-radius: 4px;
+            }
+            .bottom-right {
+                bottom: 2px;
+                right: 2px;
+                border-width: 0 3px 3px 0;
+                border-bottom-right-radius: 4px;
+            }
+
+            /* Anillo Exterior Giratorio (Sentido horario) */
+            .hud-ring-outer {
+                position: absolute;
+                width: 110px;
+                height: 110px;
+                border: 2px dashed rgba(0, 255, 204, 0.35);
+                border-radius: 50%;
+                animation: rotateRight 10s linear infinite;
+            }
+
+            /* Anillo Interior Giratorio (Sentido antihorario) */
+            .hud-ring-inner {
+                position: absolute;
+                width: 70px;
+                height: 70px;
+                border: 2px dotted rgba(0, 200, 255, 0.5);
+                border-radius: 50%;
+                animation: rotateLeft 6s linear infinite;
+            }
+
+            /* Ejes de Cruz de Retícula (Crosshair) */
+            .hud-cross-h {
+                position: absolute;
+                width: 100px;
+                height: 1px;
+                background: rgba(0, 255, 204, 0.25);
+            }
+            .hud-cross-v {
+                position: absolute;
+                width: 1px;
+                height: 100px;
+                background: rgba(0, 255, 204, 0.25);
+            }
+
+            /* Punto Láser Central Pulsante */
+            .hud-dot {
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background-color: #00ffcc;
+                border-radius: 50%;
+                box-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+                animation: laserPulse 1.2s infinite ease-in-out;
+                z-index: 3;
+            }
+
+            /* NUEVA ANIMACIÓN: Barra/Línea de Escaneo Laser Vertical (Scanline) */
+            .hud-scanline {
+                position: absolute;
+                top: -100%;
+                left: 0;
+                width: 100%;
+                height: 35%;
+                background: linear-gradient(180deg, rgba(0, 255, 204, 0) 0%, rgba(0, 255, 204, 0.25) 100%);
+                border-bottom: 2px solid #00ffcc;
+                animation: scanMove 3s infinite ease-in-out;
+                z-index: 1;
+            }
+
+            /* Títulos del Formulario */
+            .login-title {
+                color: #ffffff;
+                font-size: 19px;
+                font-weight: 700;
+                text-align: center;
+                letter-spacing: 1.2px;
+                text-transform: uppercase;
+                margin: 0;
+            }
+            .login-subtitle {
+                color: #00ffcc;
+                font-size: 11px;
+                text-align: center;
+                letter-spacing: 0.5px;
+                opacity: 0.8;
+                margin-top: 4px;
+                margin-bottom: 18px;
+            }
+
+            /* Efecto de resplandor láser al enfocar los inputs */
+            div[data-baseweb="input"] input:focus {
+                border-color: #00ffcc !important;
+                box-shadow: 0 0 10px rgba(0, 255, 204, 0.3) !important;
+            }
+
+            /* Keyframes de Animaciones */
+            @keyframes rotateRight {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+
+            @keyframes rotateLeft {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(-360deg); }
+            }
+
+            @keyframes cornerPulse {
+                0% {
+                    border-color: #00ffcc;
+                    filter: drop-shadow(0 0 3px #00ffcc);
+                }
+                100% {
+                    border-color: #0099ff;
+                    filter: drop-shadow(0 0 9px #0099ff);
+                }
+            }
+
+            @keyframes laserPulse {
+                0%, 100% {
+                    transform: scale(0.85);
+                    opacity: 0.7;
+                }
+                50% {
+                    transform: scale(1.4);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes scanMove {
+                0% { top: -40%; }
+                50% { top: 100%; }
+                100% { top: -40%; }
+            }
+        </style>
+    """, unsafe_allow_html=True)
     
-    with st.form("formulario_login"):
-        correo = st.text_input("Correo electrónico autorizado:")
-        password = st.text_input("Contraseña:", type="password") 
-        boton_ingresar = st.form_submit_button("Iniciar Sesión / Escanear Credenciales")
+    col_left, col_center, col_right = st.columns([1, 1.2, 1])
+    
+    with col_center:
+        st.markdown("""
+            <div class="login-card">
+                <div class="hud-box">
+                    <div class="corner top-left"></div>
+                    <div class="corner top-right"></div>
+                    <div class="corner bottom-left"></div>
+                    <div class="corner bottom-right"></div>
+                    <div class="hud-cross-h"></div>
+                    <div class="hud-cross-v"></div>
+                    <div class="hud-ring-outer"></div>
+                    <div class="hud-ring-inner"></div>
+                    <div class="hud-dot"></div>
+                    <div class="hud-scanline"></div>
+                </div>
+                <div class="login-title">Autenticación Óptica</div>
+                <div class="login-subtitle">● SISTEMA DE AVALÚO Y COLIMACIÓN LÁSER</div>
+            </div>
+        """, unsafe_allow_html=True)
         
-        if boton_ingresar:
-            if correo in USUARIOS_PERMITIDOS and password == CONTRASEÑA_CORRECTA:
-                st.session_state.autenticado = True
-                st.session_state.intentos = 0
-                st.rerun()
-            else:
-                st.session_state.intentos += 1
-                intentos_restantes = MAX_INTENTOS - st.session_state.intentos
-                st.error(f"[X] Credenciales incorrectas. Te quedan {intentos_restantes} intentos.")
-                st.stop()
+        with st.form("formulario_login"):
+            correo = st.text_input("✉️ Correo electrónico autorizado:", placeholder="ejemplo@correo.com")
+            password = st.text_input("🔑 Contraseña:", type="password", placeholder="••••••••") 
+            boton_ingresar = st.form_submit_button("Acceder al Sistema", use_container_width=True)
+            
+            if boton_ingresar:
+                correo_ingresado = correo.strip().lower()
+                lista_permitidos = [u.strip().lower() for u in USUARIOS_PERMITIDOS]
+                
+                if correo_ingresado in lista_permitidos and password == CONTRASEÑA_CORRECTA:
+                    st.session_state.autenticado = True
+                    st.session_state.intentos = 0
+                    
+                    with st.spinner("🔍 Escaneando parámetros y calibrando sensores..."):
+                        time.sleep(1.2)
+                    st.rerun()
+                else:
+                    st.session_state.intentos += 1
+                    intentos_restantes = MAX_INTENTOS - st.session_state.intentos
+                    st.error(f"Credenciales incorrectas. Intentos restantes: {intentos_restantes}")
+                    st.stop()
 
 if not st.session_state.autenticado:
     st.stop()
 
 
 # =========================================================================
-# BASE DE DATOS SQLITE
+# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (MANTENIDO INTACTO)
 # =========================================================================
+
+# --- BASE DE DATOS SQLITE ---
 DB_NAME = "colimacion_historial.db"
 
 def init_db():
@@ -282,8 +333,99 @@ def clear_db():
     conn.commit()
     conn.close()
 
+# Inicializar Base de Datos
 init_db()
 
+# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO) ---
+st.markdown("""
+    <style>
+        .stApp {
+            background-color: #000000 !important;
+            color: #e0e0e0 !important;
+        }
+
+        [data-testid="stSidebar"] {
+            background-color: #0a0a0a !important;
+            border-right: 1px solid #262626 !important;
+        }
+
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+            color: #ffffff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 15px !important;
+            margin-bottom: 8px !important;
+            border-bottom: 1px solid #262626 !important;
+            padding-bottom: 4px;
+        }
+
+        div.stButton > button {
+            background: linear-gradient(135deg, #1a1a1a 0%, #262626 100%) !important;
+            color: #ffffff !important;
+            border: 1px solid #444444 !important;
+            border-radius: 6px !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+        }
+        div.stButton > button:hover {
+            background: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+            border-color: #ffffff !important;
+        }
+
+        button[aria-label="Increase value"], 
+        button[aria-label="Decrease value"],
+        div[data-baseweb="spinbutton"] button,
+        [data-testid="stNumberInputStepDown"],
+        [data-testid="stNumberInputStepUp"] {
+            color: #ffffff !important;
+            background-color: #121212 !important;
+            border-color: #333333 !important;
+            transition: all 0.2s ease !important;
+        }
+
+        button[aria-label="Increase value"]:hover, 
+        button[aria-label="Decrease value"]:hover,
+        div[data-baseweb="spinbutton"] button:hover,
+        [data-testid="stNumberInputStepDown"]:hover,
+        [data-testid="stNumberInputStepUp"]:hover {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.3) !important;
+        }
+
+        div[data-baseweb="input"], div[data-baseweb="select"] > div {
+            background-color: #121212 !important;
+            border-color: #333333 !important;
+            color: #ffffff !important;
+        }
+
+        div.btn-confirm-yes > div.stButton > button {
+            background: linear-gradient(135deg, #1f2a1f 0%, #2a3a2a 100%) !important;
+            color: #a3dda3 !important;
+            border: 1px solid #3d5a3d !important;
+        }
+        div.btn-confirm-yes > div.stButton > button:hover {
+            background: #a3dda3 !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 10px rgba(163, 221, 163, 0.3);
+        }
+
+        div.btn-confirm-cancel > div.stButton > button {
+            background: linear-gradient(135deg, #2a1f1f 0%, #3a2a2a 100%) !important;
+            color: #dda3a3 !important;
+            border: 1px solid #5a3d3d !important;
+        }
+        div.btn-confirm-cancel > div.stButton > button:hover {
+            background: #dda3a3 !important;
+            color: #000000 !important;
+            box-shadow: 0px 0px 10px rgba(221, 163, 163, 0.3);
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 # --- DICCIONARIOS DE TRADUCCIÓN ---
 TEXTS = {
@@ -323,9 +465,9 @@ TEXTS = {
 
         "params": "Parámetros Geométricos",
         "phys_params": "Óptica & Entorno Físico",
-        "reset_btn": "[RST] Reiniciar Valores a 0",
-        "save_btn": "[SAVE] Registrar Medición (DB)",
-        "export_csv": "[EXPORT] Exportar Historial (CSV)",
+        "reset_btn": "Reiniciar Valores a 0",
+        "save_btn": "💾 Registrar Medición (DB)",
+        "export_csv": "📥 Exportar Historial (CSV)",
         "h_mira": "Línea de colimación",
         "h_extra": "Desviación del punto de impacto / Objetivo",
         "dist_input": "Distancia al receptor / Destino",
@@ -354,14 +496,14 @@ TEXTS = {
         "curv_drop_lbl": "Caída x Curvatura",
         "uncertainty_lbl": "Incertidumbre (SciPy)",
         "history_title": "Historial en Base de Datos (SQLite)",
-        "clear_history": "[CLR] Borrar Base de Datos",
+        "clear_history": "Borrar Base de Datos",
         "confirm_clear_msg": "¿Estás seguro de que deseas borrar toda la base de datos?",
-        "confirm_yes": "[OK] Sí, Borrar",
-        "confirm_cancel": "[X] Cancelar",
+        "confirm_yes": "✔ Sí, Borrar",
+        "confirm_cancel": "✖ Cancelar",
         "empty_history": "No hay registros guardados en la base de datos.",
-        "select_prompt": "[!] Por favor, seleccione un Perfil de Aplicación / Profesión en la barra lateral para iniciar la simulación.",
-        "record_saved": "[OK] Medición guardada permanentemente en SQLite.",
-        "target_2d_title": "[2D] Vista Frontal (Retícula / Diana)"
+        "select_prompt": "⚠️ Por favor, seleccione un Perfil de Aplicación / Profesión en la barra lateral para iniciar la simulación.",
+        "record_saved": "✅ Medición guardada permanentemente en SQLite.",
+        "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
     },
     "EN": {
         "title": "Advanced Optical Alignment & Collimation Simulator",
@@ -399,9 +541,9 @@ TEXTS = {
 
         "params": "Geometric Parameters",
         "phys_params": "Optics & Physical Environment",
-        "reset_btn": "[RST] Reset Values to 0",
-        "save_btn": "[SAVE] Save Measurement (DB)",
-        "export_csv": "[EXPORT] Export History (CSV)",
+        "reset_btn": "Reset Values to 0",
+        "save_btn": "💾 Save Measurement (DB)",
+        "export_csv": "📥 Export History (CSV)",
         "h_mira": "Collimation Line",
         "h_extra": "Impact Point Deviation / Target Offset",
         "dist_input": "Distance to Receiver / Destination",
@@ -430,14 +572,14 @@ TEXTS = {
         "curv_drop_lbl": "Curvature Drop",
         "uncertainty_lbl": "Uncertainty (SciPy)",
         "history_title": "Database Records (SQLite)",
-        "clear_history": "[CLR] Clear Database",
+        "clear_history": "Clear Database",
         "confirm_clear_msg": "Are you sure you want to clear the entire database?",
-        "confirm_yes": "[OK] Yes, Clear",
-        "confirm_cancel": "[X] Cancel",
+        "confirm_yes": "✔ Yes, Clear",
+        "confirm_cancel": "✖ Cancel",
         "empty_history": "No records saved in database yet.",
-        "select_prompt": "[!] Please select an Application Profile / Profession in the sidebar to start the simulation.",
-        "record_saved": "[OK] Measurement saved permanently into SQLite.",
-        "target_2d_title": "[2D] Front View (Reticle / Target)"
+        "select_prompt": "⚠️ Please select an Application Profile / Profession in the sidebar to start the simulation.",
+        "record_saved": "✅ Measurement saved permanently into SQLite.",
+        "target_2d_title": "🎯 Vista Frontal 2D (Retícula / Diana)"
     }
 }
 
@@ -557,14 +699,20 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO CON ESCÁNER CARTA ---
+# --- ENCABEZADO PRINCIPAL ---
 st.markdown(f"""
-    <div class="scanner-card">
-        <h2 class="neon-title" style="margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="background: linear-gradient(90deg, #121212 0%, #1a1a1a 100%);
+                padding: 10px 25px;
+                border-radius: 10px;
+                border-left: 5px solid #ffffff;
+                border: 1px solid #262626;
+                margin-bottom: 20px;
+                box-shadow: 0px 4px 15px rgba(0,0,0,0.5);">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;">
             {txt['title']}
         </h2>
-        <p style="color: #8888aa; margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">
-            [ESCÁNER ÓPTICO ACTIVO] | Perfil Seleccionado: <b style="color: #00f0ff;">{profile if profile != txt['profile_placeholder'] else 'Pendiente'}</b>
+        <p style="color: #888888; margin: 0; font-size: 13px; opacity: 0.85;">
+            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #ffffff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -624,7 +772,7 @@ direccion_str = txt["direction_up"] if is_up else txt["direction_down"]
 clicks_moa = abs(round(moa * 4))
 pulsos_mrad = abs(round(mrad * 10))
 
-# --- REGISTRO EN SQLITE ---
+# --- REGISTRO A BASE DE DATOS EN SQLite ---
 if save_clicked:
     current_record = {
         "Perfil / Carrera": profile,
@@ -643,7 +791,7 @@ if save_clicked:
     save_record_to_db(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICAS ---
+# --- GRÁFICAS 3D Y 2D ---
 col_3d, col_2d = st.columns([1.75, 1.0])
 
 with col_3d:
@@ -659,7 +807,7 @@ with col_3d:
 
     fig3d.add_trace(go.Surface(
         x=gx, y=gy, z=gz,
-        colorscale=[[0, '#000000'], [1, '#0c0c16']],
+        colorscale=[[0, '#000000'], [1, '#111111']],
         showscale=False, opacity=0.5, hoverinfo='none'
     ))
 
@@ -693,19 +841,19 @@ with col_3d:
 
     fig3d.update_layout(
         title=dict(
-            text=f"[3D] <b>{txt['title_graph']}</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
+            text=f"📐 <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
             font=dict(color="#ffffff", size=14)
         ),
         paper_bgcolor='#000000', plot_bgcolor='#000000',
         height=460, margin=dict(l=5, r=5, t=35, b=5),
         scene=dict(
             aspectmode='manual', aspectratio=dict(x=2.0, y=1, z=1.1),
-            xaxis=dict(title='Distancia (cm)', backgroundcolor="#000000", gridcolor="#1f1f2e", tickfont=dict(color="#888888")),
-            yaxis=dict(title='Eje Lateral', backgroundcolor="#000000", gridcolor="#1f1f2e", tickfont=dict(color="#888888")),
-            zaxis=dict(title='Elevación (cm)', backgroundcolor="#000000", gridcolor="#1f1f2e", tickfont=dict(color="#888888")),
+            xaxis=dict(title='Distancia (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            yaxis=dict(title='Eje Lateral', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            zaxis=dict(title='Elevación (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
             camera=dict(eye=dict(x=1.6, y=-1.4, z=0.6))
         ),
-        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(10, 10, 16, 0.85)")
+        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(18, 18, 18, 0.8)")
     )
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
@@ -719,12 +867,12 @@ with col_2d:
         fig2d.add_shape(
             type="circle", xref="x", yref="y",
             x0=-r, y0=-r, x1=r, y1=r,
-            line=dict(color="#26263b", width=1.5),
-            fillcolor="rgba(20, 20, 35, 0.3)"
+            line=dict(color="#333333", width=1.5),
+            fillcolor="rgba(30, 30, 30, 0.3)"
         )
 
-    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#555577", width=1, dash="dot"))
-    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#555577", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#666666", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#666666", width=1, dash="dot"))
 
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
@@ -752,37 +900,37 @@ with col_2d:
         height=460, margin=dict(l=10, r=10, t=35, b=10),
         xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"X ({h_unit})"),
         yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
-        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(10, 10, 16, 0.85)")
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(18, 18, 18, 0.8)")
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS DE RESULTADOS ---
+# --- MÉTRICAS Y RESULTADOS ---
 st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; background-color: rgba(10, 10, 18, 0.85); border: 1px solid rgba(0, 240, 255, 0.4); padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);">
+    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #121212; border: 1px solid #262626; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
         <div style="text-align: center; flex: 1;">
-            <span style="color: #8888aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #1f1f3a; padding-left: 10px; flex: 1;">
-            <span style="color: #8888aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{angulo_deg:.4f}°</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #1f1f3a; padding-left: 10px; flex: 1.2;">
-            <span style="color: #8888aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
             <span style="color: #e0e0e0; font-size: 16px; font-weight: bold;">{moa:.2f} MOA | {mrad:.2f} mrad</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #1f1f3a; padding-left: 10px; flex: 1.2;">
-            <span style="color: #8888aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
             <span style="color: #ffffff; font-size: 16px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #1f1f3a; padding-left: 10px; flex: 1.2;">
-            <span style="color: #8888aa; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
-            <span style="color: #00f0ff; font-size: 15px; font-weight: bold;">{uncertainty_str}</span>
+        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
+            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
+            <span style="color: #a3dda3; font-size: 15px; font-weight: bold;">{uncertainty_str}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# --- HISTORIAL SQLITE Y EXPORTACIÓN ---
+# --- TABLA DE HISTORIAL BASE DE DATOS SQLITE & EXPORTACIÓN CSV ---
 st.markdown("---")
 df_db = load_history_from_db()
 
