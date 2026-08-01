@@ -7,8 +7,7 @@ import sqlite3
 from scipy import stats
 
 st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
-
-# --- BASE DE DATOS SQLITE (CON GESTORES DE CONTEXTO) ---
+# --- BASE DE DATOS SQLITE (CON MIGRACIÓN AUTOMÁTICA) ---
 DB_NAME = "colimacion_historial.db"
 
 def init_db():
@@ -29,6 +28,18 @@ def init_db():
                 mrad REAL,
                 direccion TEXT,
                 clics_moa INTEGER,
+                pulsos_mrad INTEGER,
+                incertidumbre TEXT
+            )
+        ''')
+        
+        # Migración automática por si la base de datos ya existía sin la columna 'viento_x'
+        c.execute("PRAGMA table_info(historial)")
+        columns = [col[1] for col in c.fetchall()]
+        if "viento_x" not in columns:
+            c.execute("ALTER TABLE historial ADD COLUMN viento_x TEXT")
+            
+        conn.commit()
                 pulsos_mrad INTEGER,
                 incertidumbre TEXT
             )
