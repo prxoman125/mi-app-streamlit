@@ -8,7 +8,11 @@ import time
 from scipy import stats
 
 # 1. Configuración de la página (¡SIEMPRE PRIMERO EN STREAMLIT!)
-st.set_page_config(page_title="Simulador de Colimación Óptica", layout="wide")
+st.set_page_config(
+    page_title="Simulador de Colimación Óptica",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 
 # =========================================================================
@@ -38,13 +42,11 @@ if st.session_state.intentos >= MAX_INTENTOS:
 if not st.session_state.autenticado:
     st.markdown("""
         <style>
-            /* OCULTAR LA BARRA SUPERIOR NATIVA DE STREAMLIT */
-            header[data-testid="stHeader"], [data-testid="stHeader"], .stAppHeader {
-                display: none !important;
-                visibility: hidden !important;
-                height: 0px !important;
+            /* Ocultar barra superior de Streamlit */
+            header, [data-testid="stHeader"] {
+                visibility: hidden;
+                height: 0px;
             }
-
             .stApp {
                 background-color: #030507 !important;
             }
@@ -54,8 +56,8 @@ if not st.session_state.autenticado:
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
                 background-image: 
-                    linear-gradient(rgba(0, 255, 204, 0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(0, 255, 204, 0.03) 1px, transparent 1px);
+                    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
                 background-size: 30px 30px;
                 animation: gridMove 20s linear infinite;
                 z-index: 0;
@@ -66,13 +68,13 @@ if not st.session_state.autenticado:
             .login-wrapper {
                 position: relative;
                 max-width: 460px;
-                margin: 4vh auto 0 auto;
+                margin: 5vh auto 0 auto;
                 padding: 3px;
                 border-radius: 20px;
-                background: linear-gradient(90deg, #00ffcc, #0077ff, #00ffcc, #0077ff);
+                background: linear-gradient(90deg, #00f0ff, #0077ff, #00f0ff, #0077ff);
                 background-size: 300% 300%;
-                animation: borderGlow 4s linear infinite;
-                box-shadow: 0 0 25px rgba(0, 255, 204, 0.25);
+                animation: borderGlow 4s linear infinite, fadeIn 0.8s ease-out;
+                box-shadow: 0 0 25px rgba(0, 240, 255, 0.35);
             }
 
             /* Tarjeta Interior de Login */
@@ -91,17 +93,17 @@ if not st.session_state.autenticado:
                 align-items: center;
                 font-family: monospace;
                 font-size: 10px;
-                color: #00ffcc;
+                color: #00f0ff;
                 letter-spacing: 1px;
                 margin-bottom: 12px;
-                border-bottom: 1px solid rgba(0, 255, 204, 0.15);
+                border-bottom: 1px solid rgba(0, 240, 255, 0.2);
                 padding-bottom: 6px;
             }
 
             .loading-bar-container {
                 width: 100%;
                 height: 3px;
-                background: rgba(0, 255, 204, 0.1);
+                background: rgba(0, 240, 255, 0.1);
                 border-radius: 2px;
                 overflow: hidden;
                 margin-bottom: 15px;
@@ -110,7 +112,7 @@ if not st.session_state.autenticado:
             .loading-bar-fill {
                 width: 40%;
                 height: 100%;
-                background: linear-gradient(90deg, transparent, #00ffcc, transparent);
+                background: linear-gradient(90deg, transparent, #00f0ff, transparent);
                 animation: loadingSweep 2s ease-in-out infinite;
             }
 
@@ -131,7 +133,7 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 20px;
                 height: 20px;
-                border-color: #00ffcc;
+                border-color: #00f0ff;
                 border-style: solid;
                 animation: cornerPulse 2.5s infinite alternate ease-in-out;
                 z-index: 2;
@@ -146,7 +148,7 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 95px;
                 height: 95px;
-                border: 2px dashed rgba(0, 255, 204, 0.4);
+                border: 2px dashed rgba(0, 240, 255, 0.5);
                 border-radius: 50%;
                 animation: rotateRight 10s linear infinite;
             }
@@ -155,23 +157,23 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 60px;
                 height: 60px;
-                border: 2px dotted rgba(0, 180, 255, 0.6);
+                border: 2px dotted rgba(0, 150, 255, 0.7);
                 border-radius: 50%;
                 animation: rotateLeft 6s linear infinite;
             }
 
             /* Retícula Crosshair */
-            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(0, 255, 204, 0.3); }
-            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(0, 255, 204, 0.3); }
+            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(0, 240, 255, 0.35); }
+            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(0, 240, 255, 0.35); }
 
             /* Punto Láser Central */
             .hud-dot {
                 position: absolute;
                 width: 7px;
                 height: 7px;
-                background-color: #00ffcc;
+                background-color: #00f0ff;
                 border-radius: 50%;
-                box-shadow: 0 0 10px #00ffcc, 0 0 18px #00ffcc;
+                box-shadow: 0 0 10px #00f0ff, 0 0 18px #00f0ff;
                 animation: laserPulse 1.2s infinite ease-in-out;
                 z-index: 3;
             }
@@ -183,8 +185,8 @@ if not st.session_state.autenticado:
                 left: 0;
                 width: 100%;
                 height: 35%;
-                background: linear-gradient(180deg, rgba(0, 255, 204, 0) 0%, rgba(0, 255, 204, 0.3) 100%);
-                border-bottom: 2px solid #00ffcc;
+                background: linear-gradient(180deg, rgba(0, 240, 255, 0) 0%, rgba(0, 240, 255, 0.35) 100%);
+                border-bottom: 2px solid #00f0ff;
                 animation: scanMove 3s infinite ease-in-out;
                 z-index: 1;
             }
@@ -200,7 +202,7 @@ if not st.session_state.autenticado:
                 margin: 0;
             }
             .login-subtitle {
-                color: #00ffcc;
+                color: #00f0ff;
                 font-size: 10px;
                 text-align: center;
                 letter-spacing: 0.5px;
@@ -210,69 +212,15 @@ if not st.session_state.autenticado:
                 font-family: monospace;
             }
 
-            /* ANIMACIÓN Y ESTILOS PARA EL CONTENEDOR DEL FORMULARIO DE CREDENCIALES */
-            div[data-testid="stForm"] {
-                background: #080b0e !important;
-                border: 1px solid rgba(0, 255, 204, 0.25) !important;
-                border-radius: 16px !important;
-                padding: 22px 20px !important;
-                margin-top: 15px !important;
-                box-shadow: 0 0 18px rgba(0, 255, 204, 0.1) !important;
-                animation: fadeInUp 0.8s ease-out forwards;
-            }
-
             /* Resplandor Láser en Inputs */
-            div[data-baseweb="input"] {
-                background-color: #030507 !important;
-                border: 1px solid rgba(0, 255, 204, 0.2) !important;
-                border-radius: 8px !important;
-                color: #ffffff !important;
-            }
-
             div[data-baseweb="input"] input:focus {
-                border-color: #00ffcc !important;
-                box-shadow: 0 0 12px rgba(0, 255, 204, 0.4) !important;
+                border-color: #00f0ff !important;
+                box-shadow: 0 0 12px rgba(0, 240, 255, 0.5) !important;
             }
 
-            /* ESTILO FUTURISTA CIBERPUNK PARA EL BOTÓN DE INGRESAR */
-            div[data-testid="stFormSubmitButton"] > button {
-                background: linear-gradient(135deg, #051923 0%, #003554 100%) !important;
-                color: #00ffcc !important;
-                border: 1px solid #00ffcc !important;
-                border-radius: 8px !important;
-                font-family: monospace, sans-serif !important;
-                font-size: 14px !important;
-                font-weight: 700 !important;
-                letter-spacing: 1.5px !important;
-                text-transform: uppercase !important;
-                box-shadow: 0 0 10px rgba(0, 255, 204, 0.3), inset 0 0 10px rgba(0, 255, 204, 0.1) !important;
-                transition: all 0.3s ease-in-out !important;
-                margin-top: 10px !important;
-            }
-
-            div[data-testid="stFormSubmitButton"] > button:hover {
-                background: #00ffcc !important;
-                color: #030507 !important;
-                box-shadow: 0 0 20px #00ffcc, 0 0 35px rgba(0, 255, 204, 0.8) !important;
-                transform: scale(1.02) !important;
-                cursor: pointer !important;
-            }
-
-            div[data-testid="stFormSubmitButton"] > button:active {
-                transform: scale(0.98) !important;
-                box-shadow: 0 0 5px #00ffcc !important;
-            }
-
-            /* Keyframes de Animaciones */
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-15px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
             @keyframes borderGlow {
@@ -302,8 +250,8 @@ if not st.session_state.autenticado:
             }
 
             @keyframes cornerPulse {
-                0% { border-color: #00ffcc; filter: drop-shadow(0 0 3px #00ffcc); }
-                100% { border-color: #0088ff; filter: drop-shadow(0 0 8px #0088ff); }
+                0% { border-color: #00f0ff; filter: drop-shadow(0 0 3px #00f0ff); }
+                100% { border-color: #0077ff; filter: drop-shadow(0 0 8px #0077ff); }
             }
 
             @keyframes laserPulse {
@@ -378,7 +326,7 @@ if not st.session_state.autenticado:
 
 
 # =========================================================================
-# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (MANTENIDO INTACTO)
+# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (AJUSTADO Y UNIFICADO)
 # =========================================================================
 
 # --- BASE DE DATOS SQLITE ---
@@ -440,55 +388,84 @@ def clear_db():
 # Inicializar Base de Datos
 init_db()
 
-# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO) ---
+# --- ESTILOS CSS PERSONALIZADOS (AZUL CLARO / CIAN NEÓN GLOW & SLIM LAYOUT) ---
 st.markdown("""
     <style>
-        .stApp {
-            background-color: #000000 !important;
-            color: #e0e0e0 !important;
+        /* Ocultar Barra Superior y Toolbar de Streamlit para efecto pantalla completa */
+        header, [data-testid="stHeader"], [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            height: 0px !important;
+            margin: 0px !important;
+            padding: 0px !important;
         }
 
+        /* Ajuste de márgenes globales del contenedor de la app */
+        .block-container {
+            padding-top: 1.2rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            max-width: 100% !important;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .stApp {
+            background-color: #03060a !important;
+            color: #dbeafe !important;
+        }
+
+        /* Estilo de la Barra Lateral */
         [data-testid="stSidebar"] {
-            background-color: #0a0a0a !important;
-            border-right: 1px solid #262626 !important;
+            background-color: #060d14 !important;
+            border-right: 1px solid rgba(0, 240, 255, 0.25) !important;
+            box-shadow: 4px 0px 18px rgba(0, 240, 255, 0.08);
+        }
+
+        [data-testid="stSidebar"] > div:first-child {
+            padding-top: 1.5rem !important;
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-            color: #ffffff !important;
+            color: #00f0ff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
             text-transform: uppercase;
-            letter-spacing: 0.8px;
+            letter-spacing: 1px;
             margin-top: 15px !important;
-            margin-bottom: 8px !important;
-            border-bottom: 1px solid #262626 !important;
+            margin-bottom: 10px !important;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2) !important;
             padding-bottom: 4px;
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
         }
 
+        /* Botones Interactivos */
         div.stButton > button {
-            background: linear-gradient(135deg, #1a1a1a 0%, #262626 100%) !important;
-            color: #ffffff !important;
-            border: 1px solid #444444 !important;
-            border-radius: 6px !important;
+            background: linear-gradient(135deg, #0a192f 0%, #0d2547 100%) !important;
+            color: #00f0ff !important;
+            border: 1px solid rgba(0, 240, 255, 0.4) !important;
+            border-radius: 8px !important;
             font-weight: 600 !important;
-            transition: all 0.3s ease !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
         }
         div.stButton > button:hover {
-            background: #ffffff !important;
-            color: #000000 !important;
-            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
-            border-color: #ffffff !important;
+            background: #00f0ff !important;
+            color: #03060a !important;
+            box-shadow: 0px 0px 18px rgba(0, 240, 255, 0.6) !important;
+            border-color: #00f0ff !important;
+            transform: translateY(-1px);
         }
 
+        /* Microinteracciones para Steppers (- / +) */
         button[aria-label="Increase value"], 
         button[aria-label="Decrease value"],
         div[data-baseweb="spinbutton"] button,
         [data-testid="stNumberInputStepDown"],
         [data-testid="stNumberInputStepUp"] {
-            color: #ffffff !important;
-            background-color: #121212 !important;
-            border-color: #333333 !important;
-            transition: all 0.2s ease !important;
+            color: #00f0ff !important;
+            background-color: #081420 !important;
+            border-color: rgba(0, 240, 255, 0.3) !important;
+            transition: all 0.25s ease !important;
         }
 
         button[aria-label="Increase value"]:hover, 
@@ -496,37 +473,78 @@ st.markdown("""
         div[data-baseweb="spinbutton"] button:hover,
         [data-testid="stNumberInputStepDown"]:hover,
         [data-testid="stNumberInputStepUp"]:hover {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.3) !important;
+            background-color: #00f0ff !important;
+            color: #03060a !important;
+            box-shadow: 0px 0px 12px rgba(0, 240, 255, 0.5) !important;
+            border-color: #00f0ff !important;
         }
 
+        /* Campos de Entrada e Selects */
         div[data-baseweb="input"], div[data-baseweb="select"] > div {
-            background-color: #121212 !important;
-            border-color: #333333 !important;
+            background-color: #081420 !important;
+            border: 1px solid rgba(0, 240, 255, 0.25) !important;
             color: #ffffff !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
         }
 
+        div[data-baseweb="input"]:hover, div[data-baseweb="select"] > div:hover {
+            border-color: rgba(0, 240, 255, 0.6) !important;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.25) !important;
+        }
+
+        /* Tarjetas de Métricas con Glow Dinámico */
+        .metric-card-container {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: linear-gradient(135deg, #060d14 0%, #0a1726 100%);
+            border: 1px solid rgba(0, 240, 255, 0.35); 
+            padding: 16px 20px; 
+            border-radius: 12px; 
+            margin-top: 15px; 
+            margin-bottom: 25px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+            animation: pulseGlow 4s infinite alternate ease-in-out, slideUp 0.6s ease-out;
+        }
+
+        /* Confirmaciones */
         div.btn-confirm-yes > div.stButton > button {
-            background: linear-gradient(135deg, #1f2a1f 0%, #2a3a2a 100%) !important;
-            color: #a3dda3 !important;
-            border: 1px solid #3d5a3d !important;
+            background: linear-gradient(135deg, #092c1d 0%, #114e34 100%) !important;
+            color: #38ef7d !important;
+            border: 1px solid #114e34 !important;
         }
         div.btn-confirm-yes > div.stButton > button:hover {
-            background: #a3dda3 !important;
+            background: #38ef7d !important;
             color: #000000 !important;
-            box-shadow: 0px 0px 10px rgba(163, 221, 163, 0.3);
+            box-shadow: 0px 0px 15px rgba(56, 239, 125, 0.5);
         }
 
         div.btn-confirm-cancel > div.stButton > button {
-            background: linear-gradient(135deg, #2a1f1f 0%, #3a2a2a 100%) !important;
-            color: #dda3a3 !important;
-            border: 1px solid #5a3d3d !important;
+            background: linear-gradient(135deg, #380e14 0%, #5d1621 100%) !important;
+            color: #ff4d4d !important;
+            border: 1px solid #5d1621 !important;
         }
         div.btn-confirm-cancel > div.stButton > button:hover {
-            background: #dda3a3 !important;
+            background: #ff4d4d !important;
             color: #000000 !important;
-            box-shadow: 0px 0px 10px rgba(221, 163, 163, 0.3);
+            box-shadow: 0px 0px 15px rgba(255, 77, 77, 0.5);
+        }
+
+        /* Keyframes de Animaciones Generales */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.12), inset 0 0 10px rgba(0, 240, 255, 0.05); }
+            100% { box-shadow: 0 0 25px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.1); }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -803,20 +821,20 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO PRINCIPAL ---
+# --- ENCABEZADO PRINCIPAL (CON LUZ NEÓN CIAN/AZUL) ---
 st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #121212 0%, #1a1a1a 100%);
-                padding: 10px 25px;
-                border-radius: 10px;
-                border-left: 5px solid #ffffff;
-                border: 1px solid #262626;
+    <div style="background: linear-gradient(135deg, #060d14 0%, #0a1829 100%);
+                padding: 14px 25px;
+                border-radius: 12px;
+                border-left: 5px solid #00f0ff;
+                border: 1px solid rgba(0, 240, 255, 0.3);
                 margin-bottom: 20px;
-                box-shadow: 0px 4px 15px rgba(0,0,0,0.5);">
-        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;">
+                box-shadow: 0px 4px 20px rgba(0, 240, 255, 0.15);">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,240,255,0.3);">
             {txt['title']}
         </h2>
-        <p style="color: #888888; margin: 0; font-size: 13px; opacity: 0.85;">
-            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #ffffff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
+        <p style="color: #93c5fd; margin: 0; font-size: 13px; opacity: 0.9;">
+            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #00f0ff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -895,7 +913,7 @@ if save_clicked:
     save_record_to_db(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICAS 3D Y 2D ---
+# --- GRÁFICAS 3D Y 2D CON CONTENEDORES RESPLANDECIENTES ---
 col_3d, col_2d = st.columns([1.75, 1.0])
 
 with col_3d:
@@ -911,53 +929,53 @@ with col_3d:
 
     fig3d.add_trace(go.Surface(
         x=gx, y=gy, z=gz,
-        colorscale=[[0, '#000000'], [1, '#111111']],
-        showscale=False, opacity=0.5, hoverinfo='none'
+        colorscale=[[0, '#03060a'], [1, '#081420']],
+        showscale=False, opacity=0.6, hoverinfo='none'
     ))
 
     fig3d.add_trace(go.Scatter3d(
         x=[0, D_cm], y=[0, 0], z=[0, y_ref_end],
         mode='lines+markers',
         name=f"{txt['laser_label']} ({ref_angle_deg:.2f}°)",
-        line=dict(color='#FF0055', width=7, dash='dash'),
-        marker=dict(size=4, color='#FF0055')
+        line=dict(color='#ff0055', width=7, dash='dash'),
+        marker=dict(size=4, color='#ff0055')
     ))
 
     fig3d.add_trace(go.Scatter3d(
         x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
         mode='lines+markers',
         name=f"{txt['sight_label']} (α = {angulo_deg:.2f}°)",
-        line=dict(color='#00F0FF', width=9),
-        marker=dict(size=5, color='#00F0FF')
+        line=dict(color='#00f0ff', width=9),
+        marker=dict(size=5, color='#00f0ff')
     ))
 
     fig3d.add_trace(go.Scatter3d(
         x=[D_cm], y=[0], z=[y_ref_end],
         mode='markers', name=txt["target_center"],
-        marker=dict(size=8, color='#FFE600', symbol='circle')
+        marker=dict(size=8, color='#ffe600', symbol='circle')
     ))
 
     fig3d.add_trace(go.Scatter3d(
         x=[D_cm], y=[0], z=[y_target_point],
         mode='markers', name=txt["target_point"],
-        marker=dict(size=10, color='#00FF66', symbol='diamond')
+        marker=dict(size=10, color='#00ff66', symbol='diamond')
     ))
 
     fig3d.update_layout(
         title=dict(
             text=f"📐 <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
-            font=dict(color="#ffffff", size=14)
+            font=dict(color="#00f0ff", size=14)
         ),
-        paper_bgcolor='#000000', plot_bgcolor='#000000',
+        paper_bgcolor='#040a12', plot_bgcolor='#040a12',
         height=460, margin=dict(l=5, r=5, t=35, b=5),
         scene=dict(
             aspectmode='manual', aspectratio=dict(x=2.0, y=1, z=1.1),
-            xaxis=dict(title='Distancia (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
-            yaxis=dict(title='Eje Lateral', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
-            zaxis=dict(title='Elevación (cm)', backgroundcolor="#000000", gridcolor="#262626", tickfont=dict(color="#888888")),
+            xaxis=dict(title='Distancia (cm)', backgroundcolor="#040a12", gridcolor="#0f2b48", tickfont=dict(color="#93c5fd")),
+            yaxis=dict(title='Eje Lateral', backgroundcolor="#040a12", gridcolor="#0f2b48", tickfont=dict(color="#93c5fd")),
+            zaxis=dict(title='Elevación (cm)', backgroundcolor="#040a12", gridcolor="#0f2b48", tickfont=dict(color="#93c5fd")),
             camera=dict(eye=dict(x=1.6, y=-1.4, z=0.6))
         ),
-        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(18, 18, 18, 0.8)")
+        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(6, 13, 20, 0.85)")
     )
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
@@ -971,65 +989,65 @@ with col_2d:
         fig2d.add_shape(
             type="circle", xref="x", yref="y",
             x0=-r, y0=-r, x1=r, y1=r,
-            line=dict(color="#333333", width=1.5),
-            fillcolor="rgba(30, 30, 30, 0.3)"
+            line=dict(color="#0f3456", width=1.5),
+            fillcolor="rgba(10, 30, 50, 0.2)"
         )
 
-    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#666666", width=1, dash="dot"))
-    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#666666", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#1e4976", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#1e4976", width=1, dash="dot"))
 
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
         x0=-spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
         x1=spot_radius_cm, y1=diferencia_altura_cm + spot_radius_cm,
-        line=dict(color="#00F0FF", width=2),
+        line=dict(color="#00f0ff", width=2),
         fillcolor="rgba(0, 240, 255, 0.35)"
     )
 
     fig2d.add_trace(go.Scatter(
         x=[0], y=[diferencia_altura_cm],
         mode='markers', name=txt["target_point"],
-        marker=dict(size=8, color='#00FF66', symbol='cross')
+        marker=dict(size=8, color='#00ff66', symbol='cross')
     ))
 
     fig2d.add_trace(go.Scatter(
         x=[0], y=[0],
         mode='markers', name=txt["target_center"],
-        marker=dict(size=7, color='#FFE600', symbol='circle')
+        marker=dict(size=7, color='#ffe600', symbol='circle')
     ))
 
     fig2d.update_layout(
-        title=dict(text=txt["target_2d_title"], font=dict(color="#ffffff", size=14)),
-        paper_bgcolor='#000000', plot_bgcolor='#000000',
+        title=dict(text=txt["target_2d_title"], font=dict(color="#00f0ff", size=14)),
+        paper_bgcolor='#040a12', plot_bgcolor='#040a12',
         height=460, margin=dict(l=10, r=10, t=35, b=10),
-        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"X ({h_unit})"),
-        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
-        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(18, 18, 18, 0.8)")
+        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#93c5fd"), title=f"X ({h_unit})"),
+        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#93c5fd"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(6, 13, 20, 0.85)")
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS Y RESULTADOS ---
+# --- MÉTRICAS Y RESULTADOS (ESTILO CIAN NEÓN PUSLANTE) ---
 st.markdown(f"""
-    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #121212; border: 1px solid #262626; padding: 12px 15px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
+    <div class="metric-card-container">
         <div style="text-align: center; flex: 1;">
-            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
-            <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
+            <span style="color: #ffffff; font-size: 17px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1;">
-            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
-            <span style="color: #ffffff; font-size: 16px; font-weight: bold;">{angulo_deg:.4f}°</span>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
+            <span style="color: #ffffff; font-size: 17px; font-weight: bold;">{angulo_deg:.4f}°</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
-            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
-            <span style="color: #e0e0e0; font-size: 16px; font-weight: bold;">{moa:.2f} MOA | {mrad:.2f} mrad</span>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
+            <span style="color: #00f0ff; font-size: 17px; font-weight: bold; text-shadow: 0 0 8px rgba(0,240,255,0.5);">{moa:.2f} MOA | {mrad:.2f} mrad</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
-            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
-            <span style="color: #ffffff; font-size: 16px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
+            <span style="color: #ffffff; font-size: 17px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid #262626; padding-left: 10px; flex: 1.2;">
-            <span style="color: #888888; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
-            <span style="color: #a3dda3; font-size: 15px; font-weight: bold;">{uncertainty_str}</span>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
+            <span style="color: #38ef7d; font-size: 15px; font-weight: bold; text-shadow: 0 0 8px rgba(56,239,125,0.4);">{uncertainty_str}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
