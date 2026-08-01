@@ -67,7 +67,7 @@ def clear_db():
 # Inicializar Base de Datos
 init_db()
 
-# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO + TARJETA Y FONDO MEJORADOS) ---
+# --- ESTILOS CSS PERSONALIZADOS (MONOCROMÁTICO NEGRO) ---
 st.markdown("""
     <style>
         .stApp {
@@ -154,15 +154,6 @@ st.markdown("""
             background: #dda3a3 !important;
             color: #000000 !important;
             box-shadow: 0px 0px 10px rgba(221, 163, 163, 0.3);
-        }
-
-        /* --- CONTENEDOR TÁCTICO PARA MEJORAR LA SECCIÓN DERECHA --- */
-        .right-panel-card {
-            background-color: #080808 !important;
-            border: 1px solid #1f2937 !important;
-            border-radius: 10px !important;
-            padding: 12px !important;
-            box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.8) !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -494,10 +485,13 @@ spot_size_display = spot_diameter_cm if is_metric else spot_diameter_cm / 2.54
 curv_drop_display = curv_drop_cm if is_metric else curv_drop_cm / 2.54
 
 # CÁLCULO DE INCERTIDUMBRE ANGULAR (PROPAGACIÓN CON SCIPY/NUMPY)
+# Delta H_mira: ±0.05 cm, Delta Distancia: ±0.5 m, Delta Divergencia
 delta_h_cm = 0.05
 delta_d_cm = 50.0 if D_m > 0 else 0.1
 if D_cm > 0:
+    # Propagación del error: d(atan(y/x))
     sigma_angle_rad = math.sqrt((delta_h_cm / D_cm)**2 + (diferencia_altura_cm * delta_d_cm / (D_cm**2 + diferencia_altura_cm**2))**2)
+    # Factor de confianza 95% usando SciPy norm.ppf
     confidence_factor = stats.norm.ppf(0.975) # ~1.96
     uncertainty_mrad = sigma_angle_rad * 1000.0 * confidence_factor
     uncertainty_moa = math.degrees(sigma_angle_rad) * 60.0 * confidence_factor
@@ -598,76 +592,52 @@ with col_3d:
     )
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
-# --- COLUMNA DERECHA CON DISEÑO DE FONDO Y RETÍCULA MEJORADOS ---
 with col_2d:
-    st.markdown('<div class="right-panel-card">', unsafe_allow_html=True)
-    
-    # Status Banner Táctico superior
-    if abs(diferencia_altura_cm) < 0.1:
-        status_color = "#10b981"
-        status_msg = "🎯 ALINEACIÓN PERFECTA"
-    else:
-        status_color = "#f59e0b"
-        status_msg = "⚠️ DESVIACIÓN DETECTADA"
-
-    st.markdown(f"""
-        <div style="background-color: #0d0d0d; border-left: 3px solid {status_color}; padding: 6px 12px; border-radius: 4px; margin-bottom: 8px;">
-            <span style="color: {status_color}; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">{status_msg}</span>
-        </div>
-    """, unsafe_allow_html=True)
-
     fig2d = go.Figure()
 
     max_radius = max(abs(diferencia_altura_cm) * 1.4, spot_radius_cm * 2.5, 5.0)
     rings = np.linspace(max_radius * 0.2, max_radius, 4)
 
-    # Anillos con fondo translúcido táctico
     for r in reversed(rings):
         fig2d.add_shape(
             type="circle", xref="x", yref="y",
             x0=-r, y0=-r, x1=r, y1=r,
-            line=dict(color="#1f2937", width=1.5),
-            fillcolor="rgba(15, 23, 42, 0.35)"
+            line=dict(color="#333333", width=1.5),
+            fillcolor="rgba(30, 30, 30, 0.3)"
         )
 
-    # Retícula táctica de referencia
-    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#374151", width=1, dash="dot"))
-    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#374151", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#666666", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#666666", width=1, dash="dot"))
 
-    # Láser / Haz Spot
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
         x0=-spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
         x1=spot_radius_cm, y1=diferencia_altura_cm + spot_radius_cm,
         line=dict(color="#00F0FF", width=2),
-        fillcolor="rgba(0, 240, 255, 0.25)"
+        fillcolor="rgba(0, 240, 255, 0.35)"
     )
 
     fig2d.add_trace(go.Scatter(
         x=[0], y=[diferencia_altura_cm],
         mode='markers', name=txt["target_point"],
-        marker=dict(size=10, color='#00FF66', symbol='x')
+        marker=dict(size=8, color='#00FF66', symbol='cross')
     ))
 
     fig2d.add_trace(go.Scatter(
         x=[0], y=[0],
         mode='markers', name=txt["target_center"],
-        marker=dict(size=8, color='#FFE600', symbol='circle')
+        marker=dict(size=7, color='#FFE600', symbol='circle')
     ))
 
-    # Integración del nuevo fondo en Plotly (#0a0a0a y #050505)
     fig2d.update_layout(
-        title=dict(text=txt["target_2d_title"], font=dict(color="#ffffff", size=13)),
-        paper_bgcolor='#0a0a0a',
-        plot_bgcolor='#050505',
-        height=405, margin=dict(l=10, r=10, t=30, b=10),
-        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#6b7280"), title=f"X ({h_unit})"),
-        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#6b7280"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
-        legend=dict(orientation="h", y=-0.12, x=0.5, xanchor="center", font=dict(color="#9ca3af", size=9), bgcolor="rgba(10, 10, 10, 0.8)")
+        title=dict(text=txt["target_2d_title"], font=dict(color="#ffffff", size=14)),
+        paper_bgcolor='#000000', plot_bgcolor='#000000',
+        height=460, margin=dict(l=10, r=10, t=35, b=10),
+        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"X ({h_unit})"),
+        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#888888"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(18, 18, 18, 0.8)")
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- MÉTRICAS Y RESULTADOS ---
 st.markdown(f"""
