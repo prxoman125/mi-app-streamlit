@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 # =========================================================================
-# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO DE CARGA Y ESCANEO (ROSA NEÓN)
+# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO MULTICOLOR DINÁMICO (AURORA)
 # =========================================================================
 
 USUARIOS_PERMITIDOS = [
@@ -42,105 +42,49 @@ if st.session_state.intentos >= MAX_INTENTOS:
 if not st.session_state.autenticado:
     st.markdown("""
         <style>
-            /* Ocultar barra superior e interfaz de fondo Streamlit */
+            /* Ocultar barra superior de Streamlit */
             header, [data-testid="stHeader"] {
                 visibility: hidden;
                 height: 0px;
             }
             .stApp {
-                background-color: #080205 !important;
-                overflow-x: hidden;
+                background-color: #030507 !important;
             }
 
-            /* Fondo Avanzado con Malla Sci-Fi y Luz Radial Rosa Neón */
+            /* Fondo de Malla Grid Sci-Fi con Resplandor Radial Aurora */
             .grid-bg {
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
-                background: 
-                    radial-gradient(circle at 50% 50%, rgba(255, 0, 127, 0.08) 0%, rgba(8, 2, 5, 0.95) 75%),
-                    linear-gradient(rgba(255, 0, 127, 0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 0, 127, 0.03) 1px, transparent 1px);
-                background-size: 100% 100%, 35px 35px, 35px 35px;
-                animation: gridMove 25s linear infinite;
+                background-image: 
+                    radial-gradient(circle at 50% 30%, rgba(138, 43, 226, 0.12) 0%, rgba(0, 240, 255, 0.08) 35%, rgba(255, 0, 127, 0.05) 60%, transparent 80%),
+                    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+                background-size: 100% 100%, 30px 30px, 30px 30px;
+                animation: gridMove 20s linear infinite, ambientPulse 10s ease-in-out infinite alternate;
                 z-index: 0;
                 pointer-events: none;
             }
 
-            /* Indicadores Globales de la Interfaz en Esquinas Superiores */
-            .top-global-hud {
-                position: fixed;
-                top: 15px; left: 25px; right: 25px;
-                display: flex;
-                justify-content: space-between;
-                font-family: monospace;
-                font-size: 11px;
-                color: #ff007f;
-                letter-spacing: 1.5px;
-                z-index: 10;
-                opacity: 0.85;
-                pointer-events: none;
-                text-shadow: 0 0 8px rgba(255, 0, 127, 0.6);
-            }
-
-            /* Módulos Flotantes Periféricos (Laterales Izquierda y Derecha) */
-            .hud-panel-left, .hud-panel-right {
-                position: fixed;
-                top: 18vh;
-                width: 220px;
-                padding: 16px;
-                background: rgba(20, 5, 14, 0.45);
-                border: 1px solid rgba(255, 0, 127, 0.22);
-                backdrop-filter: blur(10px);
-                border-radius: 12px;
-                font-family: monospace;
-                font-size: 10px;
-                color: #f472b6;
-                z-index: 1;
-                pointer-events: none;
-                box-shadow: 0 0 15px rgba(255, 0, 127, 0.06);
-                animation: sidePanelEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-
-            .hud-panel-left { left: 4vw; }
-            .hud-panel-right { right: 4vw; }
-
-            .panel-header {
-                color: #ff007f;
-                font-weight: bold;
-                border-bottom: 1px dashed rgba(255, 0, 127, 0.35);
-                padding-bottom: 4px;
-                margin-bottom: 10px;
-                letter-spacing: 1px;
-                text-shadow: 0 0 5px rgba(255, 0, 127, 0.4);
-            }
-
-            .hud-data-row {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 6px;
-            }
-
-            /* Contenedor Exterior con Borde Neon Giratorio Rosa/Magenta */
+            /* Contenedor Exterior con Borde Neon Dinámico Multicolor (Aurora Gradient) */
             .login-wrapper {
                 position: relative;
                 max-width: 460px;
-                margin: 4vh auto 0 auto;
-                padding: 2px;
+                margin: 5vh auto 0 auto;
+                padding: 3px;
                 border-radius: 20px;
-                background: linear-gradient(135deg, #ff007f, #9900ff, #ff007f, #ff3399);
-                background-size: 300% 300%;
-                animation: borderGlow 6s ease infinite, entranceZoom 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                box-shadow: 0 0 35px rgba(255, 0, 127, 0.3);
+                background: linear-gradient(135deg, #00f0ff, #8a2be2, #ff007f, #00ff99, #00f0ff);
+                background-size: 400% 400%;
+                animation: auroraBorder 8s ease infinite, fadeIn 0.8s ease-out;
+                box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), 0 0 50px rgba(138, 43, 226, 0.2);
             }
 
-            /* Tarjeta Interior de Login con Glassmorphism Dark Pink */
+            /* Tarjeta Interior de Login */
             .login-card {
                 position: relative;
-                background: rgba(16, 4, 11, 0.88);
-                backdrop-filter: blur(16px);
-                border-radius: 18px;
+                background: #06090e;
+                border-radius: 17px;
                 padding: 25px 25px 15px 25px;
-                z-index: 2;
+                z-index: 1;
             }
 
             /* Barra de Telemetría Superior */
@@ -150,26 +94,30 @@ if not st.session_state.autenticado:
                 align-items: center;
                 font-family: monospace;
                 font-size: 10px;
-                color: #ff007f;
                 letter-spacing: 1px;
                 margin-bottom: 12px;
-                border-bottom: 1px solid rgba(255, 0, 127, 0.2);
+                border-bottom: 1px solid rgba(0, 240, 255, 0.2);
                 padding-bottom: 6px;
+                background: linear-gradient(90deg, #00f0ff, #ff007f, #00ff99);
+                background-size: 200% 200%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: auroraText 6s ease infinite;
             }
 
             .loading-bar-container {
                 width: 100%;
                 height: 3px;
-                background: rgba(255, 0, 127, 0.1);
+                background: rgba(255, 255, 255, 0.05);
                 border-radius: 2px;
                 overflow: hidden;
                 margin-bottom: 15px;
             }
 
             .loading-bar-fill {
-                width: 40%;
+                width: 45%;
                 height: 100%;
-                background: linear-gradient(90deg, transparent, #ff007f, transparent);
+                background: linear-gradient(90deg, transparent, #00f0ff, #ff007f, transparent);
                 animation: loadingSweep 2s ease-in-out infinite;
             }
 
@@ -185,14 +133,14 @@ if not st.session_state.autenticado:
                 overflow: hidden;
             }
 
-            /* Esquinas HUD */
+            /* 4 Esquinas Simétricas Multicolor */
             .corner {
                 position: absolute;
                 width: 20px;
                 height: 20px;
-                border-color: #ff007f;
+                border-color: #00f0ff;
                 border-style: solid;
-                animation: cornerPulse 2.5s infinite alternate ease-in-out;
+                animation: cornerMulticolor 4s infinite ease-in-out alternate;
                 z-index: 2;
             }
             .top-left { top: 2px; left: 2px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
@@ -200,97 +148,141 @@ if not st.session_state.autenticado:
             .bottom-left { bottom: 2px; left: 2px; border-width: 0 0 3px 3px; border-bottom-left-radius: 4px; }
             .bottom-right { bottom: 2px; right: 2px; border-width: 0 3px 3px 0; border-bottom-right-radius: 4px; }
 
-            /* Anillos Giratorios */
+            /* Anillos Giratorios con Degradados Dinámicos */
             .hud-ring-outer {
                 position: absolute;
                 width: 95px;
                 height: 95px;
-                border: 2px dashed rgba(255, 0, 127, 0.55);
+                border: 2px dashed #00f0ff;
                 border-radius: 50%;
-                animation: rotateRight 10s linear infinite;
+                animation: rotateRight 10s linear infinite, ringColorOuter 6s ease-in-out infinite alternate;
             }
 
             .hud-ring-inner {
                 position: absolute;
                 width: 60px;
                 height: 60px;
-                border: 2px dotted rgba(255, 102, 178, 0.7);
+                border: 2px dotted #ff007f;
                 border-radius: 50%;
-                animation: rotateLeft 6s linear infinite;
+                animation: rotateLeft 6s linear infinite, ringColorInner 6s ease-in-out infinite alternate;
             }
 
             /* Retícula Crosshair */
-            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(255, 0, 127, 0.35); }
-            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(255, 0, 127, 0.35); }
+            .hud-cross-h { 
+                position: absolute; width: 85px; height: 1px; 
+                background: linear-gradient(90deg, transparent, #00f0ff, #ff007f, transparent); 
+            }
+            .hud-cross-v { 
+                position: absolute; width: 1px; height: 85px; 
+                background: linear-gradient(180deg, transparent, #00f0ff, #ff007f, transparent); 
+            }
 
-            /* Punto Láser Central Rosa */
+            /* Punto Láser Central Dinámico */
             .hud-dot {
                 position: absolute;
-                width: 7px;
-                height: 7px;
-                background-color: #ff007f;
+                width: 8px;
+                height: 8px;
+                background-color: #00f0ff;
                 border-radius: 50%;
-                box-shadow: 0 0 10px #ff007f, 0 0 18px #ff007f;
-                animation: laserPulse 1.2s infinite ease-in-out;
+                animation: laserPulseMulticolor 2s infinite ease-in-out;
                 z-index: 3;
             }
 
-            /* Scanline Vertical */
+            /* Scanline Vertical Multicolor */
             .hud-scanline {
                 position: absolute;
                 top: -100%;
                 left: 0;
                 width: 100%;
                 height: 35%;
-                background: linear-gradient(180deg, rgba(255, 0, 127, 0) 0%, rgba(255, 0, 127, 0.35) 100%);
+                background: linear-gradient(180deg, transparent 0%, rgba(0, 240, 255, 0.25) 50%, rgba(255, 0, 127, 0.35) 100%);
                 border-bottom: 2px solid #ff007f;
                 animation: scanMove 3s infinite ease-in-out;
                 z-index: 1;
             }
 
-            /* Títulos del Formulario */
+            /* Títulos con Texto Degradado Dinámico */
             .login-title {
-                color: #ffffff;
-                font-size: 18px;
-                font-weight: 700;
+                background: linear-gradient(90deg, #ffffff, #00f0ff, #ff007f, #ffffff);
+                background-size: 300% 300%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: auroraText 6s ease infinite;
+                font-size: 19px;
+                font-weight: 800;
                 text-align: center;
-                letter-spacing: 1px;
+                letter-spacing: 1.5px;
                 text-transform: uppercase;
                 margin: 0;
-                text-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
             }
             .login-subtitle {
-                color: #ff007f;
+                color: #00f0ff;
                 font-size: 10px;
                 text-align: center;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.8px;
                 opacity: 0.9;
                 margin-top: 4px;
                 margin-bottom: 12px;
                 font-family: monospace;
+                background: linear-gradient(90deg, #00f0ff, #8a2be2, #ff007f);
+                background-size: 200% 200%;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                animation: auroraText 8s ease infinite;
             }
 
-            /* Resplandor Láser Rosa en Inputs */
+            /* Resplandor Láser Multicolor en Inputs */
             div[data-baseweb="input"] input:focus {
-                border-color: #ff007f !important;
-                box-shadow: 0 0 14px rgba(255, 0, 127, 0.6) !important;
+                border-color: #8a2be2 !important;
+                box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), 0 0 25px rgba(255, 0, 127, 0.3) !important;
             }
 
-            /* Keyframes de Animaciones */
-            @keyframes entranceZoom {
-                0% { opacity: 0; transform: scale(0.92) translateY(-20px); }
-                100% { opacity: 1; transform: scale(1) translateY(0); }
+            /* Keyframes de Animaciones Aurora y Borde Multicolor */
+            @keyframes auroraBorder {
+                0% { background-position: 0% 50%; box-shadow: 0 0 25px rgba(0, 240, 255, 0.35); }
+                50% { background-position: 100% 50%; box-shadow: 0 0 30px rgba(255, 0, 127, 0.4); }
+                100% { background-position: 0% 50%; box-shadow: 0 0 25px rgba(0, 240, 255, 0.35); }
             }
 
-            @keyframes sidePanelEntrance {
-                0% { opacity: 0; transform: translateY(30px); }
-                100% { opacity: 1; transform: translateY(0); }
-            }
-
-            @keyframes borderGlow {
+            @keyframes auroraText {
                 0% { background-position: 0% 50%; }
                 50% { background-position: 100% 50%; }
                 100% { background-position: 0% 50%; }
+            }
+
+            @keyframes cornerMulticolor {
+                0% { border-color: #00f0ff; filter: drop-shadow(0 0 5px #00f0ff); }
+                33% { border-color: #8a2be2; filter: drop-shadow(0 0 6px #8a2be2); }
+                66% { border-color: #ff007f; filter: drop-shadow(0 0 6px #ff007f); }
+                100% { border-color: #00ff99; filter: drop-shadow(0 0 5px #00ff99); }
+            }
+
+            @keyframes ringColorOuter {
+                0% { border-color: rgba(0, 240, 255, 0.6); }
+                50% { border-color: rgba(255, 0, 127, 0.6); }
+                100% { border-color: rgba(138, 43, 226, 0.6); }
+            }
+
+            @keyframes ringColorInner {
+                0% { border-color: rgba(138, 43, 226, 0.7); }
+                50% { border-color: rgba(0, 255, 153, 0.7); }
+                100% { border-color: rgba(0, 240, 255, 0.7); }
+            }
+
+            @keyframes laserPulseMulticolor {
+                0% { transform: scale(0.85); background-color: #00f0ff; box-shadow: 0 0 10px #00f0ff, 0 0 20px #00f0ff; }
+                50% { transform: scale(1.4); background-color: #ff007f; box-shadow: 0 0 12px #ff007f, 0 0 25px #ff007f; }
+                100% { transform: scale(0.85); background-color: #00ff99; box-shadow: 0 0 10px #00ff99, 0 0 20px #00ff99; }
+            }
+
+            @keyframes ambientPulse {
+                0% { opacity: 0.7; }
+                100% { opacity: 1; }
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-15px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
             @keyframes loadingSweep {
@@ -300,7 +292,7 @@ if not st.session_state.autenticado:
 
             @keyframes gridMove {
                 0% { background-position: 0 0, 0 0, 0 0; }
-                100% { background-position: 0 0, 35px 35px, 35px 35px; }
+                100% { background-position: 0 0, 30px 30px, 30px 30px; }
             }
 
             @keyframes rotateRight {
@@ -313,51 +305,13 @@ if not st.session_state.autenticado:
                 to { transform: rotate(-360deg); }
             }
 
-            @keyframes cornerPulse {
-                0% { border-color: #ff007f; filter: drop-shadow(0 0 3px #ff007f); }
-                100% { border-color: #ff66b2; filter: drop-shadow(0 0 8px #ff66b2); }
-            }
-
-            @keyframes laserPulse {
-                0%, 100% { transform: scale(0.85); opacity: 0.7; }
-                50% { transform: scale(1.35); opacity: 1; }
-            }
-
             @keyframes scanMove {
                 0% { top: -40%; }
                 50% { top: 100%; }
                 100% { top: -40%; }
             }
-
-            /* Ocultar elementos decorativos en dispositivos móviles */
-            @media (max-width: 1024px) {
-                .hud-panel-left, .hud-panel-right { display: none; }
-            }
         </style>
-
         <div class="grid-bg"></div>
-
-        <div class="top-global-hud">
-            <span>● SYSTEM: ONLINE</span>
-            <span>ENCRYPTION: AES-256</span>
-            <span>NODE: OPTIC-CORE-01</span>
-        </div>
-
-        <div class="hud-panel-left">
-            <div class="panel-header">DIAGNOSTICO_RED</div>
-            <div class="hud-data-row"><span>LATENCIA:</span><span style="color:#ff007f">12 ms</span></div>
-            <div class="hud-data-row"><span>SENSORES:</span><span style="color:#38ef7d">CALIBRADOS</span></div>
-            <div class="hud-data-row"><span>OPTICAL LASER:</span><span style="color:#ff007f">READY</span></div>
-            <div class="hud-data-row"><span>SEGURIDAD:</span><span style="color:#38ef7d">ACTIVA</span></div>
-        </div>
-
-        <div class="hud-panel-right">
-            <div class="panel-header">MODULO_TELEMETRIA</div>
-            <div class="hud-data-row"><span>CPU CORE:</span><span style="color:#ff007f">1.4 GHz</span></div>
-            <div class="hud-data-row"><span>MEMORIA:</span><span style="color:#ff007f">18% REQ</span></div>
-            <div class="hud-data-row"><span>CANAL:</span><span style="color:#ff007f">0xFA992</span></div>
-            <div class="hud-data-row"><span>SSL LINK:</span><span style="color:#38ef7d">ESTABLE</span></div>
-        </div>
     """, unsafe_allow_html=True)
     
     col_left, col_center, col_right = st.columns([1, 1.3, 1])
@@ -418,7 +372,7 @@ if not st.session_state.autenticado:
 
 
 # =========================================================================
-# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (UNIFICADO CON ESTÉTICA NEÓN ROSA)
+# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (AJUSTADO Y UNIFICADO)
 # =========================================================================
 
 # --- BASE DE DATOS SQLITE ---
@@ -480,10 +434,10 @@ def clear_db():
 # Inicializar Base de Datos
 init_db()
 
-# --- ESTILOS CSS PERSONALIZADOS (ROSA NEÓN / MAGENTA GLOW & SLIM LAYOUT) ---
+# --- ESTILOS CSS PERSONALIZADOS (AURORA NEÓN MULTICOLOR DINÁMICO & SLIM LAYOUT) ---
 st.markdown("""
     <style>
-        /* Ocultar Barra Superior y Toolbar de Streamlit */
+        /* Ocultar Barra Superior y Toolbar de Streamlit para efecto pantalla completa */
         header, [data-testid="stHeader"], [data-testid="stToolbar"] {
             visibility: hidden !important;
             height: 0px !important;
@@ -491,7 +445,7 @@ st.markdown("""
             padding: 0px !important;
         }
 
-        /* Ajuste de márgenes globales del contenedor */
+        /* Ajuste de márgenes globales del contenedor de la app */
         .block-container {
             padding-top: 1.2rem !important;
             padding-bottom: 2rem !important;
@@ -502,15 +456,15 @@ st.markdown("""
         }
 
         .stApp {
-            background-color: #080205 !important;
-            color: #fce7f3 !important;
+            background-color: #03060a !important;
+            color: #dbeafe !important;
         }
 
         /* Estilo de la Barra Lateral */
         [data-testid="stSidebar"] {
-            background-color: #12040c !important;
-            border-right: 1px solid rgba(255, 0, 127, 0.25) !important;
-            box-shadow: 4px 0px 18px rgba(255, 0, 127, 0.08);
+            background-color: #060d14 !important;
+            border-right: 1px solid rgba(0, 240, 255, 0.25) !important;
+            box-shadow: 4px 0px 20px rgba(138, 43, 226, 0.12);
         }
 
         [data-testid="stSidebar"] > div:first-child {
@@ -518,32 +472,35 @@ st.markdown("""
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-            color: #ff007f !important;
+            background: linear-gradient(90deg, #00f0ff, #ff007f, #00ff99);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: auroraText 6s ease infinite;
             font-size: 13px !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 15px !important;
             margin-bottom: 10px !important;
-            border-bottom: 1px solid rgba(255, 0, 127, 0.2) !important;
+            border-bottom: 1px solid rgba(0, 240, 255, 0.2) !important;
             padding-bottom: 4px;
-            text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
         }
 
-        /* Botones Interactivos */
+        /* Botones Interactivos Neón Aurora */
         div.stButton > button {
-            background: linear-gradient(135deg, #2a081a 0%, #3d0c26 100%) !important;
-            color: #ff007f !important;
-            border: 1px solid rgba(255, 0, 127, 0.4) !important;
+            background: linear-gradient(135deg, #0a192f 0%, #170d29 50%, #0d2547 100%) !important;
+            color: #00f0ff !important;
+            border: 1px solid rgba(0, 240, 255, 0.4) !important;
             border-radius: 8px !important;
             font-weight: 600 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 0 10px rgba(255, 0, 127, 0.1);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
         }
         div.stButton > button:hover {
-            background: #ff007f !important;
-            color: #080205 !important;
-            box-shadow: 0px 0px 18px rgba(255, 0, 127, 0.6) !important;
+            background: linear-gradient(135deg, #00f0ff 0%, #8a2be2 50%, #ff007f 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0px 0px 22px rgba(255, 0, 127, 0.5) !important;
             border-color: #ff007f !important;
             transform: translateY(-1px);
         }
@@ -554,9 +511,9 @@ st.markdown("""
         div[data-baseweb="spinbutton"] button,
         [data-testid="stNumberInputStepDown"],
         [data-testid="stNumberInputStepUp"] {
-            color: #ff007f !important;
-            background-color: #1a0612 !important;
-            border-color: rgba(255, 0, 127, 0.3) !important;
+            color: #00f0ff !important;
+            background-color: #081420 !important;
+            border-color: rgba(0, 240, 255, 0.3) !important;
             transition: all 0.25s ease !important;
         }
 
@@ -565,16 +522,16 @@ st.markdown("""
         div[data-baseweb="spinbutton"] button:hover,
         [data-testid="stNumberInputStepDown"]:hover,
         [data-testid="stNumberInputStepUp"]:hover {
-            background-color: #ff007f !important;
-            color: #080205 !important;
-            box-shadow: 0px 0px 12px rgba(255, 0, 127, 0.5) !important;
-            border-color: #ff007f !important;
+            background-color: #8a2be2 !important;
+            color: #ffffff !important;
+            box-shadow: 0px 0px 12px rgba(138, 43, 226, 0.6) !important;
+            border-color: #8a2be2 !important;
         }
 
         /* Campos de Entrada e Selects */
         div[data-baseweb="input"], div[data-baseweb="select"] > div {
-            background-color: #1a0612 !important;
-            border: 1px solid rgba(255, 0, 127, 0.25) !important;
+            background-color: #081420 !important;
+            border: 1px solid rgba(0, 240, 255, 0.25) !important;
             color: #ffffff !important;
             border-radius: 6px !important;
             transition: all 0.3s ease !important;
@@ -582,22 +539,22 @@ st.markdown("""
 
         div[data-baseweb="input"]:hover, div[data-baseweb="select"] > div:hover {
             border-color: rgba(255, 0, 127, 0.6) !important;
-            box-shadow: 0 0 10px rgba(255, 0, 127, 0.25) !important;
+            box-shadow: 0 0 12px rgba(255, 0, 127, 0.25) !important;
         }
 
-        /* Tarjetas de Métricas con Glow Dinámico Rosa Neón */
+        /* Tarjetas de Métricas con Glow Dinámico Multicolor */
         .metric-card-container {
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            background: linear-gradient(135deg, #12040c 0%, #200816 100%);
-            border: 1px solid rgba(255, 0, 127, 0.35); 
+            background: linear-gradient(135deg, #060d14 0%, #0d1222 50%, #0a1726 100%);
+            border: 1px solid rgba(0, 240, 255, 0.35); 
             padding: 16px 20px; 
             border-radius: 12px; 
             margin-top: 15px; 
             margin-bottom: 25px;
-            box-shadow: 0 0 20px rgba(255, 0, 127, 0.15);
-            animation: pulseGlow 4s infinite alternate ease-in-out, slideUp 0.6s ease-out;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+            animation: pulseAuroraGlow 6s infinite alternate ease-in-out, slideUp 0.6s ease-out;
         }
 
         /* Confirmaciones */
@@ -623,7 +580,7 @@ st.markdown("""
             box-shadow: 0px 0px 15px rgba(255, 77, 77, 0.5);
         }
 
-        /* Keyframes de Animaciones Generales */
+        /* Keyframes de Animaciones Generales Aurora */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -634,9 +591,10 @@ st.markdown("""
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 15px rgba(255, 0, 127, 0.12), inset 0 0 10px rgba(255, 0, 127, 0.05); }
-            100% { box-shadow: 0 0 25px rgba(255, 0, 127, 0.3), inset 0 0 15px rgba(255, 0, 127, 0.1); }
+        @keyframes pulseAuroraGlow {
+            0% { box-shadow: 0 0 15px rgba(0, 240, 255, 0.2), inset 0 0 10px rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.35); }
+            50% { box-shadow: 0 0 25px rgba(138, 43, 226, 0.3), inset 0 0 15px rgba(138, 43, 226, 0.1); border-color: rgba(138, 43, 226, 0.45); }
+            100% { box-shadow: 0 0 25px rgba(255, 0, 127, 0.3), inset 0 0 15px rgba(255, 0, 127, 0.1); border-color: rgba(255, 0, 127, 0.35); }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -913,20 +871,25 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO PRINCIPAL (CON LUZ NEÓN ROSA/MAGENTA) ---
+# --- ENCABEZADO PRINCIPAL (CON DEGRADADO MULTICOLOR AURORA DINÁMICO) ---
 st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #12040c 0%, #220817 100%);
+    <div style="background: linear-gradient(135deg, #060d14 0%, #0d1222 50%, #0a1829 100%);
                 padding: 14px 25px;
                 border-radius: 12px;
-                border-left: 5px solid #ff007f;
-                border: 1px solid rgba(255, 0, 127, 0.3);
+                border-left: 5px solid #00f0ff;
+                border: 1px solid rgba(0, 240, 255, 0.3);
                 margin-bottom: 20px;
-                box-shadow: 0px 4px 20px rgba(255, 0, 127, 0.15);">
-        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,0,127,0.3);">
+                box-shadow: 0px 4px 25px rgba(138, 43, 226, 0.2);">
+        <h2 style="background: linear-gradient(90deg, #ffffff, #00f0ff, #ff007f, #ffffff);
+                   background-size: 300% 300%;
+                   -webkit-background-clip: text;
+                   -webkit-text-fill-color: transparent;
+                   animation: auroraText 6s ease infinite;
+                   margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px;">
             {txt['title']}
         </h2>
-        <p style="color: #f472b6; margin: 0; font-size: 13px; opacity: 0.9;">
-            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #ff007f;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
+        <p style="color: #93c5fd; margin: 0; font-size: 13px; opacity: 0.9;">
+            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #00f0ff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1005,7 +968,7 @@ if save_clicked:
     save_record_to_db(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICAS 3D Y 2D CON CONTENEDORES ROSA NEÓN ---
+# --- GRÁFICAS 3D Y 2D CON CONTENEDORES RESPLANDECIENTES ---
 col_3d, col_2d = st.columns([1.75, 1.0])
 
 with col_3d:
@@ -1021,7 +984,7 @@ with col_3d:
 
     fig3d.add_trace(go.Surface(
         x=gx, y=gy, z=gz,
-        colorscale=[[0, '#080205'], [1, '#1a0612']],
+        colorscale=[[0, '#03060a'], [1, '#081420']],
         showscale=False, opacity=0.6, hoverinfo='none'
     ))
 
@@ -1037,8 +1000,8 @@ with col_3d:
         x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
         mode='lines+markers',
         name=f"{txt['sight_label']} (α = {angulo_deg:.2f}°)",
-        line=dict(color='#ff007f', width=9),
-        marker=dict(size=5, color='#ff007f')
+        line=dict(color='#00f0ff', width=9),
+        marker=dict(size=5, color='#00f0ff')
     ))
 
     fig3d.add_trace(go.Scatter3d(
@@ -1056,18 +1019,18 @@ with col_3d:
     fig3d.update_layout(
         title=dict(
             text=f"📐 <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
-            font=dict(color="#ff007f", size=14)
+            font=dict(color="#00f0ff", size=14)
         ),
-        paper_bgcolor='#0a0307', plot_bgcolor='#0a0307',
+        paper_bgcolor='#040a12', plot_bgcolor='#040a12',
         height=460, margin=dict(l=5, r=5, t=35, b=5),
         scene=dict(
             aspectmode='manual', aspectratio=dict(x=2.0, y=1, z=1.1),
-            xaxis=dict(title='Distancia (cm)', backgroundcolor="#0a0307", gridcolor="#380a24", tickfont=dict(color="#f472b6")),
-            yaxis=dict(title='Eje Lateral', backgroundcolor="#0a0307", gridcolor="#380a24", tickfont=dict(color="#f472b6")),
-            zaxis=dict(title='Elevación (cm)', backgroundcolor="#0a0307", gridcolor="#380a24", tickfont=dict(color="#f472b6")),
+            xaxis=dict(title='Distancia (cm)', backgroundcolor="#040a12", gridcolor="#0f2b48", tickfont=dict(color="#93c5fd")),
+            yaxis=dict(title='Eje Lateral', backgroundcolor="#040a12", gridcolor="#0f2b48", tickfont=dict(color="#93c5fd")),
+            zaxis=dict(title='Elevación (cm)', backgroundcolor="#040a12", gridcolor="#0f2b48", tickfont=dict(color="#93c5fd")),
             camera=dict(eye=dict(x=1.6, y=-1.4, z=0.6))
         ),
-        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(18, 4, 12, 0.85)")
+        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(6, 13, 20, 0.85)")
     )
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
@@ -1081,19 +1044,19 @@ with col_2d:
         fig2d.add_shape(
             type="circle", xref="x", yref="y",
             x0=-r, y0=-r, x1=r, y1=r,
-            line=dict(color="#4a0f31", width=1.5),
-            fillcolor="rgba(50, 10, 35, 0.2)"
+            line=dict(color="#0f3456", width=1.5),
+            fillcolor="rgba(10, 30, 50, 0.2)"
         )
 
-    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#661444", width=1, dash="dot"))
-    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#661444", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#1e4976", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#1e4976", width=1, dash="dot"))
 
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
         x0=-spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
         x1=spot_radius_cm, y1=diferencia_altura_cm + spot_radius_cm,
-        line=dict(color="#ff007f", width=2),
-        fillcolor="rgba(255, 0, 127, 0.35)"
+        line=dict(color="#00f0ff", width=2),
+        fillcolor="rgba(0, 240, 255, 0.35)"
     )
 
     fig2d.add_trace(go.Scatter(
@@ -1109,36 +1072,36 @@ with col_2d:
     ))
 
     fig2d.update_layout(
-        title=dict(text=txt["target_2d_title"], font=dict(color="#ff007f", size=14)),
-        paper_bgcolor='#0a0307', plot_bgcolor='#0a0307',
+        title=dict(text=txt["target_2d_title"], font=dict(color="#00f0ff", size=14)),
+        paper_bgcolor='#040a12', plot_bgcolor='#040a12',
         height=460, margin=dict(l=10, r=10, t=35, b=10),
-        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#f472b6"), title=f"X ({h_unit})"),
-        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#f472b6"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
-        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(18, 4, 12, 0.85)")
+        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#93c5fd"), title=f"X ({h_unit})"),
+        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#93c5fd"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(6, 13, 20, 0.85)")
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS Y RESULTADOS (ESTILO ROSA NEÓN PULSANTE) ---
+# --- MÉTRICAS Y RESULTADOS (ESTILO AURORA MULTICOLOR PULSANTE) ---
 st.markdown(f"""
     <div class="metric-card-container">
         <div style="text-align: center; flex: 1;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
             <span style="color: #ffffff; font-size: 17px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
             <span style="color: #ffffff; font-size: 17px; font-weight: bold;">{angulo_deg:.4f}°</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1.2;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
-            <span style="color: #ff007f; font-size: 17px; font-weight: bold; text-shadow: 0 0 8px rgba(255,0,127,0.5);">{moa:.2f} MOA | {mrad:.2f} mrad</span>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
+            <span style="color: #00f0ff; font-size: 17px; font-weight: bold; text-shadow: 0 0 10px rgba(0,240,255,0.6);">{moa:.2f} MOA | {mrad:.2f} mrad</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1.2;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
             <span style="color: #ffffff; font-size: 17px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1.2;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
+        <div style="text-align: center; border-left: 1px solid rgba(0,240,255,0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #93c5fd; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
             <span style="color: #38ef7d; font-size: 15px; font-weight: bold; text-shadow: 0 0 8px rgba(56,239,125,0.4);">{uncertainty_str}</span>
         </div>
     </div>
