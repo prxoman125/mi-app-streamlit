@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 # =========================================================================
-# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO DE CARGA Y ESCANEO (AZUL/MORADO NEÓN)
+# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO DE CARGA Y ESCANEO (AZUL/MORADO NEÓN BRILLANTE)
 # =========================================================================
 
 USUARIOS_PERMITIDOS = [
@@ -52,13 +52,13 @@ if not st.session_state.autenticado:
                 overflow-x: hidden;
             }
 
-            /* Fondo Avanzado con Malla Sci-Fi sin resplandor radial molesto */
+            /* Fondo Avanzado con Malla Sci-Fi más notoria sin saturar */
             .grid-bg {
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
                 background: 
-                    linear-gradient(rgba(0, 149, 255, 0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(147, 51, 234, 0.03) 1px, transparent 1px);
+                    linear-gradient(rgba(0, 240, 255, 0.08) 1.2px, transparent 1.2px),
+                    linear-gradient(90deg, rgba(147, 51, 234, 0.08) 1.2px, transparent 1.2px);
                 background-size: 35px 35px, 35px 35px;
                 animation: gridMove 25s linear infinite;
                 z-index: 0;
@@ -76,9 +76,9 @@ if not st.session_state.autenticado:
                 color: #00f0ff;
                 letter-spacing: 1.5px;
                 z-index: 10;
-                opacity: 0.85;
+                opacity: 0.95;
                 pointer-events: none;
-                text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+                text-shadow: 0 0 12px rgba(0, 240, 255, 0.85);
             }
 
             /* Módulos Flotantes Periféricos (Laterales Izquierda y Derecha) */
@@ -87,16 +87,16 @@ if not st.session_state.autenticado:
                 top: 18vh;
                 width: 220px;
                 padding: 16px;
-                background: rgba(5, 12, 25, 0.45);
-                border: 1px solid rgba(0, 149, 255, 0.22);
+                background: rgba(5, 12, 25, 0.55);
+                border: 1px solid rgba(0, 240, 255, 0.4);
                 backdrop-filter: blur(10px);
                 border-radius: 12px;
                 font-family: monospace;
                 font-size: 10px;
-                color: #c084fc;
+                color: #d8b4fe;
                 z-index: 1;
                 pointer-events: none;
-                box-shadow: 0 0 15px rgba(147, 51, 234, 0.06);
+                box-shadow: 0 0 20px rgba(147, 51, 234, 0.15);
                 animation: sidePanelEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             }
 
@@ -106,11 +106,11 @@ if not st.session_state.autenticado:
             .panel-header {
                 color: #00f0ff;
                 font-weight: bold;
-                border-bottom: 1px dashed rgba(0, 240, 255, 0.35);
+                border-bottom: 1px dashed rgba(0, 240, 255, 0.6);
                 padding-bottom: 4px;
                 margin-bottom: 10px;
                 letter-spacing: 1px;
-                text-shadow: 0 0 5px rgba(0, 240, 255, 0.4);
+                text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
             }
 
             .hud-data-row {
@@ -119,52 +119,55 @@ if not st.session_state.autenticado:
                 margin-bottom: 6px;
             }
 
-            /* Contenedor Exterior con Borde Neon Azul/Morado */
+            /* Contenedor Exterior con Borde Neon Azul/Morado Muy Brillante */
             .login-wrapper {
                 position: relative;
                 max-width: 460px;
                 margin: 4vh auto 0 auto;
-                padding: 2px;
+                padding: 2.5px;
                 border-radius: 20px;
-                background: linear-gradient(135deg, #00f0ff, #9333ea, #00f0ff, #3b82f6);
+                background: linear-gradient(135deg, #00f0ff, #c084fc, #00f0ff, #9333ea);
                 background-size: 300% 300%;
-                animation: borderGlow 6s ease infinite, entranceZoom 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                animation: borderGlow 5s ease infinite, entranceZoom 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                box-shadow: 0 0 35px rgba(0, 240, 255, 0.45), 0 0 50px rgba(147, 51, 234, 0.35);
             }
 
-            /* Aureola Fina Giratoria Exterior alrededor de la Interfaz Principal */
+            /* Aureola Fina Giratoria Exterior alrededor de la Interfaz Principal (Más Brillante) */
             .aureola-halo {
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 530px;
-                height: 530px;
+                width: 540px;
+                height: 540px;
                 transform: translate(-50%, -50%);
-                border: 1.2px dashed rgba(0, 240, 255, 0.55);
+                border: 1.5px dashed rgba(0, 240, 255, 0.85);
                 border-radius: 50%;
-                animation: haloRotate 22s linear infinite;
+                animation: haloRotate 20s linear infinite;
                 pointer-events: none;
                 z-index: 0;
+                box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
             }
 
-            /* Nueva Aureola Fina Giratoria Interior */
+            /* Nueva Aureola Fina Giratoria Interior (Más Brillante) */
             .aureola-halo-inner {
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 470px;
-                height: 470px;
+                width: 475px;
+                height: 475px;
                 transform: translate(-50%, -50%);
-                border: 1px dashed rgba(147, 51, 234, 0.65);
+                border: 1.5px dashed rgba(192, 132, 252, 0.9);
                 border-radius: 50%;
-                animation: haloRotateReverse 17s linear infinite;
+                animation: haloRotateReverse 15s linear infinite;
                 pointer-events: none;
                 z-index: 0;
+                box-shadow: 0 0 15px rgba(147, 51, 234, 0.5);
             }
 
             /* Tarjeta Interior de Login con Glassmorphism Dark Blue/Purple */
             .login-card {
                 position: relative;
-                background: rgba(6, 10, 22, 0.92);
+                background: rgba(6, 10, 22, 0.94);
                 backdrop-filter: blur(16px);
                 border-radius: 18px;
                 padding: 25px 25px 15px 25px;
@@ -181,14 +184,15 @@ if not st.session_state.autenticado:
                 color: #00f0ff;
                 letter-spacing: 1px;
                 margin-bottom: 12px;
-                border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+                border-bottom: 1px solid rgba(0, 240, 255, 0.35);
                 padding-bottom: 6px;
+                text-shadow: 0 0 6px rgba(0, 240, 255, 0.5);
             }
 
             .loading-bar-container {
                 width: 100%;
-                height: 3px;
-                background: rgba(0, 240, 255, 0.1);
+                height: 3.5px;
+                background: rgba(0, 240, 255, 0.15);
                 border-radius: 2px;
                 overflow: hidden;
                 margin-bottom: 15px;
@@ -197,8 +201,9 @@ if not st.session_state.autenticado:
             .loading-bar-fill {
                 width: 40%;
                 height: 100%;
-                background: linear-gradient(90deg, transparent, #00f0ff, transparent);
-                animation: loadingSweep 2s ease-in-out infinite;
+                background: linear-gradient(90deg, transparent, #00f0ff, #c084fc, transparent);
+                box-shadow: 0 0 10px #00f0ff;
+                animation: loadingSweep 1.8s ease-in-out infinite;
             }
 
             /* Contenedor HUD Animado Central */
@@ -220,7 +225,7 @@ if not st.session_state.autenticado:
                 height: 20px;
                 border-color: #00f0ff;
                 border-style: solid;
-                animation: cornerPulse 2.5s infinite alternate ease-in-out;
+                animation: cornerPulse 2s infinite alternate ease-in-out;
                 z-index: 2;
             }
             .top-left { top: 2px; left: 2px; border-width: 3px 0 0 3px; border-top-left-radius: 4px; }
@@ -233,33 +238,35 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 95px;
                 height: 95px;
-                border: 1.5px dashed rgba(0, 240, 255, 0.55);
+                border: 1.5px dashed rgba(0, 240, 255, 0.75);
                 border-radius: 50%;
-                animation: rotateRight 10s linear infinite;
+                animation: rotateRight 9s linear infinite;
+                box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
             }
 
             .hud-ring-inner {
                 position: absolute;
                 width: 60px;
                 height: 60px;
-                border: 1.5px dotted rgba(147, 51, 234, 0.7);
+                border: 1.5px dotted rgba(192, 132, 252, 0.9);
                 border-radius: 50%;
-                animation: rotateLeft 6s linear infinite;
+                animation: rotateLeft 5s linear infinite;
+                box-shadow: 0 0 8px rgba(147, 51, 234, 0.4);
             }
 
             /* Retícula Crosshair */
-            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(0, 240, 255, 0.35); }
-            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(0, 240, 255, 0.35); }
+            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(0, 240, 255, 0.6); box-shadow: 0 0 6px #00f0ff; }
+            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(0, 240, 255, 0.6); box-shadow: 0 0 6px #00f0ff; }
 
-            /* Punto Láser Central Azul/Morado */
+            /* Punto Láser Central Azul/Morado Súper Brillante */
             .hud-dot {
                 position: absolute;
-                width: 7px;
-                height: 7px;
+                width: 8px;
+                height: 8px;
                 background-color: #00f0ff;
                 border-radius: 50%;
-                box-shadow: 0 0 10px #00f0ff, 0 0 18px #9333ea;
-                animation: laserPulse 1.2s infinite ease-in-out;
+                box-shadow: 0 0 14px #00f0ff, 0 0 25px #c084fc, 0 0 35px #9333ea;
+                animation: laserPulse 1s infinite ease-in-out;
                 z-index: 3;
             }
 
@@ -270,9 +277,10 @@ if not st.session_state.autenticado:
                 left: 0;
                 width: 100%;
                 height: 35%;
-                background: linear-gradient(180deg, rgba(0, 240, 255, 0) 0%, rgba(0, 240, 255, 0.35) 100%);
+                background: linear-gradient(180deg, rgba(0, 240, 255, 0) 0%, rgba(0, 240, 255, 0.5) 100%);
                 border-bottom: 2px solid #00f0ff;
-                animation: scanMove 3s infinite ease-in-out;
+                box-shadow: 0 0 10px #00f0ff;
+                animation: scanMove 2.5s infinite ease-in-out;
                 z-index: 1;
             }
 
@@ -285,23 +293,24 @@ if not st.session_state.autenticado:
                 letter-spacing: 1px;
                 text-transform: uppercase;
                 margin: 0;
-                text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+                text-shadow: 0 0 12px rgba(0, 240, 255, 0.7);
             }
             .login-subtitle {
                 color: #00f0ff;
                 font-size: 10px;
                 text-align: center;
                 letter-spacing: 0.5px;
-                opacity: 0.9;
+                opacity: 0.95;
                 margin-top: 4px;
                 margin-bottom: 12px;
                 font-family: monospace;
+                text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
             }
 
-            /* Resplandor Láser Azul en Inputs */
+            /* Resplandor Láser Azul Intenso en Inputs */
             div[data-baseweb="input"] input:focus {
                 border-color: #00f0ff !important;
-                box-shadow: 0 0 14px rgba(0, 240, 255, 0.6) !important;
+                box-shadow: 0 0 18px rgba(0, 240, 255, 0.8) !important;
             }
 
             /* Keyframes de Animaciones */
@@ -352,13 +361,13 @@ if not st.session_state.autenticado:
             }
 
             @keyframes cornerPulse {
-                0% { border-color: #00f0ff; filter: drop-shadow(0 0 3px #00f0ff); }
-                100% { border-color: #9333ea; filter: drop-shadow(0 0 8px #9333ea); }
+                0% { border-color: #00f0ff; filter: drop-shadow(0 0 5px #00f0ff); }
+                100% { border-color: #c084fc; filter: drop-shadow(0 0 12px #c084fc); }
             }
 
             @keyframes laserPulse {
-                0%, 100% { transform: scale(0.85); opacity: 0.7; }
-                50% { transform: scale(1.35); opacity: 1; }
+                0%, 100% { transform: scale(0.85); opacity: 0.8; }
+                50% { transform: scale(1.4); opacity: 1; }
             }
 
             @keyframes scanMove {
@@ -383,18 +392,18 @@ if not st.session_state.autenticado:
 
         <div class="hud-panel-left">
             <div class="panel-header">DIAGNOSTICO_RED</div>
-            <div class="hud-data-row"><span>LATENCIA:</span><span style="color:#00f0ff">12 ms</span></div>
-            <div class="hud-data-row"><span>SENSORES:</span><span style="color:#38ef7d">CALIBRADOS</span></div>
-            <div class="hud-data-row"><span>OPTICAL LASER:</span><span style="color:#00f0ff">READY</span></div>
-            <div class="hud-data-row"><span>SEGURIDAD:</span><span style="color:#38ef7d">ACTIVA</span></div>
+            <div class="hud-data-row"><span>LATENCIA:</span><span style="color:#00f0ff; text-shadow:0 0 6px #00f0ff">12 ms</span></div>
+            <div class="hud-data-row"><span>SENSORES:</span><span style="color:#38ef7d; text-shadow:0 0 6px #38ef7d">CALIBRADOS</span></div>
+            <div class="hud-data-row"><span>OPTICAL LASER:</span><span style="color:#00f0ff; text-shadow:0 0 6px #00f0ff">READY</span></div>
+            <div class="hud-data-row"><span>SEGURIDAD:</span><span style="color:#38ef7d; text-shadow:0 0 6px #38ef7d">ACTIVA</span></div>
         </div>
 
         <div class="hud-panel-right">
             <div class="panel-header">MODULO_TELEMETRIA</div>
-            <div class="hud-data-row"><span>CPU CORE:</span><span style="color:#00f0ff">1.4 GHz</span></div>
-            <div class="hud-data-row"><span>MEMORIA:</span><span style="color:#00f0ff">18% REQ</span></div>
-            <div class="hud-data-row"><span>CANAL:</span><span style="color:#00f0ff">0xFA992</span></div>
-            <div class="hud-data-row"><span>SSL LINK:</span><span style="color:#38ef7d">ESTABLE</span></div>
+            <div class="hud-data-row"><span>CPU CORE:</span><span style="color:#00f0ff; text-shadow:0 0 6px #00f0ff">1.4 GHz</span></div>
+            <div class="hud-data-row"><span>MEMORIA:</span><span style="color:#00f0ff; text-shadow:0 0 6px #00f0ff">18% REQ</span></div>
+            <div class="hud-data-row"><span>CANAL:</span><span style="color:#00f0ff; text-shadow:0 0 6px #00f0ff">0xFA992</span></div>
+            <div class="hud-data-row"><span>SSL LINK:</span><span style="color:#38ef7d; text-shadow:0 0 6px #38ef7d">ESTABLE</span></div>
         </div>
     """, unsafe_allow_html=True)
     
@@ -1223,7 +1232,7 @@ with col_hist_btn:
 
         with col_no:
             st.markdown('<div class="btn-confirm-cancel">', unsafe_allow_html=True)
-            if st.button(txt["confirm_cancel"], use_container_width=True):
+            if st.button(txt["confirm_confirm_cancel"] if "confirm_confirm_cancel" in txt else txt["confirm_cancel"], use_container_width=True):
                 st.session_state["confirm_clear"] = False
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
