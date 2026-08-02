@@ -24,7 +24,8 @@ USUARIOS_PERMITIDOS = [
     "correo2@ejemplo.com"
 ]
 
-CONTRASEÑA_CORRECTA = "Jggg101031"
+# Aquí le dices a Streamlit que busque la contraseña de forma segura
+CONTRASEÑA_CORRECTA = st.secrets["CONTRASEÑA_CORRECTA"] 
 MAX_INTENTOS = 3
 
 # Inicializar variables de estado seguro
