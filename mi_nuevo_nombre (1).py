@@ -21,12 +21,10 @@ st.set_page_config(
 
 USUARIOS_PERMITIDOS = [
     "j3remyx1010@gmail.com",
-    "correo2@ejemplo.com",
-    "Aguaenpolvo"
+    "correo2@ejemplo.com"
 ]
 
-# Aquí le dices a Streamlit que busque la contraseña de forma segura
-CONTRASEÑA_CORRECTA ="31//10//2010JJ"
+CONTRASEÑA_CORRECTA = "Jggg101031"
 MAX_INTENTOS = 3
 
 # Inicializar variables de estado seguro
