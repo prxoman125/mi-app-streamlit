@@ -16,7 +16,7 @@ st.set_page_config(
 
 
 # =========================================================================
-# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO DE CARGA Y ESCANEO (ROSA NEÓN)
+# 🔒 MÓDULO DE SEGURIDAD CON MARCO HUD ANIMADO DE CARGA Y ESCANEO (AZUL/MORADO NEÓN)
 # =========================================================================
 
 USUARIOS_PERMITIDOS = [
@@ -48,7 +48,7 @@ if not st.session_state.autenticado:
                 height: 0px;
             }
             .stApp {
-                background-color: #080205 !important;
+                background-color: #03050c !important;
                 overflow-x: hidden;
             }
 
@@ -57,8 +57,8 @@ if not st.session_state.autenticado:
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
                 background: 
-                    linear-gradient(rgba(255, 0, 127, 0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255, 0, 127, 0.03) 1px, transparent 1px);
+                    linear-gradient(rgba(0, 149, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(147, 51, 234, 0.03) 1px, transparent 1px);
                 background-size: 35px 35px, 35px 35px;
                 animation: gridMove 25s linear infinite;
                 z-index: 0;
@@ -73,12 +73,12 @@ if not st.session_state.autenticado:
                 justify-content: space-between;
                 font-family: monospace;
                 font-size: 11px;
-                color: #ff007f;
+                color: #00f0ff;
                 letter-spacing: 1.5px;
                 z-index: 10;
                 opacity: 0.85;
                 pointer-events: none;
-                text-shadow: 0 0 8px rgba(255, 0, 127, 0.6);
+                text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
             }
 
             /* Módulos Flotantes Periféricos (Laterales Izquierda y Derecha) */
@@ -87,16 +87,16 @@ if not st.session_state.autenticado:
                 top: 18vh;
                 width: 220px;
                 padding: 16px;
-                background: rgba(20, 5, 14, 0.45);
-                border: 1px solid rgba(255, 0, 127, 0.22);
+                background: rgba(5, 12, 25, 0.45);
+                border: 1px solid rgba(0, 149, 255, 0.22);
                 backdrop-filter: blur(10px);
                 border-radius: 12px;
                 font-family: monospace;
                 font-size: 10px;
-                color: #f472b6;
+                color: #c084fc;
                 z-index: 1;
                 pointer-events: none;
-                box-shadow: 0 0 15px rgba(255, 0, 127, 0.06);
+                box-shadow: 0 0 15px rgba(147, 51, 234, 0.06);
                 animation: sidePanelEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             }
 
@@ -104,13 +104,13 @@ if not st.session_state.autenticado:
             .hud-panel-right { right: 4vw; }
 
             .panel-header {
-                color: #ff007f;
+                color: #00f0ff;
                 font-weight: bold;
-                border-bottom: 1px dashed rgba(255, 0, 127, 0.35);
+                border-bottom: 1px dashed rgba(0, 240, 255, 0.35);
                 padding-bottom: 4px;
                 margin-bottom: 10px;
                 letter-spacing: 1px;
-                text-shadow: 0 0 5px rgba(255, 0, 127, 0.4);
+                text-shadow: 0 0 5px rgba(0, 240, 255, 0.4);
             }
 
             .hud-data-row {
@@ -119,19 +119,19 @@ if not st.session_state.autenticado:
                 margin-bottom: 6px;
             }
 
-            /* Contenedor Exterior con Borde Neon Rosa/Magenta */
+            /* Contenedor Exterior con Borde Neon Azul/Morado */
             .login-wrapper {
                 position: relative;
                 max-width: 460px;
                 margin: 4vh auto 0 auto;
                 padding: 2px;
                 border-radius: 20px;
-                background: linear-gradient(135deg, #ff007f, #9900ff, #ff007f, #ff3399);
+                background: linear-gradient(135deg, #00f0ff, #9333ea, #00f0ff, #3b82f6);
                 background-size: 300% 300%;
                 animation: borderGlow 6s ease infinite, entranceZoom 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             }
 
-            /* Aureola Fina Giratoria alrededor de la Interfaz Principal */
+            /* Aureola Fina Giratoria Exterior alrededor de la Interfaz Principal */
             .aureola-halo {
                 position: absolute;
                 top: 50%;
@@ -139,17 +139,32 @@ if not st.session_state.autenticado:
                 width: 530px;
                 height: 530px;
                 transform: translate(-50%, -50%);
-                border: 1.2px dashed rgba(255, 0, 127, 0.55);
+                border: 1.2px dashed rgba(0, 240, 255, 0.55);
                 border-radius: 50%;
                 animation: haloRotate 22s linear infinite;
                 pointer-events: none;
                 z-index: 0;
             }
 
-            /* Tarjeta Interior de Login con Glassmorphism Dark Pink */
+            /* Nueva Aureola Fina Giratoria Interior */
+            .aureola-halo-inner {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 470px;
+                height: 470px;
+                transform: translate(-50%, -50%);
+                border: 1px dashed rgba(147, 51, 234, 0.65);
+                border-radius: 50%;
+                animation: haloRotateReverse 17s linear infinite;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            /* Tarjeta Interior de Login con Glassmorphism Dark Blue/Purple */
             .login-card {
                 position: relative;
-                background: rgba(16, 4, 11, 0.92);
+                background: rgba(6, 10, 22, 0.92);
                 backdrop-filter: blur(16px);
                 border-radius: 18px;
                 padding: 25px 25px 15px 25px;
@@ -163,17 +178,17 @@ if not st.session_state.autenticado:
                 align-items: center;
                 font-family: monospace;
                 font-size: 10px;
-                color: #ff007f;
+                color: #00f0ff;
                 letter-spacing: 1px;
                 margin-bottom: 12px;
-                border-bottom: 1px solid rgba(255, 0, 127, 0.2);
+                border-bottom: 1px solid rgba(0, 240, 255, 0.2);
                 padding-bottom: 6px;
             }
 
             .loading-bar-container {
                 width: 100%;
                 height: 3px;
-                background: rgba(255, 0, 127, 0.1);
+                background: rgba(0, 240, 255, 0.1);
                 border-radius: 2px;
                 overflow: hidden;
                 margin-bottom: 15px;
@@ -182,7 +197,7 @@ if not st.session_state.autenticado:
             .loading-bar-fill {
                 width: 40%;
                 height: 100%;
-                background: linear-gradient(90deg, transparent, #ff007f, transparent);
+                background: linear-gradient(90deg, transparent, #00f0ff, transparent);
                 animation: loadingSweep 2s ease-in-out infinite;
             }
 
@@ -203,7 +218,7 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 20px;
                 height: 20px;
-                border-color: #ff007f;
+                border-color: #00f0ff;
                 border-style: solid;
                 animation: cornerPulse 2.5s infinite alternate ease-in-out;
                 z-index: 2;
@@ -218,7 +233,7 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 95px;
                 height: 95px;
-                border: 1.5px dashed rgba(255, 0, 127, 0.55);
+                border: 1.5px dashed rgba(0, 240, 255, 0.55);
                 border-radius: 50%;
                 animation: rotateRight 10s linear infinite;
             }
@@ -227,23 +242,23 @@ if not st.session_state.autenticado:
                 position: absolute;
                 width: 60px;
                 height: 60px;
-                border: 1.5px dotted rgba(255, 102, 178, 0.7);
+                border: 1.5px dotted rgba(147, 51, 234, 0.7);
                 border-radius: 50%;
                 animation: rotateLeft 6s linear infinite;
             }
 
             /* Retícula Crosshair */
-            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(255, 0, 127, 0.35); }
-            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(255, 0, 127, 0.35); }
+            .hud-cross-h { position: absolute; width: 85px; height: 1px; background: rgba(0, 240, 255, 0.35); }
+            .hud-cross-v { position: absolute; width: 1px; height: 85px; background: rgba(0, 240, 255, 0.35); }
 
-            /* Punto Láser Central Rosa */
+            /* Punto Láser Central Azul/Morado */
             .hud-dot {
                 position: absolute;
                 width: 7px;
                 height: 7px;
-                background-color: #ff007f;
+                background-color: #00f0ff;
                 border-radius: 50%;
-                box-shadow: 0 0 10px #ff007f, 0 0 18px #ff007f;
+                box-shadow: 0 0 10px #00f0ff, 0 0 18px #9333ea;
                 animation: laserPulse 1.2s infinite ease-in-out;
                 z-index: 3;
             }
@@ -255,8 +270,8 @@ if not st.session_state.autenticado:
                 left: 0;
                 width: 100%;
                 height: 35%;
-                background: linear-gradient(180deg, rgba(255, 0, 127, 0) 0%, rgba(255, 0, 127, 0.35) 100%);
-                border-bottom: 2px solid #ff007f;
+                background: linear-gradient(180deg, rgba(0, 240, 255, 0) 0%, rgba(0, 240, 255, 0.35) 100%);
+                border-bottom: 2px solid #00f0ff;
                 animation: scanMove 3s infinite ease-in-out;
                 z-index: 1;
             }
@@ -270,10 +285,10 @@ if not st.session_state.autenticado:
                 letter-spacing: 1px;
                 text-transform: uppercase;
                 margin: 0;
-                text-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
+                text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
             }
             .login-subtitle {
-                color: #ff007f;
+                color: #00f0ff;
                 font-size: 10px;
                 text-align: center;
                 letter-spacing: 0.5px;
@@ -283,16 +298,21 @@ if not st.session_state.autenticado:
                 font-family: monospace;
             }
 
-            /* Resplandor Láser Rosa en Inputs */
+            /* Resplandor Láser Azul en Inputs */
             div[data-baseweb="input"] input:focus {
-                border-color: #ff007f !important;
-                box-shadow: 0 0 14px rgba(255, 0, 127, 0.6) !important;
+                border-color: #00f0ff !important;
+                box-shadow: 0 0 14px rgba(0, 240, 255, 0.6) !important;
             }
 
             /* Keyframes de Animaciones */
             @keyframes haloRotate {
                 from { transform: translate(-50%, -50%) rotate(0deg); }
                 to { transform: translate(-50%, -50%) rotate(360deg); }
+            }
+
+            @keyframes haloRotateReverse {
+                from { transform: translate(-50%, -50%) rotate(360deg); }
+                to { transform: translate(-50%, -50%) rotate(0deg); }
             }
 
             @keyframes entranceZoom {
@@ -332,8 +352,8 @@ if not st.session_state.autenticado:
             }
 
             @keyframes cornerPulse {
-                0% { border-color: #ff007f; filter: drop-shadow(0 0 3px #ff007f); }
-                100% { border-color: #ff66b2; filter: drop-shadow(0 0 8px #ff66b2); }
+                0% { border-color: #00f0ff; filter: drop-shadow(0 0 3px #00f0ff); }
+                100% { border-color: #9333ea; filter: drop-shadow(0 0 8px #9333ea); }
             }
 
             @keyframes laserPulse {
@@ -349,7 +369,7 @@ if not st.session_state.autenticado:
 
             /* Ocultar elementos decorativos en dispositivos móviles */
             @media (max-width: 1024px) {
-                .hud-panel-left, .hud-panel-right, .aureola-halo { display: none; }
+                .hud-panel-left, .hud-panel-right, .aureola-halo, .aureola-halo-inner { display: none; }
             }
         </style>
 
@@ -363,17 +383,17 @@ if not st.session_state.autenticado:
 
         <div class="hud-panel-left">
             <div class="panel-header">DIAGNOSTICO_RED</div>
-            <div class="hud-data-row"><span>LATENCIA:</span><span style="color:#ff007f">12 ms</span></div>
+            <div class="hud-data-row"><span>LATENCIA:</span><span style="color:#00f0ff">12 ms</span></div>
             <div class="hud-data-row"><span>SENSORES:</span><span style="color:#38ef7d">CALIBRADOS</span></div>
-            <div class="hud-data-row"><span>OPTICAL LASER:</span><span style="color:#ff007f">READY</span></div>
+            <div class="hud-data-row"><span>OPTICAL LASER:</span><span style="color:#00f0ff">READY</span></div>
             <div class="hud-data-row"><span>SEGURIDAD:</span><span style="color:#38ef7d">ACTIVA</span></div>
         </div>
 
         <div class="hud-panel-right">
             <div class="panel-header">MODULO_TELEMETRIA</div>
-            <div class="hud-data-row"><span>CPU CORE:</span><span style="color:#ff007f">1.4 GHz</span></div>
-            <div class="hud-data-row"><span>MEMORIA:</span><span style="color:#ff007f">18% REQ</span></div>
-            <div class="hud-data-row"><span>CANAL:</span><span style="color:#ff007f">0xFA992</span></div>
+            <div class="hud-data-row"><span>CPU CORE:</span><span style="color:#00f0ff">1.4 GHz</span></div>
+            <div class="hud-data-row"><span>MEMORIA:</span><span style="color:#00f0ff">18% REQ</span></div>
+            <div class="hud-data-row"><span>CANAL:</span><span style="color:#00f0ff">0xFA992</span></div>
             <div class="hud-data-row"><span>SSL LINK:</span><span style="color:#38ef7d">ESTABLE</span></div>
         </div>
     """, unsafe_allow_html=True)
@@ -384,6 +404,7 @@ if not st.session_state.autenticado:
         st.markdown("""
             <div class="login-wrapper">
                 <div class="aureola-halo"></div>
+                <div class="aureola-halo-inner"></div>
                 <div class="login-card">
                     <div class="status-bar-top">
                         <span>SYS.STATUS: ONLINE</span>
@@ -437,7 +458,7 @@ if not st.session_state.autenticado:
 
 
 # =========================================================================
-# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (UNIFICADO CON ESTÉTICA NEÓN ROSA)
+# 👇 CÓDIGO DEL SIMULADOR A CONTINUACIÓN (UNIFICADO CON ESTÉTICA AZUL/MORADO NEÓN)
 # =========================================================================
 
 # --- BASE DE DATOS SQLITE ---
@@ -499,7 +520,7 @@ def clear_db():
 # Inicializar Base de Datos
 init_db()
 
-# --- ESTILOS CSS PERSONALIZADOS (ROSA NEÓN / MAGENTA GLOW & SLIM LAYOUT) ---
+# --- ESTILOS CSS PERSONALIZADOS (AZUL/MORADO NEÓN GLOW & SLIM LAYOUT) ---
 st.markdown("""
     <style>
         /* Ocultar Barra Superior y Toolbar de Streamlit */
@@ -521,15 +542,15 @@ st.markdown("""
         }
 
         .stApp {
-            background-color: #080205 !important;
-            color: #fce7f3 !important;
+            background-color: #03050c !important;
+            color: #f3e8ff !important;
         }
 
         /* Estilo de la Barra Lateral */
         [data-testid="stSidebar"] {
-            background-color: #12040c !important;
-            border-right: 1px solid rgba(255, 0, 127, 0.25) !important;
-            box-shadow: 4px 0px 18px rgba(255, 0, 127, 0.08);
+            background-color: #070b19 !important;
+            border-right: 1px solid rgba(0, 149, 255, 0.25) !important;
+            box-shadow: 4px 0px 18px rgba(147, 51, 234, 0.08);
         }
 
         [data-testid="stSidebar"] > div:first-child {
@@ -537,33 +558,33 @@ st.markdown("""
         }
 
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-            color: #ff007f !important;
+            color: #00f0ff !important;
             font-size: 13px !important;
             font-weight: 700 !important;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-top: 15px !important;
             margin-bottom: 10px !important;
-            border-bottom: 1px solid rgba(255, 0, 127, 0.2) !important;
+            border-bottom: 1px solid rgba(0, 149, 255, 0.2) !important;
             padding-bottom: 4px;
-            text-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+            text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
         }
 
         /* Botones Interactivos */
         div.stButton > button {
-            background: linear-gradient(135deg, #2a081a 0%, #3d0c26 100%) !important;
-            color: #ff007f !important;
-            border: 1px solid rgba(255, 0, 127, 0.4) !important;
+            background: linear-gradient(135deg, #0b132b 0%, #171033 100%) !important;
+            color: #00f0ff !important;
+            border: 1px solid rgba(0, 149, 255, 0.4) !important;
             border-radius: 8px !important;
             font-weight: 600 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            box-shadow: 0 0 10px rgba(255, 0, 127, 0.1);
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.1);
         }
         div.stButton > button:hover {
-            background: #ff007f !important;
-            color: #080205 !important;
-            box-shadow: 0px 0px 18px rgba(255, 0, 127, 0.6) !important;
-            border-color: #ff007f !important;
+            background: #00f0ff !important;
+            color: #03050c !important;
+            box-shadow: 0px 0px 18px rgba(0, 240, 255, 0.6) !important;
+            border-color: #00f0ff !important;
             transform: translateY(-1px);
         }
 
@@ -573,9 +594,9 @@ st.markdown("""
         div[data-baseweb="spinbutton"] button,
         [data-testid="stNumberInputStepDown"],
         [data-testid="stNumberInputStepUp"] {
-            color: #ff007f !important;
-            background-color: #1a0612 !important;
-            border-color: rgba(255, 0, 127, 0.3) !important;
+            color: #00f0ff !important;
+            background-color: #0b132b !important;
+            border-color: rgba(0, 149, 255, 0.3) !important;
             transition: all 0.25s ease !important;
         }
 
@@ -584,38 +605,38 @@ st.markdown("""
         div[data-baseweb="spinbutton"] button:hover,
         [data-testid="stNumberInputStepDown"]:hover,
         [data-testid="stNumberInputStepUp"]:hover {
-            background-color: #ff007f !important;
-            color: #080205 !important;
-            box-shadow: 0px 0px 12px rgba(255, 0, 127, 0.5) !important;
-            border-color: #ff007f !important;
+            background-color: #00f0ff !important;
+            color: #03050c !important;
+            box-shadow: 0px 0px 12px rgba(0, 240, 255, 0.5) !important;
+            border-color: #00f0ff !important;
         }
 
         /* Campos de Entrada e Selects */
         div[data-baseweb="input"], div[data-baseweb="select"] > div {
-            background-color: #1a0612 !important;
-            border: 1px solid rgba(255, 0, 127, 0.25) !important;
+            background-color: #0b132b !important;
+            border: 1px solid rgba(0, 149, 255, 0.25) !important;
             color: #ffffff !important;
             border-radius: 6px !important;
             transition: all 0.3s ease !important;
         }
 
         div[data-baseweb="input"]:hover, div[data-baseweb="select"] > div:hover {
-            border-color: rgba(255, 0, 127, 0.6) !important;
-            box-shadow: 0 0 10px rgba(255, 0, 127, 0.25) !important;
+            border-color: rgba(0, 149, 255, 0.6) !important;
+            box-shadow: 0 0 10px rgba(0, 149, 255, 0.25) !important;
         }
 
-        /* Tarjetas de Métricas con Glow Dinámico Rosa Neón */
+        /* Tarjetas de Métricas con Glow Dinámico Azul/Morado Neón */
         .metric-card-container {
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            background: linear-gradient(135deg, #12040c 0%, #200816 100%);
-            border: 1px solid rgba(255, 0, 127, 0.35); 
+            background: linear-gradient(135deg, #070b19 0%, #100f2b 100%);
+            border: 1px solid rgba(0, 149, 255, 0.35); 
             padding: 16px 20px; 
             border-radius: 12px; 
             margin-top: 15px; 
             margin-bottom: 25px;
-            box-shadow: 0 0 20px rgba(255, 0, 127, 0.15);
+            box-shadow: 0 0 20px rgba(147, 51, 234, 0.15);
             animation: pulseGlow 4s infinite alternate ease-in-out, slideUp 0.6s ease-out;
         }
 
@@ -654,8 +675,8 @@ st.markdown("""
         }
 
         @keyframes pulseGlow {
-            0% { box-shadow: 0 0 15px rgba(255, 0, 127, 0.12), inset 0 0 10px rgba(255, 0, 127, 0.05); }
-            100% { box-shadow: 0 0 25px rgba(255, 0, 127, 0.3), inset 0 0 15px rgba(255, 0, 127, 0.1); }
+            0% { box-shadow: 0 0 15px rgba(0, 149, 255, 0.12), inset 0 0 10px rgba(147, 51, 234, 0.05); }
+            100% { box-shadow: 0 0 25px rgba(0, 149, 255, 0.3), inset 0 0 15px rgba(147, 51, 234, 0.1); }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -932,20 +953,20 @@ else:
     D_m = D_val * 0.9144
     D_cm, H_mira_cm, H_extra_cm = D_val * 91.44, H_mira * 2.54, H_extra * 2.54
 
-# --- ENCABEZADO PRINCIPAL (CON LUZ NEÓN ROSA/MAGENTA) ---
+# --- ENCABEZADO PRINCIPAL (CON LUZ NEÓN AZUL/MORADO) ---
 st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #12040c 0%, #220817 100%);
+    <div style="background: linear-gradient(135deg, #070b19 0%, #110e28 100%);
                 padding: 14px 25px;
                 border-radius: 12px;
-                border-left: 5px solid #ff007f;
-                border: 1px solid rgba(255, 0, 127, 0.3);
+                border-left: 5px solid #00f0ff;
+                border: 1px solid rgba(0, 149, 255, 0.3);
                 margin-bottom: 20px;
-                box-shadow: 0px 4px 20px rgba(255, 0, 127, 0.15);">
-        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px; text-shadow: 0 0 10px rgba(255,0,127,0.3);">
+                box-shadow: 0px 4px 20px rgba(147, 51, 234, 0.15);">
+        <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,240,255,0.3);">
             {txt['title']}
         </h2>
-        <p style="color: #f472b6; margin: 0; font-size: 13px; opacity: 0.9;">
-            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #ff007f;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
+        <p style="color: #c084fc; margin: 0; font-size: 13px; opacity: 0.9;">
+            Alineación de precisión óptica & Física Atmosférica | Perfil Activo: <b style="color: #00f0ff;">{profile if profile != txt['profile_placeholder'] else 'Ninguno'}</b>
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1024,7 +1045,7 @@ if save_clicked:
     save_record_to_db(current_record)
     st.sidebar.success(txt["record_saved"])
 
-# --- GRÁFICAS 3D Y 2D CON CONTENEDORES ROSA NEÓN ---
+# --- GRÁFICAS 3D Y 2D CON CONTENEDORES AZUL/MORADO NEÓN ---
 col_3d, col_2d = st.columns([1.75, 1.0])
 
 with col_3d:
@@ -1040,7 +1061,7 @@ with col_3d:
 
     fig3d.add_trace(go.Surface(
         x=gx, y=gy, z=gz,
-        colorscale=[[0, '#080205'], [1, '#1a0612']],
+        colorscale=[[0, '#03050c'], [1, '#0e1124']],
         showscale=False, opacity=0.6, hoverinfo='none'
     ))
 
@@ -1048,16 +1069,16 @@ with col_3d:
         x=[0, D_cm], y=[0, 0], z=[0, y_ref_end],
         mode='lines+markers',
         name=f"{txt['laser_label']} ({ref_angle_deg:.2f}°)",
-        line=dict(color='#ff0055', width=7, dash='dash'),
-        marker=dict(size=4, color='#ff0055')
+        line=dict(color='#00d9ff', width=7, dash='dash'),
+        marker=dict(size=4, color='#00d9ff')
     ))
 
     fig3d.add_trace(go.Scatter3d(
         x=[0, D_cm], y=[0, 0], z=[pos_mira[1], pos_impacto_mira[1]],
         mode='lines+markers',
         name=f"{txt['sight_label']} (α = {angulo_deg:.2f}°)",
-        line=dict(color='#ff007f', width=9),
-        marker=dict(size=5, color='#ff007f')
+        line=dict(color='#00f0ff', width=9),
+        marker=dict(size=5, color='#00f0ff')
     ))
 
     fig3d.add_trace(go.Scatter3d(
@@ -1075,18 +1096,18 @@ with col_3d:
     fig3d.update_layout(
         title=dict(
             text=f"📐 <b>{txt['title_graph']} 3D</b>: {D_val:.1f} {d_unit} | <b>α</b>: {angulo_deg:.4f}°",
-            font=dict(color="#ff007f", size=14)
+            font=dict(color="#00f0ff", size=14)
         ),
-        paper_bgcolor='#0a0307', plot_bgcolor='#0a0307',
+        paper_bgcolor='#050814', plot_bgcolor='#050814',
         height=460, margin=dict(l=5, r=5, t=35, b=5),
         scene=dict(
             aspectmode='manual', aspectratio=dict(x=2.0, y=1, z=1.1),
-            xaxis=dict(title='Distancia (cm)', backgroundcolor="#0a0307", gridcolor="#380a24", tickfont=dict(color="#f472b6")),
-            yaxis=dict(title='Eje Lateral', backgroundcolor="#0a0307", gridcolor="#380a24", tickfont=dict(color="#f472b6")),
-            zaxis=dict(title='Elevación (cm)', backgroundcolor="#0a0307", gridcolor="#380a24", tickfont=dict(color="#f472b6")),
+            xaxis=dict(title='Distancia (cm)', backgroundcolor="#050814", gridcolor="#132347", tickfont=dict(color="#c084fc")),
+            yaxis=dict(title='Eje Lateral', backgroundcolor="#050814", gridcolor="#132347", tickfont=dict(color="#c084fc")),
+            zaxis=dict(title='Elevación (cm)', backgroundcolor="#050814", gridcolor="#132347", tickfont=dict(color="#c084fc")),
             camera=dict(eye=dict(x=1.6, y=-1.4, z=0.6))
         ),
-        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(18, 4, 12, 0.85)")
+        legend=dict(orientation="h", y=-0.05, x=0.5, xanchor="center", font=dict(color="white", size=10), bgcolor="rgba(11, 19, 43, 0.85)")
     )
     st.plotly_chart(fig3d, use_container_width=True, key="grafica_optica_3d")
 
@@ -1100,19 +1121,19 @@ with col_2d:
         fig2d.add_shape(
             type="circle", xref="x", yref="y",
             x0=-r, y0=-r, x1=r, y1=r,
-            line=dict(color="#4a0f31", width=1.5),
-            fillcolor="rgba(50, 10, 35, 0.2)"
+            line=dict(color="#291b4a", width=1.5),
+            fillcolor="rgba(30, 20, 60, 0.2)"
         )
 
-    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#661444", width=1, dash="dot"))
-    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#661444", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=-max_radius*1.2, y0=0, x1=max_radius*1.2, y1=0, line=dict(color="#3b246b", width=1, dash="dot"))
+    fig2d.add_shape(type="line", x0=0, y0=-max_radius*1.2, x1=0, y1=max_radius*1.2, line=dict(color="#3b246b", width=1, dash="dot"))
 
     fig2d.add_shape(
         type="circle", xref="x", yref="y",
         x0=-spot_radius_cm, y0=diferencia_altura_cm - spot_radius_cm,
         x1=spot_radius_cm, y1=diferencia_altura_cm + spot_radius_cm,
-        line=dict(color="#ff007f", width=2),
-        fillcolor="rgba(255, 0, 127, 0.35)"
+        line=dict(color="#00f0ff", width=2),
+        fillcolor="rgba(0, 240, 255, 0.35)"
     )
 
     fig2d.add_trace(go.Scatter(
@@ -1128,36 +1149,36 @@ with col_2d:
     ))
 
     fig2d.update_layout(
-        title=dict(text=txt["target_2d_title"], font=dict(color="#ff007f", size=14)),
-        paper_bgcolor='#0a0307', plot_bgcolor='#0a0307',
+        title=dict(text=txt["target_2d_title"], font=dict(color="#00f0ff", size=14)),
+        paper_bgcolor='#050814', plot_bgcolor='#050814',
         height=460, margin=dict(l=10, r=10, t=35, b=10),
-        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#f472b6"), title=f"X ({h_unit})"),
-        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#f472b6"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
-        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(18, 4, 12, 0.85)")
+        xaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#c084fc"), title=f"X ({h_unit})"),
+        yaxis=dict(range=[-max_radius*1.2, max_radius*1.2], showgrid=False, zeroline=False, tickfont=dict(color="#c084fc"), title=f"Y ({h_unit})", scaleanchor="x", scaleratio=1),
+        legend=dict(orientation="h", y=-0.1, x=0.5, xanchor="center", font=dict(color="white", size=9), bgcolor="rgba(11, 19, 43, 0.85)")
     )
     st.plotly_chart(fig2d, use_container_width=True, key="grafica_diana_2d")
 
-# --- MÉTRICAS Y RESULTADOS (ESTILO ROSA NEÓN PULSANTE) ---
+# --- MÉTRICAS Y RESULTADOS (ESTILO AZUL/MORADO NEÓN PULSANTE) ---
 st.markdown(f"""
     <div class="metric-card-container">
         <div style="text-align: center; flex: 1;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
+            <span style="color: #c084fc; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['diff_height']}</span><br>
             <span style="color: #ffffff; font-size: 17px; font-weight: bold;">{diff_height_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
+        <div style="text-align: center; border-left: 1px solid rgba(0, 149, 255, 0.25); padding-left: 10px; flex: 1;">
+            <span style="color: #c084fc; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['sight_angle']}</span><br>
             <span style="color: #ffffff; font-size: 17px; font-weight: bold;">{angulo_deg:.4f}°</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1.2;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
-            <span style="color: #ff007f; font-size: 17px; font-weight: bold; text-shadow: 0 0 8px rgba(255,0,127,0.5);">{moa:.2f} MOA | {mrad:.2f} mrad</span>
+        <div style="text-align: center; border-left: 1px solid rgba(0, 149, 255, 0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #c084fc; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['angular_adj']}</span><br>
+            <span style="color: #00f0ff; font-size: 17px; font-weight: bold; text-shadow: 0 0 8px rgba(0,240,255,0.5);">{moa:.2f} MOA | {mrad:.2f} mrad</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1.2;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
+        <div style="text-align: center; border-left: 1px solid rgba(0, 149, 255, 0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #c084fc; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['spot_size_lbl']}</span><br>
             <span style="color: #ffffff; font-size: 17px; font-weight: bold;">Ø {spot_size_display:.2f} {h_unit}</span>
         </div>
-        <div style="text-align: center; border-left: 1px solid rgba(255,0,127,0.25); padding-left: 10px; flex: 1.2;">
-            <span style="color: #f472b6; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
+        <div style="text-align: center; border-left: 1px solid rgba(0, 149, 255, 0.25); padding-left: 10px; flex: 1.2;">
+            <span style="color: #c084fc; font-size: 11px; font-weight: bold; text-transform: uppercase;">{txt['uncertainty_lbl']}</span><br>
             <span style="color: #38ef7d; font-size: 15px; font-weight: bold; text-shadow: 0 0 8px rgba(56,239,125,0.4);">{uncertainty_str}</span>
         </div>
     </div>
